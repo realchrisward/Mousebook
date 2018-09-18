@@ -5,7 +5,7 @@ INSTRUCTIONS FOR "INSTALLATION"
 You will need a server that is capable of running mySQL and PHP (current versions used are mySQL PHP 5.4 and mySQL 5.6)
 
 Schema/Tables for the mySQL backends (userbook and mousebook) are provided as an SQL file, you will need to upload/import this into you mySQL server.
-php files are provided and can simply be uploaded to a directory in your "web root" directory (the default directory organization is defined below). A Zipped version of the php files is also provided that makes it easier to preserve the necessary directory layout.
+php files are provided and can simply be uploaded to a directory in your "web root" directory (the default directory organization is defined below). A Zipped version of the php files is provided that makes it easier to preserve the necessary directory layout.
 
 /pages/databases.php
 /php/mousebook/index.php
