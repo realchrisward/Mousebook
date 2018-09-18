@@ -16,5 +16,6 @@ php files are provided and can simply be uploaded to a directory in your "web ro
 *search and replace "{server ip}" with the ip address of the server running your mySQL backend
 *search and replace "{server login}" with the read only username so that the users attempting to sign in can be checked against the "userbook" database
 *search and replace "{server pass}" with the read only password matched to the username used to access the "userbook" database
+*search and replace "{server port}" with the port used to access the "userbook" database
 
 *NOTE - you will need to manage database users/passwords/access through the "userbook" database
