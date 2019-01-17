@@ -1,0 +1,17 @@
+several issues require fixing...
+
+major
+*text replacement needs to catch additional references to the 'userbook' database and should be made flexible in case alternative names are used for databases.
+*several of the pages need to be corrected to include host ip and userbook database name parameters as part of the login check
+*template mysql file still needed for upload
+
+minor
+*additional feature requests still need to be addressed...
+-Copy Paste form matched to the Tissue Collection template
+-Printable pdf form for “clipping logs”
+-Filters to (optionally) limit lines, cage cards to the current user’s entries/responsibility
+-Method to track litter sizes even if only one gender is kept (is this needed?)
+-Quick Sac tool - sac all selected animals with a common comment/dod
+-Better Style Matching to rat excel sheets as an output option
+-Link to excel macro for output of by line summary
+-more Download buttons for more table outputs
