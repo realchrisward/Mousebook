@@ -24,9 +24,13 @@
 		
 	//test login
 
-	// use userbook to check credentials	
-	$ubname="{server login}";
-	$ubpass="{server pass}";
+	// use userbook to check credentials
+	// collect config values
+	$config = require '../config.php';
+	
+	//setup sql variables
+	$ubname=$config['server_user'];
+	$ubpass=$config['server_pass'];	
 
 		//query userbook for accessable databases
 		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl,db_subject_plural,db_subject_single,db_guide1_title,db_guide1_url from ".

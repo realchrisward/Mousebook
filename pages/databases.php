@@ -3,17 +3,21 @@
 <html>
 <head>
 	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-	<title>Home - Databases -- Neurobehavioral Core</title>
-	<link href="../neurobehavioralcore.css" rel="stylesheet" type="text/css" />
+	<title>Home - Databases</title>
+	<link href="../mousebook.css" rel="stylesheet" type="text/css" />
 <!--php code-->
 	<?php
+	//collect config values
+	$config = require '../config.php';
+	
+
 	//setup sql variables
-	$host="{server ip}";
-	$port={server port};
+	$host=$config['server_ip'];
+	$port=$config['server_port'];
 	$socket="";
 	$dbname="userbook";
-	$ubname="{server login}";
-	$ubpass="{server pass}";
+	$ubname=$config['server_user'];
+	$ubpass=$config['server_pass'];
 	//test connection
 	$conn=new mysqli($host,$ubname,$ubpass,$dbname);
 	//check connection
