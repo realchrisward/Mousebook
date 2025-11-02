@@ -1,0 +1,129 @@
+body {
+margin-left: auto;
+margin-right: auto;
+border: 5px;
+font-family: Arial, Helvetica, sans-serif;
+background-color: white;
+color:#217190;
+width: 90%;
+min-width: 800px;
+height:90%;
+}
+
+
+table,th,td {
+border: 1px solid #034262;
+text-align: center;
+margin:auto;
+
+}
+/*
+main colors for style use
+white
+black
+darkblue =rgb(3,66,98)/#034262
+medblue =#217190
+lightblue =#2b92b9
+vlblue =#77afcb
+Orange =#ef7000
+Gold =#cc9900
+grey =#474747
+*/
+
+/*
+form sections
+*/
+#header {
+width:100%;
+height:50px;
+line-height:50px;
+background-color:#034262;
+color:white;
+position:relative;
+}
+#left_navmenu {
+width:100px;
+height:850px;
+background-color:grey;
+float:left;
+}
+#right_content {
+margin-left:100px;
+background-color:white;
+position:relative;
+}
+
+#loginbox {
+}
+
+#footer {
+width:700px;
+height:20px;
+color:#034262;
+float:right;
+vertical-align:bottom;
+}
+/*
+style options - classes
+*/
+.centertext {
+text-align:center;
+margin:auto;
+width:100%;
+}
+.righttext {
+text-align:right;
+margin:10px;
+}
+.lefttext {
+text-align:left;
+margin:10px;
+}
+
+.centervert {
+position: absolute;
+top: 50%;
+transform: translateY(-50%);
+}
+.whitespace {
+text-align:center;
+margin:auto;
+width:80%;
+}
+/*
+form controls
+*/
+.button {
+border:none;
+width:90px;
+height:50px;
+margin:5px;
+border-radius:5px;
+background-color:lightgrey;
+color:#217190;
+font-weight:bold;
+white-space:normal;
+}
+
+.mediumlistbox {
+width:200px;
+}
+.smalllistbox {
+width:125px;
+}
+.largelistbox {
+width:350px;
+}
+.largelistbox2 {
+min-width:350px;
+}
+.tinylistbox {
+width:50px;
+}
+.label {
+text-align:right;
+width:75px;
+}
+.plain {
+border:none;
+}
