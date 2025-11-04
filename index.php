@@ -1,9 +1,11 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
-
+test
 <!--php code: login-->
 	<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 	//setup sql variables
 	$xusername=$_POST['xusername'];
 	$xpassword=$_POST['xpassword'];
@@ -26,7 +28,7 @@
 
 	// use userbook to check credentials
 	// collect config values
-	$config = require '../config.php';
+	$config = require './config.php';
 	
 	//setup sql variables
 	$ubname=$config['server_user'];
