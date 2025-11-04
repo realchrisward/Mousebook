@@ -69,7 +69,7 @@
 			
 </head>
 <body>
-	<img class="logo" src="../images/neurobehavioralcore_logo_1.png" alt="Neurobehavioral Core" width="50%" style="background:transparent;">
+	<img class="logo" src="../images/logo.png" alt="Mouse Metabolism and Phenotyping Core" width="50%">
 	<div class="content-center">
 		 
 		<h1 class="section">
@@ -125,7 +125,7 @@
 
 	<div >
 		<p class="footer">
-		NeurobehavioralCore.com &copy 2016
+		@realchrisward &copy 2025
 		</p>
 	</div>
 
