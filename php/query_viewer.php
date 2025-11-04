@@ -53,8 +53,8 @@
 //create connection
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
-//retreive mice data from db of mice
-//*****generate temp list of mice*****
+//retreive animals data from db of animals
+//*****generate temp list of animals*****
 
 $xquerytorun=$_POST['querytorun'];
 
@@ -62,7 +62,7 @@ $querylist=array(
 	'view_linestatus' =>'Line Status',
 	'view_matingstatus' =>'Mating Status',
         'view_cagestatus' =>'Cage Status',
-        'view_activemice' =>'Active Mice'
+        'view_activeanimals' =>'Active animals'
 	);
 
 $curquery=$querylist[$xquerytorun];
@@ -114,7 +114,7 @@ $querylist=array(
 	'view_linestatus' =>'Line Status',
 	'view_matingstatus' =>'Mating Status',
         'view_cagestatus' =>'Cage Status',
-        'view_activemice' =>'Active Mice'
+        'view_activeanimals' =>'Active animals'
 	);
 
 
@@ -253,13 +253,13 @@ exit;
 					 </form>
 					
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					  <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -270,13 +270,13 @@ exit;
 					  value="Record Dead Pups" />
 					 </form>
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
@@ -304,13 +304,13 @@ exit;
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
 					  
 			</div>
@@ -330,7 +330,7 @@ exit;
 					<option value="view_linestatus">Line Status</option>
 					<option value="view_matingstatus">Mating Status</option>
                                         <option value="view_cagestatus">Cage Status</option>
-                                        <option value="view_activemice">Active Mice</option>
+                                        <option value="view_activeanimals">Active animals</option>
 				</select>
 
 <input type=submit class="button" name="Download"

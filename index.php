@@ -155,13 +155,13 @@ ini_set('display_errors', 1);
 					 </form>
 					
 					 </form>					 
-					 <form action="./php/add_mice.php" method=post target="_blank">
+					 <form action="./php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					  <form action="./php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -172,13 +172,13 @@ ini_set('display_errors', 1);
 					  value="Record Dead Pups" />
 					 </form>
 					 </form>					 
-					 <form action="./php/manage_mice.php" method=post target="_blank">
+					 <form action="./php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>
 					 </form>					 
 					 <form action="./php/manage_cages.php" method=post target="_blank">
@@ -206,13 +206,13 @@ ini_set('display_errors', 1);
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="./php/query_mice.php" method=post target="_blank">
+					 <form action="./php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
                                          <form action="./php/cagecard_printer.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -223,13 +223,13 @@ ini_set('display_errors', 1);
 					  value="Card Printer" />
 					 </form>
 
-                                         <form action="./php/mouse_info_export.php" method=post target="_blank">
+                                         <form action="./php/animal_info_export.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Export Mouse Info" />
+					  value="Export animal Info" />
 					 </form>
 
                                          <form action="./php/manage_roles.php" method=post target="_blank">
@@ -271,10 +271,10 @@ $result = $conn->query("call get_colonystats()") ;
 $conn->close();
 //loop the result set
 $row = $result->fetch_array();   
-$totalmiceindb=$row['totalmiceindb'];
-$alivemice=$row['alivemice'];
-$deadmice=$row['deadmice'];
-$micewithnodob=$row['micewithnodob'];
+$totalanimalsindb=$row['totalanimalsindb'];
+$aliveanimals=$row['aliveanimals'];
+$deadanimals=$row['deadanimals'];
+$animalswithnodob=$row['animalswithnodob'];
 $currentmonthyr=$row['currentmonthyr'];
 $x1monthprev=$row['1monthprev'];
 $x2monthprev=$row['2monthprev'];
@@ -303,7 +303,7 @@ $deaths_6monthprev=$row['deaths_6monthprev'];
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //$results = $conn->query("call get_weanlist();");
 
-$sqltext = "select `currentcage`, max(datediff(curdate(),`dob`)) as age, `dob`, `line` from `".$dbname."`.`table_mice` "
+$sqltext = "select `currentcage`, max(datediff(curdate(),`dob`)) as age, `dob`, `line` from `".$dbname."`.`table_animals` "
 ."where (dod is null and (left(currentcage,1)='L' or left(currentcage,1)='F')) "
 ."group by `currentcage` order by age desc, currentcage asc;";
 
@@ -344,7 +344,7 @@ $ManageWean.="</form>";
 
 
 $ManageGeno=""
-."<form action='../php/manage_mice.php' method=post target='_blank'>"
+."<form action='../php/manage_animals.php' method=post target='_blank'>"
 ."<input type=hidden name='xusername' value='".$xusername."' />"
 ."<input type=hidden name='xpassword' value='".$xpassword."' />"
 ."<input type=hidden name='dbname' value='".$dbname."' />"
@@ -368,16 +368,16 @@ $weantable.="</table>";
 			<h2 class="centertext">Current Colony Stats</h2>
 <table style="width:400px;"> 
 	<tr>
-		<th>Total Mice</th>
-		<th>Alive Mice</th>
-		<th>Dead Mice</th>
-		<th>'Deleted' Mice</th>
+		<th>Total animals</th>
+		<th>Alive animals</th>
+		<th>Dead animals</th>
+		<th>'Deleted' animals</th>
 	</tr>
 	<tr>
-		<td><?php echo $totalmiceindb; ?></td>
-		<td><?php echo $alivemice; ?></td>
-		<td><?php echo $deadmice; ?></td>
-		<td><?php echo $micewithnodob; ?></td>
+		<td><?php echo $totalanimalsindb; ?></td>
+		<td><?php echo $aliveanimals; ?></td>
+		<td><?php echo $deadanimals; ?></td>
+		<td><?php echo $animalswithnodob; ?></td>
 	</tr>
 </table>
 <table style="width:400px;">

@@ -59,8 +59,8 @@
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 
-//retreive mice data from db of mice
-//  *****generate temp list of mice*****
+//retreive animals data from db of animals
+//  *****generate temp list of animals*****
 
 $sqltext="SELECT `line`,`idno`,`dob`,`genotypingrxn` as generxn, `allele` FROM view_unkgenos join key_allelegroupbygenotypingrxn 
 on view_unkgenos.allelegroup= key_allelegroupbygenotypingrxn.allelegroup
@@ -68,7 +68,7 @@ order by generxn asc, line asc, cast(idno as unsigned) asc, idno;";
 //run query 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqltext);
-$mice_results=$results;
+$animals_results=$results;
 //loop and grab data
 //echo $sqltext;
 $table=[];
@@ -206,13 +206,13 @@ $temptable.='</table>';
 					 </form>
 					
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					  <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -223,13 +223,13 @@ $temptable.='</table>';
 					  value="Record Dead Pups" />
 					 </form>
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
@@ -257,20 +257,20 @@ $temptable.='</table>';
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
 					  
 			</div>
 
 <!--CONTENT SECTION-->
 			<div id="right_content" class="centertext">
-			<h2 class="centertext">Mouse Management</h2>
+			<h2 class="centertext">animal Management</h2>
 			<form id="query_genotodo" name="query_genotodo" method=post>
 
 					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />

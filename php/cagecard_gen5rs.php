@@ -265,21 +265,21 @@ $pdf->Cell(44,6,$cagearray[$cagename]['type'],'TBR',0,'C',1);
 $pdf->Cell(84,6,$cagearray[$cagename]['cageline'],'TBL',1,'C',1);
 $pdf->SetFillColor(255,255,255);
 
-//grab and sort mice
-$malemice=0;
-$femalemice=0;
+//grab and sort animals
+$maleanimals=0;
+$femaleanimals=0;
 $fatherarray=array();
 $motherarray=array();
-foreach(array_keys($cagearray[$cagename]['mice']) as $mouseauto){
-$mousearray=$cagearray[$cagename]['mice'][$mouseauto];
+foreach(array_keys($cagearray[$cagename]['animals']) as $animalauto){
+$animalarray=$cagearray[$cagename]['animals'][$animalauto];
 
-if (strtolower($mousearray['gender'])=='f'){
-	$femalemice=$femalemice+1;
-	$motherarray[$femalemice]=$mouseauto;
+if (strtolower($animalarray['gender'])=='f'){
+	$femaleanimals=$femaleanimals+1;
+	$motherarray[$femaleanimals]=$animalauto;
 }
-if (strtolower($mousearray['gender'])=='m'){
-	$malemice=$malemice+1;
-	$fatherarray[$malemice]=$mouseauto;
+if (strtolower($animalarray['gender'])=='m'){
+	$maleanimals=$maleanimals+1;
+	$fatherarray[$maleanimals]=$animalauto;
 }
 
 }
@@ -287,26 +287,26 @@ if (strtolower($mousearray['gender'])=='m'){
 //Father row - table headers
 $pdf->Cell(4,5);
 $pdf->Cell(20,5,'Father:','TB',0,'C');
-$father1string=$cagearray[$cagename]['mice'][$fatherarray[1]]['line'].' - '.
-$cagearray[$cagename]['mice'][$fatherarray[1]]['idno'].' ('.
-$cagearray[$cagename]['mice'][$fatherarray[1]]['ear'].') '.
-$cagearray[$cagename]['mice'][$fatherarray[1]]['dob'];
+$father1string=$cagearray[$cagename]['animals'][$fatherarray[1]]['line'].' - '.
+$cagearray[$cagename]['animals'][$fatherarray[1]]['idno'].' ('.
+$cagearray[$cagename]['animals'][$fatherarray[1]]['ear'].') '.
+$cagearray[$cagename]['animals'][$fatherarray[1]]['dob'];
 
 $pdf->Cell(96,5,$father1string,'TB',1);
 
 //Mother row
 $pdf->Cell(4,5);
 $pdf->Cell(20,10,'Mother(s):','TB',0,'C');
-$pdf->Cell(96,5,$cagearray[$cagename]['mice'][$motherarray[1]]['line'].' - '.
-$cagearray[$cagename]['mice'][$motherarray[1]]['idno'].' ('.
-$cagearray[$cagename]['mice'][$motherarray[1]]['ear'].') '.
-$cagearray[$cagename]['mice'][$motherarray[1]]['dob'],'TB',1);
-if($femalemice>1){
+$pdf->Cell(96,5,$cagearray[$cagename]['animals'][$motherarray[1]]['line'].' - '.
+$cagearray[$cagename]['animals'][$motherarray[1]]['idno'].' ('.
+$cagearray[$cagename]['animals'][$motherarray[1]]['ear'].') '.
+$cagearray[$cagename]['animals'][$motherarray[1]]['dob'],'TB',1);
+if($femaleanimals>1){
 $pdf->Cell(24,5);
-$pdf->Cell(96,5,$cagearray[$cagename]['mice'][$motherarray[2]]['line'].' - '.
-$cagearray[$cagename]['mice'][$motherarray[2]]['idno'].' ('.
-$cagearray[$cagename]['mice'][$motherarray[2]]['ear'].') '.
-$cagearray[$cagename]['mice'][$motherarray[2]]['dob'],'TB',1);	
+$pdf->Cell(96,5,$cagearray[$cagename]['animals'][$motherarray[2]]['line'].' - '.
+$cagearray[$cagename]['animals'][$motherarray[2]]['idno'].' ('.
+$cagearray[$cagename]['animals'][$motherarray[2]]['ear'].') '.
+$cagearray[$cagename]['animals'][$motherarray[2]]['dob'],'TB',1);	
 }
 else{
 $pdf->Cell(24,5);
@@ -414,28 +414,28 @@ $pdf->Cell(30,5,'EAR',1,0,'C');
 $pdf->Cell(40,5,'GENO/NOTES','TBR',1,'L');
 
 //$pdf->SetFont('Arial','',10);
-//add mice
+//add animals
 
 //preferred font size 14pt for body text of card
 $pdf->SetFont('Arial','',20);
 
-$cagesize=count($cagearray[$cagename]['mice']);
+$cagesize=count($cagearray[$cagename]['animals']);
 
-foreach(array_keys($cagearray[$cagename]['mice']) as $mouseauto){
-$mousearray=$cagearray[$cagename]['mice'][$mouseauto];
+foreach(array_keys($cagearray[$cagename]['animals']) as $animalauto){
+$animalarray=$cagearray[$cagename]['animals'][$animalauto];
 
 $pdf->Cell(4,8);
-//$pdf->Cell(25,8,substr($mousearray['line'],0,12),1,0,'C');
-$pdf->Cell(20,8,$mousearray['idno'],1,0,'C');
-$pdf->Cell(30,8,$mousearray['dob'],1,0,'C');
-$pdf->Cell(30,8,$mousearray['ear'],1,0,'C');
-$genoneedle=strtolower($mousearray['line']).":".strtolower($mousearray['geno']);
+//$pdf->Cell(25,8,substr($animalarray['line'],0,12),1,0,'C');
+$pdf->Cell(20,8,$animalarray['idno'],1,0,'C');
+$pdf->Cell(30,8,$animalarray['dob'],1,0,'C');
+$pdf->Cell(30,8,$animalarray['ear'],1,0,'C');
+$genoneedle=strtolower($animalarray['line']).":".strtolower($animalarray['geno']);
 if (array_key_exists($genoneedle, $genoconver)){
 $pdf->Cell(40,8,$genoconver[$genoneedle],1,1,'L');
 }
 else {
 //$pdf->Cell(40,8,$genoneedle,1,1,'L');
-$pdf->Cell(40,8,$mousearray['geno'],1,1,'L');
+$pdf->Cell(40,8,$animalarray['geno'],1,1,'L');
 
 }
 }

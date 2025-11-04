@@ -67,12 +67,12 @@ $contact1=$_POST['contactinfo1'];
 $contact2=$_POST['contactinfo2'];	
 
 
-//get mouse history document - save as csv
-/*select currentcage, line, idno, matingcage, group_concat(xcom.general_comment order by xcom.commentdate SEParator '->') as mouse_history 
-from ((table_mice join table_cages on currentcage=table_cages.cageid) 
+//get animal history document - save as csv
+/*select currentcage, line, idno, matingcage, group_concat(xcom.general_comment order by xcom.commentdate SEParator '->') as animal_history 
+from ((table_animals join table_cages on currentcage=table_cages.cageid) 
 join CagesForPrinting on currentcage=CagesForPrinting.cageid) 
-left join (select * from data_comments  where data_comments.general_comment like '%moved to cage%') as xcom on table_mice.mouseautono=xcom.mouseautono 
-group by table_mice.mouseautono order by currentcage;
+left join (select * from data_comments  where data_comments.general_comment like '%moved to cage%') as xcom on table_animals.animalautono=xcom.animalautono 
+group by table_animals.animalautono order by currentcage;
 */
 
 
@@ -180,7 +180,7 @@ $sf='left(`currentcage`,1)=left("'.$source_category_selection.'",1) and ';}
 $sql_where_text=substr($lf.$gf.$sf,0,-4);
 if (strlen($sql_where_text)>0){
 $sql_where_text=' and '.$sql_where_text;}
-$sqltext="SELECT `currentcage` FROM `table_mice` left join CagesForPrinting on table_mice.currentcage=CagesForPrinting.cageid where dod is null and
+$sqltext="SELECT `currentcage` FROM `table_animals` left join CagesForPrinting on table_animals.currentcage=CagesForPrinting.cageid where dod is null and
 CagesForPrinting.cageid is null ".$sql_where_text." GROUP BY `currentcage`;";
 //echo $sqltext;
 $results=$conn->query($sqltext);
@@ -290,21 +290,21 @@ while ($row=mysqli_fetch_array($results)){
 $conn->close();
 
 
-$sqltext="Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`mouseautono`,`x`.`gender`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_mice`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_mice`.`mouseautono`,`gender`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_mice` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` join `table_genotypes` on `table_mice`.`mouseautono`=`table_genotypes`.`mouseautono` group by `table_mice`.`mouseautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`mouseautono`";
+$sqltext="Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`animalautono`,`x`.`gender`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_animals`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_animals`.`animalautono`,`gender`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_animals` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` join `table_genotypes` on `table_animals`.`animalautono`=`table_genotypes`.`animalautono` group by `table_animals`.`animalautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`animalautono`";
 
 /* old query
-"Select `table_cages`.`cageid`,`cagetype`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`card_color`,`table_mice`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y')  `dob`,`eartag`,`mouseautono`,`gender` ";
-$sqltext.="from `table_mice` ";
+"Select `table_cages`.`cageid`,`cagetype`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`card_color`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y')  `dob`,`eartag`,`animalautono`,`gender` ";
+$sqltext.="from `table_animals` ";
 $sqltext.="join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` where `dod` is null;";
 */
 
-//query table_mice
+//query table_animals
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqltext);
 
 //loop and grab data
 $cages=array();
-$mice=array();
+$animals=array();
 
 while($row=mysqli_fetch_array($results)){
 
@@ -316,33 +316,33 @@ while($row=mysqli_fetch_array($results)){
 	'papercolor'=>$row['card_color'],
 	'cardcolorR'=>$colorkey[$row['color_assignment']]["R"],
 	'cardcolorG'=>$colorkey[$row['color_assignment']]["G"],
-	'cardcolorB'=>$colorkey[$row['color_assignment']]["B"], 'mice'=>array());
-	$mice[$row['mouseautono']]=array('cage'=>$row['cageid'],'line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob'],'ear'=>$row['eartag'],'geno'=>'','gender'=>$row['gender'], 'geno'=>$row['genoshort']);
+	'cardcolorB'=>$colorkey[$row['color_assignment']]["B"], 'animals'=>array());
+	$animals[$row['animalautono']]=array('cage'=>$row['cageid'],'line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob'],'ear'=>$row['eartag'],'geno'=>'','gender'=>$row['gender'], 'geno'=>$row['genoshort']);
 }
 $conn->close();
 
 /*not needed anymore - integrated into new query
 //query table_genotypes	
 // need query to grab and annotate genos
-$sqlgenotypes="SELECT `table_genotypes`.`mouseautono`,`allelegroup`,`allele` " ;
-$sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_mice` INNER JOIN `CagesForPrinting` on `currentcage`=`CagesForPrinting`.`cageid`) ";
-$sqlgenotypes.="ON `table_genotypes`.`mouseautono` = `table_mice`.`mouseautono` where `dod` is null order by `allelegroup`;";
+$sqlgenotypes="SELECT `table_genotypes`.`animalautono`,`allelegroup`,`allele` " ;
+$sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_animals` INNER JOIN `CagesForPrinting` on `currentcage`=`CagesForPrinting`.`cageid`) ";
+$sqlgenotypes.="ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where `dod` is null order by `allelegroup`;";
 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqlgenotypes);
 $geno_results=$results;
 //loop and grab data
 while ($row=mysqli_fetch_array($results)){
-	$mice[$row['mouseautono']]['geno'].=$row['allele']."; ";
+	$animals[$row['animalautono']]['geno'].=$row['allele']."; ";
 }
 // need geno short hand table???
 */
 
-//combine mice into cage array
+//combine animals into cage array
 
-foreach($mice as $man=>$mdata){
-	$cages[$mice[$man]['cage']]['mice'][$man]=$mice[$man];
-//echo $mice[$man]['cage'];
+foreach($animals as $man=>$mdata){
+	$cages[$animals[$man]['cage']]['animals'][$man]=$animals[$man];
+//echo $animals[$man]['cage'];
 }
 
 $sqlaction='submit cages for printing';
@@ -384,7 +384,7 @@ $colorfilt_listbox.='</select>';
 <head>
 			<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
 			<title>Cage Card Printing Selector - <?php echo $dbname; ?></title>
-			<link href="../mousebook.css" rel="stylesheet" type="text/css" />	
+			<link href="../animalbook.css" rel="stylesheet" type="text/css" />	
 </head>
 <body>
 
@@ -470,13 +470,13 @@ $colorfilt_listbox.='</select>';
 					 <input type=submit class="button" name=""
 					  value="Manage Lines" />
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					 <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -487,13 +487,13 @@ $colorfilt_listbox.='</select>';
 					  value="Record Dead Pups" />
 
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -519,21 +519,21 @@ $colorfilt_listbox.='</select>';
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
-					 <form action="../php/mouse_info_export.php" method=post target="_blank">
+					 <form action="../php/animal_info_export.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Export Mouse Info" />
+					  value="Export animal Info" />
 					 </form>
 					  
 			</div>

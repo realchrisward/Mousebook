@@ -172,7 +172,7 @@ $sf='left(`currentcage`,1)=left("'.$source_category_selection.'",1) and ';}
 $sql_where_text=substr($lf.$gf.$sf,0,-4);
 if (strlen($sql_where_text)>0){
 $sql_where_text=' and '.$sql_where_text;}
-$sqltext="SELECT `currentcage` FROM `table_mice` left join CagesForInfo on table_mice.currentcage=CagesForInfo.cageid where dod is null and
+$sqltext="SELECT `currentcage` FROM `table_animals` left join CagesForInfo on table_animals.currentcage=CagesForInfo.cageid where dod is null and
 CagesForInfo.cageid is null ".$sql_where_text." GROUP BY `currentcage`;";
 //echo $sqltext;
 $results=$conn->query($sqltext);
@@ -277,18 +277,18 @@ while ($row=mysqli_fetch_array($results)){
 $conn->close();
 
 
-$sqltext="Select `table_cages`.`cageid`,`cagetype`,`cageno`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`table_mice`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`,`mouseautono`,`gender`,`matingcage` ";
-$sqltext.="from `table_mice` ";
+$sqltext="Select `table_cages`.`cageid`,`cagetype`,`cageno`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`,`animalautono`,`gender`,`matingcage` ";
+$sqltext.="from `table_animals` ";
 $sqltext.="join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForInfo` on `table_cages`.`cageid`=`CagesForInfo`.`cageid`) on `currentcage`=`CagesForInfo`.`cageid` where `dod` is null;";
 
 
-//query table_mice
+//query table_animals
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqltext);
 
 //loop and grab data
 $cages=array();
-$mice=array();
+$animals=array();
 
 while($row=mysqli_fetch_array($results)){
 
@@ -300,31 +300,31 @@ while($row=mysqli_fetch_array($results)){
 	'cagegenos'=>$cagegenokey[$row['lineassignment']],
 	'cardcolorR'=>$colorkey[$row['color_assignment']]["R"],
 	'cardcolorG'=>$colorkey[$row['color_assignment']]["G"],
-	'cardcolorB'=>$colorkey[$row['color_assignment']]["B"], 'mice'=>array());
-	$mice[$row['mouseautono']]=array('cage'=>$row['cageid'],'line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob'],'sourcecage'=>$row['matingcage'],'ear'=>$row['eartag'],'geno'=>'','gender'=>$row['gender']);
+	'cardcolorB'=>$colorkey[$row['color_assignment']]["B"], 'animals'=>array());
+	$animals[$row['animalautono']]=array('cage'=>$row['cageid'],'line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob'],'sourcecage'=>$row['matingcage'],'ear'=>$row['eartag'],'geno'=>'','gender'=>$row['gender']);
 }
 $conn->close();
 
 //query table_genotypes	
 // need query to grab and annotate genos
-$sqlgenotypes="SELECT `table_genotypes`.`mouseautono`,`allelegroup`,`allele` " ;
-$sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_mice` INNER JOIN `CagesForInfo` on `currentcage`=`CagesForInfo`.`cageid`) ";
-$sqlgenotypes.="ON `table_genotypes`.`mouseautono` = `table_mice`.`mouseautono` where `dod` is null order by `allelegroup`;";
+$sqlgenotypes="SELECT `table_genotypes`.`animalautono`,`allelegroup`,`allele` " ;
+$sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_animals` INNER JOIN `CagesForInfo` on `currentcage`=`CagesForInfo`.`cageid`) ";
+$sqlgenotypes.="ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where `dod` is null order by `allelegroup`;";
 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqlgenotypes);
 $geno_results=$results;
 //loop and grab data
 while ($row=mysqli_fetch_array($results)){
-	$mice[$row['mouseautono']]['geno'].=$row['allele']."; ";
+	$animals[$row['animalautono']]['geno'].=$row['allele']."; ";
 }
 // need geno short hand table???
 
-//combine mice into cage array
+//combine animals into cage array
 
-foreach($mice as $man=>$mdata){
-	$cages[$mice[$man]['cage']]['mice'][$man]=$mice[$man];
-//echo $mice[$man]['cage'];
+foreach($animals as $man=>$mdata){
+	$cages[$animals[$man]['cage']]['animals'][$man]=$animals[$man];
+//echo $animals[$man]['cage'];
 }
 
 $sqlaction='submit cages for printing';
@@ -568,7 +568,7 @@ $temprow='
 
 foreach ($cages as $cg=>$cgdata){
 
-	foreach ($cages[$cg]['mice'] as $man=>$mdata){
+	foreach ($cages[$cg]['animals'] as $man=>$mdata){
 	
 $temprow.='
 	<tr name="trow'.$man.'" id="trow'.$man.'">
@@ -576,23 +576,23 @@ $temprow.='
 		</td>
 		<td >'.$cg.'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['line'].'
+		<td >'.$cages[$cg]['animals'][$man]['line'].'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['idno'].'
+		<td >'.$cages[$cg]['animals'][$man]['idno'].'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['gender'].'
+		<td >'.$cages[$cg]['animals'][$man]['gender'].'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['ear'].'
+		<td >'.$cages[$cg]['animals'][$man]['ear'].'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['dob'].'
+		<td >'.$cages[$cg]['animals'][$man]['dob'].'
 		</td>
 		<td >'.$cages[$cg]['cagegenos'].'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['geno'].'
+		<td >'.$cages[$cg]['animals'][$man]['geno'].'
 		</td>
-		<td >'.$genoconv[strtolower($cages[$cg]['mice'][$man]['line'].":".$cages[$cg]['mice'][$man]['geno'])].'
+		<td >'.$genoconv[strtolower($cages[$cg]['animals'][$man]['line'].":".$cages[$cg]['animals'][$man]['geno'])].'
 		</td>
-		<td >'.$cages[$cg]['mice'][$man]['sourcecage'].'
+		<td >'.$cages[$cg]['animals'][$man]['sourcecage'].'
 		</td>
 
 	</tr>
@@ -609,7 +609,7 @@ $temprow.='</table>';
 ?>
 <head>
 			<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-			<title>Mouse Info Export - <?php echo $dbname; ?></title>
+			<title>animal Info Export - <?php echo $dbname; ?></title>
 			<link href="../mousebook.css" rel="stylesheet" type="text/css" />	
 </head>
 <body>
@@ -619,7 +619,7 @@ $temprow.='</table>';
 					<?php echo $sqlerror; ?>
 					 <h2 class="centervert"
 					 style="position:absolute;top:0px;left:75px;"> 
-					  -Mouse Info Export-
+					  -animal Info Export-
 					 </h2>
 					 
 					 <h1 class="centervert"
@@ -696,13 +696,13 @@ $temprow.='</table>';
 					 <input type=submit class="button" name=""
 					  value="Manage Lines" />
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					 <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -713,13 +713,13 @@ $temprow.='</table>';
 					  value="Record Dead Pups" />
 
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -745,13 +745,13 @@ $temprow.='</table>';
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
 					  
 			</div>

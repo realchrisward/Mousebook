@@ -59,11 +59,11 @@
 
 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-//Add mice individually to cage1|2|3|4
+//Add animals individually to cage1|2|3|4
 if (isset($_POST['addcage1_single'])){
-$mice_selection=$_POST['mice_selection'];
-$sqlaction='add mouse:'.$mice_selection;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage1` (`mouseautono`) VALUES (".$mice_selection.");";
+$animals_selection=$_POST['animals_selection'];
+$sqlaction='add animal:'.$animals_selection;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage1` (`animalautono`) VALUES (".$animals_selection.");";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -71,9 +71,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage2
 if (isset($_POST['addcage2_single'])){
-$mice_selection=$_POST['mice_selection'];
-$sqlaction='add mouse:'.$mice_selection;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage2` (`mouseautono`) VALUES (".$mice_selection.");";
+$animals_selection=$_POST['animals_selection'];
+$sqlaction='add animal:'.$animals_selection;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage2` (`animalautono`) VALUES (".$animals_selection.");";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -81,9 +81,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage3
 if (isset($_POST['addcage3_single'])){
-$mice_selection=$_POST['mice_selection'];
-$sqlaction='add mouse:'.$mice_selection;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage3` (`mouseautono`) VALUES (".$mice_selection.");";
+$animals_selection=$_POST['animals_selection'];
+$sqlaction='add animal:'.$animals_selection;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage3` (`animalautono`) VALUES (".$animals_selection.");";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -91,19 +91,19 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage4
 if (isset($_POST['addcage4_single'])){
-$mice_selection=$_POST['mice_selection'];
-$sqlaction='add mouse:'.$mice_selection;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage4` (`mouseautono`) VALUES (".$mice_selection.");";
+$animals_selection=$_POST['animals_selection'];
+$sqlaction='add animal:'.$animals_selection;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage4` (`animalautono`) VALUES (".$animals_selection.");";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 }
-//Remove mice individually to cage1|2|3|4
+//Remove animals individually to cage1|2|3|4
 if (isset($_POST['remcage1_single'])){
-$mice_selection=$_POST['cage1_selection'];
-$sqlaction='rem mouse:'.$mice_selection;
-$sqltext="DELETE FROM `".$dbname."`.`temp_cage1` WHERE `mouseautono`=".$mice_selection.";";
+$animals_selection=$_POST['cage1_selection'];
+$sqlaction='rem animal:'.$animals_selection;
+$sqltext="DELETE FROM `".$dbname."`.`temp_cage1` WHERE `animalautono`=".$animals_selection.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -111,9 +111,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage2
 if (isset($_POST['remcage2_single'])){
-$mice_selection=$_POST['cage2_selection'];
-$sqlaction='rem mouse:'.$mice_selection;
-$sqltext="DELETE FROM `".$dbname."`.`temp_cage2` WHERE `mouseautono`=".$mice_selection.";";
+$animals_selection=$_POST['cage2_selection'];
+$sqlaction='rem animal:'.$animals_selection;
+$sqltext="DELETE FROM `".$dbname."`.`temp_cage2` WHERE `animalautono`=".$animals_selection.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -121,9 +121,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage3
 if (isset($_POST['remcage3_single'])){
-$mice_selection=$_POST['cage3_selection'];
-$sqlaction='rem mouse:'.$mice_selection;
-$sqltext="DELETE FROM `".$dbname."`.`temp_cage3` WHERE `mouseautono`=".$mice_selection.";";
+$animals_selection=$_POST['cage3_selection'];
+$sqlaction='rem animal:'.$animals_selection;
+$sqltext="DELETE FROM `".$dbname."`.`temp_cage3` WHERE `animalautono`=".$animals_selection.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -131,9 +131,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage4
 if (isset($_POST['remcage4_single'])){
-$mice_selection=$_POST['cage4_selection'];
-$sqlaction='rem mouse:'.$mice_selection;
-$sqltext="DELETE FROM `".$dbname."`.`temp_cage4` WHERE `mouseautono`=".$mice_selection.";";
+$animals_selection=$_POST['cage4_selection'];
+$sqlaction='rem animal:'.$animals_selection;
+$sqltext="DELETE FROM `".$dbname."`.`temp_cage4` WHERE `animalautono`=".$animals_selection.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -141,9 +141,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //Bulk add to cage 1|2|3|4
 if (isset($_POST['addcage1_batch'])){
-$mice_batch=$_POST['mice_batchlist'];
-$sqlaction='add mouse:'.$mice_batch;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage1` (`mouseautono`) VALUES ".$mice_batch.";";
+$animals_batch=$_POST['animals_batchlist'];
+$sqlaction='add animal:'.$animals_batch;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage1` (`animalautono`) VALUES ".$animals_batch.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -151,9 +151,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage2
 if (isset($_POST['addcage2_batch'])){
-$mice_batch=$_POST['mice_batchlist'];
-$sqlaction='add mouse:'.$mice_batch;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage2` (`mouseautono`) VALUES ".$mice_batch.";";
+$animals_batch=$_POST['animals_batchlist'];
+$sqlaction='add animal:'.$animals_batch;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage2` (`animalautono`) VALUES ".$animals_batch.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -161,9 +161,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage3
 if (isset($_POST['addcage3_batch'])){
-$mice_batch=$_POST['mice_batchlist'];
-$sqlaction='add mouse:'.$mice_batch;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage3` (`mouseautono`) VALUES ".$mice_batch.";";
+$animals_batch=$_POST['animals_batchlist'];
+$sqlaction='add animal:'.$animals_batch;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage3` (`animalautono`) VALUES ".$animals_batch.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -171,9 +171,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
 //cage4
 if (isset($_POST['addcage4_batch'])){
-$mice_batch=$_POST['mice_batchlist'];
-$sqlaction='add mouse:'.$mice_batch;
-$sqltext="INSERT INTO `".$dbname."`.`temp_cage4` (`mouseautono`) VALUES ".$mice_batch.";";
+$animals_batch=$_POST['animals_batchlist'];
+$sqlaction='add animal:'.$animals_batch;
+$sqltext="INSERT INTO `".$dbname."`.`temp_cage4` (`animalautono`) VALUES ".$animals_batch.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -259,18 +259,18 @@ if ($xcage1size>0){
 $PrintCages.="('".$xcage1name."'),";
 $c1values="('".$xcage1name."','".$xcategory_selection."','".$xsetupdate."',1,'".$xline_assignment."',".$xcage1no.",'".$xcage1contents."'),";
 if ($xmove_selection==="Weaning"){
-$c1updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage1` 
-ON `table_mice`.`mouseautono`=`temp_cage1`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage1name."',
-`table_mice`.`dow`='".$xsetupdate."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage1name."' as general_comment FROM `".$dbname."`.`temp_cage1`;";
+$c1updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage1` 
+ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage1name."',
+`table_animals`.`dow`='".$xsetupdate."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage1name."' as general_comment FROM `".$dbname."`.`temp_cage1`;";
 } else {
-$c1updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage1` 
-ON `table_mice`.`mouseautono`=`temp_cage1`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage1name."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage1name."' as general_comment FROM `".$dbname."`.`temp_cage1`;";
+$c1updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage1` 
+ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage1name."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage1name."' as general_comment FROM `".$dbname."`.`temp_cage1`;";
 }
 }
 
@@ -278,54 +278,54 @@ if ($xcage2size>0){
 $PrintCages.="('".$xcage2name."'),";
 $c2values="('".$xcage2name."','".$xcategory_selection."','".$xsetupdate."',1,'".$xline_assignment."',".$xcage2no.",'".$xcage2contents."'),";
 if ($xmove_selection==="Weaning"){
-$c2updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage2` 
-ON `table_mice`.`mouseautono`=`temp_cage2`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage2name."',
-`table_mice`.`dow`='".$xsetupdate."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage2name."' as general_comment FROM `".$dbname."`.`temp_cage2`;";
+$c2updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage2` 
+ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage2name."',
+`table_animals`.`dow`='".$xsetupdate."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage2name."' as general_comment FROM `".$dbname."`.`temp_cage2`;";
 } else {
-$c2updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage2` 
-ON `table_mice`.`mouseautono`=`temp_cage2`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage2name."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage2name."' as general_comment FROM `".$dbname."`.`temp_cage2`;";
+$c2updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage2` 
+ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage2name."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage2name."' as general_comment FROM `".$dbname."`.`temp_cage2`;";
 }
 }
 if ($xcage3size>0){
 $PrintCages.="('".$xcage3name."'),";
 $c3values="('".$xcage3name."','".$xcategory_selection."','".$xsetupdate."',1,'".$xline_assignment."',".$xcage3no.",'".$xcage3contents."'),";
 if ($xmove_selection==="Weaning"){
-$c3updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage3` 
-ON `table_mice`.`mouseautono`=`temp_cage3`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage3name."',
-`table_mice`.`dow`='".$xsetupdate."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage3name."' as general_comment FROM `".$dbname."`.`temp_cage3`;";
+$c3updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage3` 
+ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage3name."',
+`table_animals`.`dow`='".$xsetupdate."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage3name."' as general_comment FROM `".$dbname."`.`temp_cage3`;";
 } else {
-$c3updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage3` 
-ON `table_mice`.`mouseautono`=`temp_cage3`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage3name."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage3name."' as general_comment FROM `".$dbname."`.`temp_cage3`;";
+$c3updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage3` 
+ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage3name."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage3name."' as general_comment FROM `".$dbname."`.`temp_cage3`;";
 }
 }
 if ($xcage4size>0){
 $PrintCages.="('".$xcage4name."'),";
 $c4values="('".$xcage4name."','".$xcategory_selection."','".$xsetupdate."',1,'".$xline_assignment."',".$xcage4no.",'".$xcage4contents."'),";
 if ($xmove_selection==="Weaning"){
-$c4updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage4` 
-ON `table_mice`.`mouseautono`=`temp_cage4`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage4name."',
-`table_mice`.`dow`='".$xsetupdate."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage4name."' as general_comment FROM `".$dbname."`.`temp_cage4`;";
+$c4updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage4` 
+ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage4name."',
+`table_animals`.`dow`='".$xsetupdate."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage4name."' as general_comment FROM `".$dbname."`.`temp_cage4`;";
 } else {
-$c4updates="UPDATE `".$dbname."`.`table_mice` join `".$dbname."`.`temp_cage4` 
-ON `table_mice`.`mouseautono`=`temp_cage4`.`mouseautono`
-SET `table_mice`.`currentcage`='".$xcage4name."';
-INSERT INTO `".$dbname."`.data_comments (`mouseautono`,`commentdate`,`general_comment`)
-Select `mouseautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage4name."' as general_comment FROM `".$dbname."`.`temp_cage4`;";
+$c4updates="UPDATE `".$dbname."`.`table_animals` join `".$dbname."`.`temp_cage4` 
+ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono`
+SET `table_animals`.`currentcage`='".$xcage4name."';
+INSERT INTO `".$dbname."`.data_comments (`animalautono`,`commentdate`,`general_comment`)
+Select `animalautono`, '".$xsetupdate."' as commentdate, 'moved to cage:".$xcage4name."' as general_comment FROM `".$dbname."`.`temp_cage4`;";
 }
 }
 $xInsertValues=substr($c1values.$c2values.$c3values.$c4values,0,-1);
@@ -371,7 +371,7 @@ $source_category_selection=$_POST['source_category_selection'];
 $category_selection=$_POST['category_selection'];
 $setupdate=$_POST['setupdate'];
 $sourcecage_selection=$_POST['sourcecage_selection'];
-$mice_selection=$_POST['mice_selection'];
+$animals_selection=$_POST['animals_selection'];
 $cage1_selection=$_POST['cage1_selection'];
 $cage2_selection=$_POST['cage2_selection'];
 $cage3_selection=$_POST['cage3_selection'];
@@ -465,17 +465,17 @@ $conn->close();
 
 //temp_cage1 contents
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage1`.`mouseautono` FROM `table_mice` JOIN `temp_cage1` ON `table_mice`.`mouseautono`=`temp_cage1`.`mouseautono` order by `gender` desc, `line`, `idno`;";
+$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage1`.`animalautono` FROM `table_animals` JOIN `temp_cage1` ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono` order by `gender` desc, `line`, `idno`;";
 $results=$conn->query($sqltext);
 $cage1size=mysqli_num_rows($results);
 $cage1_listbox='<select id="cage1_selection" name="cage1_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-if ($row['mouseautono']===$cage1_selection){
-$cage1_listbox.='<option value="'.$row['mouseautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+if ($row['animalautono']===$cage1_selection){
+$cage1_listbox.='<option value="'.$row['animalautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 else{
-$cage1_listbox.='<option value="'.$row['mouseautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+$cage1_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 $animalc1[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
@@ -486,17 +486,17 @@ $conn->close();
 
 //temp_cage2 contents
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage2`.`mouseautono` FROM `table_mice` JOIN `temp_cage2` ON `table_mice`.`mouseautono`=`temp_cage2`.`mouseautono` order by `gender` desc, `line`, `idno`;";
+$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage2`.`animalautono` FROM `table_animals` JOIN `temp_cage2` ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono` order by `gender` desc, `line`, `idno`;";
 $results=$conn->query($sqltext);
 $cage2size=mysqli_num_rows($results);
 $cage2_listbox='<select id="cage2_selection" name="cage2_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-if ($row['mouseautono']===$cage2_selection){
-$cage2_listbox.='<option value="'.$row['mouseautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+if ($row['animalautono']===$cage2_selection){
+$cage2_listbox.='<option value="'.$row['animalautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 else{
-$cage2_listbox.='<option value="'.$row['mouseautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+$cage2_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 $animalc2[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
@@ -507,17 +507,17 @@ $conn->close();
 
 //temp_cage3 contents
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage3`.`mouseautono` FROM `table_mice` JOIN `temp_cage3` ON `table_mice`.`mouseautono`=`temp_cage3`.`mouseautono` order by `gender` desc, `line`, `idno`;";
+$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage3`.`animalautono` FROM `table_animals` JOIN `temp_cage3` ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono` order by `gender` desc, `line`, `idno`;";
 $results=$conn->query($sqltext);
 $cage3size=mysqli_num_rows($results);
 $cage3_listbox='<select id="cage3_selection" name="cage3_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-if ($row['mouseautono']===$cage3_selection){
-$cage3_listbox.='<option value="'.$row['mouseautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+if ($row['animalautono']===$cage3_selection){
+$cage3_listbox.='<option value="'.$row['animalautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 else{
-$cage3_listbox.='<option value="'.$row['mouseautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+$cage3_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 $animalc3[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
@@ -528,17 +528,17 @@ $conn->close();
 
 //temp_cage4 contents
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage4`.`mouseautono` FROM `table_mice` JOIN `temp_cage4` ON `table_mice`.`mouseautono`=`temp_cage4`.`mouseautono` order by `gender` desc, `line`, `idno`;";
+$sqltext="SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage4`.`animalautono` FROM `table_animals` JOIN `temp_cage4` ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono` order by `gender` desc, `line`, `idno`;";
 $results=$conn->query($sqltext);
 $cage4size=mysqli_num_rows($results);
 $cage4_listbox='<select id="cage4_selection" name="cage4_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-if ($row['mouseautono']===$cage4_selection){
-$cage4_listbox.='<option value="'.$row['mouseautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+if ($row['animalautono']===$cage4_selection){
+$cage4_listbox.='<option value="'.$row['animalautono'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 else{
-$cage4_listbox.='<option value="'.$row['mouseautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+$cage4_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 $animalc4[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
@@ -570,10 +570,10 @@ $sf='left(`currentcage`,1)=left("'.$source_category_selection.'",1) and ';}
 $sql_where_text=substr($lf.$gf.$mf.$sf,0,-4);
 if (strlen($sql_where_text)>0){
 $sql_where_text=' and '.$sql_where_text;}
-$sqltext="SELECT `currentcage` FROM `table_mice` left join temp_cage1 on table_mice.mouseautono=temp_cage1.mouseautono 
-left join temp_cage2 on table_mice.mouseautono=temp_cage2.mouseautono left join temp_cage3 on table_mice.mouseautono=temp_cage3.mouseautono 
-left join temp_cage4 on table_mice.mouseautono=temp_cage4.mouseautono where dod is null and
-temp_cage1.mouseautono is null and temp_cage2.mouseautono is null and temp_cage3.mouseautono is null and temp_cage4.mouseautono is null".$sql_where_text." GROUP BY `currentcage`;";
+$sqltext="SELECT `currentcage` FROM `table_animals` left join temp_cage1 on table_animals.animalautono=temp_cage1.animalautono 
+left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left join temp_cage3 on table_animals.animalautono=temp_cage3.animalautono 
+left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and
+temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null".$sql_where_text." GROUP BY `currentcage`;";
 $results=$conn->query($sqltext);
 $sourcecage_listbox='<select id="sourcecage_selection" name="sourcecage_selection" size=14 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
 while($row=mysqli_fetch_array($results)){
@@ -589,7 +589,7 @@ $sourcecage_listbox.='</select>';
 $conn->close();
 //echo $sqltext;
 
-//mice list filtered by line|gender|cage
+//animals list filtered by line|gender|cage
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //set filter text
 if ($line_filter==="all"){
@@ -615,26 +615,26 @@ $cf='`currentcage`="'.$sourcecage_selection.'" and ';}
 $sql_where_text=substr($lf.$gf.$mf.$sf.$cf,0,-4);
 if (strlen($sql_where_text)>0){
 $sql_where_text=' and '.$sql_where_text;}
-$sqltext="SELECT table_mice.mouseautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_mice` left join temp_cage1 on table_mice.mouseautono=temp_cage1.mouseautono 
-left join temp_cage2 on table_mice.mouseautono=temp_cage2.mouseautono left join temp_cage3 on table_mice.mouseautono=temp_cage3.mouseautono 
-left join temp_cage4 on table_mice.mouseautono=temp_cage4.mouseautono where dod is null and 
-temp_cage1.mouseautono is null and temp_cage2.mouseautono is null and temp_cage3.mouseautono is null and temp_cage4.mouseautono is null".$sql_where_text." ;";
+$sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` left join temp_cage1 on table_animals.animalautono=temp_cage1.animalautono 
+left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left join temp_cage3 on table_animals.animalautono=temp_cage3.animalautono 
+left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and 
+temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null".$sql_where_text." ;";
 $results=$conn->query($sqltext);
-$mice_results=$results;
-$mice_listbox='<select id="mice_selection" name="mice_selection" size=15 class="largelistbox onchange="submitForm()">;';
+$animals_results=$results;
+$animals_listbox='<select id="animals_selection" name="animals_selection" size=15 class="largelistbox onchange="submitForm()">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-if ($row['man']===$mice_selection){
-$mice_listbox.='<option value="'.$row['man'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+if ($row['man']===$animals_selection){
+$animals_listbox.='<option value="'.$row['man'].'" selected>'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
 else{
-$mice_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
+$animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].' | '.$row['dob'].' | '.$row['currentcage'].'</option>';
 }
-$mice_batchlist[]=$row['man'];
+$animals_batchlist[]=$row['man'];
 }
 //close the table
-$mice_listbox.='</select>';
-$mice_batchlist='('.implode('),(',$mice_batchlist).')';
+$animals_listbox.='</select>';
+$animals_batchlist='('.implode('),(',$animals_batchlist).')';
 
 $conn->close();
 //echo $sqltext;
@@ -768,13 +768,13 @@ $sqlerror=$conn->error;
 					 </form>
 					
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					  <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -785,13 +785,13 @@ $sqlerror=$conn->error;
 					  value="Record Dead Pups" />
 					 </form>
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
@@ -819,13 +819,13 @@ $sqlerror=$conn->error;
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
 					 <form action="../php/cagecard_printer.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -877,11 +877,11 @@ function submitForm()
 			
 			<table>
 			<tr>
-				<th>Available Mice</th>
+				<th>Available animals</th>
 				<th>Source Cage Selection:</th>
 			</tr>
 			<tr>
-				<td><?php echo $mice_listbox; ?><input type=hidden name="mice_batchlist" id="mice_batchlist" value="<?php echo $mice_batchlist; ?>"></td>
+				<td><?php echo $animals_listbox; ?><input type=hidden name="animals_batchlist" id="animals_batchlist" value="<?php echo $animals_batchlist; ?>"></td>
 				<td><?php echo $sourcecage_selection; ?><br>
 				<?php echo $sourcecage_listbox; ?></td>
 			</tr>

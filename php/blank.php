@@ -3,7 +3,7 @@
 <html>
 <head>
 			<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-			<title>Blank - Mousebook -- a chriswardlab.com production</title>
+			<title>Blank - animalbook -- a chriswardlab.com production</title>
 			<link href="../mousebook.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
@@ -14,7 +14,7 @@
 $host="107.180.12.130";
 $xusername='wardchriss';
 $xpassword='Ncc1701a';
-$dbname="mousebook";
+$dbname="animalbook";
 //create connection
 $conn=new mysqli($host,$xusername,$xpassword,$dbname);
 //check connection

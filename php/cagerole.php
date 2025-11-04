@@ -153,7 +153,7 @@ $conn->close();
 //roleA/B selector
 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="SELECT * FROM mousebook.list_cage_role_assignments";
+$sqltext="SELECT * FROM animalbook.list_cage_role_assignments";
 $results=$conn->query($sqltext);
 //set up static portion of table
 $locA_listbox= '<select id="roleA_selection" name="roleA_selection" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
@@ -232,8 +232,8 @@ $locf='`cagerole_assignment`="'.$roleA_selection.'" and ';}
 $sql_where_text=substr($lf.$gf.$sf.$locf,0,-4);
 if (strlen($sql_where_text)>0){
 $sql_where_text=' and '.$sql_where_text;}
-$sqltext="SELECT `currentcage` FROM `table_mice` join `table_cages` 
-on `table_mice`.`currentcage`=`table_cages`.`cageid` 
+$sqltext="SELECT `currentcage` FROM `table_animals` join `table_cages` 
+on `table_animals`.`currentcage`=`table_cages`.`cageid` 
 where dod is null and dob is not null ".$sql_where_text." 
 GROUP BY `currentcage`
 order by `lineassignment`, field(`cagetype`, 'holding', 'rearrange', 'experimental', 'mating', 'litter', 'sac'), `cageno`
@@ -264,7 +264,7 @@ $cage_selection=$_POST['cage_selection'];
 $cageselection='("'.implode('","',$cage_selection).'")';
 $sqlaction='move cages:'.$cageselection;
 //echo $cageselection;
-$sqltext="UPDATE `mousebook`.`table_cages` SET `cagerole_assignment`='".$roleB_selection."' WHERE `cageid` in ".$cageselection.";";
+$sqltext="UPDATE `animalbook`.`table_cages` SET `cagerole_assignment`='".$roleB_selection."' WHERE `cageid` in ".$cageselection.";";
 //echo $sqltext;
 
 if ($conn->query($sqltext) === TRUE) {
@@ -364,13 +364,13 @@ echo $sqlstatus;
 					 <input type=submit class="button" name=""
 					  value="Manage Lines" />
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					 <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -381,13 +381,13 @@ echo $sqlstatus;
 					  value="Record Dead Pups" />
 
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -413,21 +413,21 @@ echo $sqlstatus;
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
-					 <form action="../php/mouse_info_export.php" method=post target="_blank">
+					 <form action="../php/animal_info_export.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Export Mouse Info" />
+					  value="Export animal Info" />
 					 </form>
 					  
 			</div>
