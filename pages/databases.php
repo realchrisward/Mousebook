@@ -52,7 +52,7 @@
 		while($row=mysqli_fetch_array($results)){
 			
 		
-		$dbaccesstext.="<form id='dbaccessform' action=".$row['db_formurl']."' method='post' target='_blank'>".
+		$dbaccesstext.="<form id='dbaccessform' action=".$row['db_formurl']." method='post' target='_blank'>".
 		"	<input type='hidden' name='xusername' value='".$xusername."'>".
 		"	<input type='hidden' name='xpassword' value='".$xpassword."'>".
 		"	<input type='hidden' name='accessun' value='".$row['db_accessun']."'>".
