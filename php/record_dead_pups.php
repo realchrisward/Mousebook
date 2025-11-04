@@ -24,9 +24,12 @@
 		
 	//test login
 
-	// use userbook to check credentials	
-	$ubname="{server login}";
-	$ubpass="{server pass}";
+	// collect config values
+	$config = require'../config.php';
+	
+	//setup sql variables
+	$ubname=$config['server_user'];
+	$ubpass=$config['server_pass'];	
 
 		//query userbook for accessable databases
 		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl from ".
@@ -59,10 +62,10 @@
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 
-//---generate temp list of mice---
+//---generate temp list of animals---
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
-if (isset($_POST['generate_mice'])){
+if (isset($_POST['generate_animals'])){
 //get deadpup info
 $xdob=$_POST['dob'];
 $xdod=$_POST['dod'];
@@ -97,12 +100,12 @@ $temptable='
 ';
 
 $testtable=$temptable.'<br><br>
-<input type=submit id="confirm_mice" name="confirm_mice" value="confirm mice">';
+<input type=submit id="confirm_animals" name="confirm_animals" value="confirm animals">';
 
 }
-//--------------------confirm mice and add to db------------------------------------
+//--------------------confirm animals and add to db------------------------------------
 
-if (isset($_POST['confirm_mice'])){
+if (isset($_POST['confirm_animals'])){
 
 $sqltext='';
 
@@ -169,7 +172,7 @@ $conn->close();
 //mating list filtered by line
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT `currentcage` 
-FROM (`table_mice` join `table_cages` on `table_mice`.`currentcage`=`table_cages`.`cageid`)
+FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
 where dod is null and left(`currentcage`,1)='M' and (`line`='".$line_selection."' or `lineassignment`='".$line_selection."') 
 GROUP BY `currentcage`;";
 $results=$conn->query($sqltext);
@@ -194,16 +197,16 @@ $conn->close();
 //mating cage contents current
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
-$sqltext="SELECT table_mice.mouseautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_mice` where dod is null and `currentcage`='".$source_selection."' ;";
+$sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
 $results=$conn->query($sqltext);
-$mice_results=$results;
-$mice_listbox='<select id="mice_selection" name="mice_selection" size=6 class="mediumlistbox onchange="submitForm()">;';
+$animals_results=$results;
+$animals_listbox='<select id="animals_selection" name="animals_selection" size=6 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-$mice_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].'</option>';
+$animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].'</option>';
 }
 //close the table
-$mice_listbox.='</select>';
+$animals_listbox.='</select>';
 $conn->close();
 
 
@@ -212,12 +215,12 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 $sqltext="SELECT table_cages.cagecontents FROM `table_cages` where `cageid`='".$source_selection."' ;";
 $results=$conn->query($sqltext);
-$mice_results=$results;
+$animals_results=$results;
 
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-$mice_string=$source_selection.' | '.$row['cagecontents'];
-$mice_string_display=$source_selection.' <br> '.$row['cagecontents'];
+$animals_string=$source_selection.' | '.$row['cagecontents'];
+$animals_string_display=$source_selection.' <br> '.$row['cagecontents'];
 }
 //close the table
 $conn->close();
@@ -314,13 +317,13 @@ $conn->close();
 					 </form>
 					
 					 </form>					 
-					 <form action="../php/add_mice.php" method=post target="_blank">
+					 <form action="../php/add_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Add Mice" />
+					  value="Add animals" />
 					 </form>
 					  <form action="../php/record_dead_pups.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
@@ -331,13 +334,13 @@ $conn->close();
 					  value="Record Dead Pups" />
 					 </form>
 					 </form>					 
-					 <form action="../php/manage_mice.php" method=post target="_blank">
+					 <form action="../php/manage_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="Manage Mice" />
+					  value="Manage animals" />
 					 </form>
 					 </form>					 
 					 <form action="../php/manage_cages.php" method=post target="_blank">
@@ -365,13 +368,13 @@ $conn->close();
 					 <input type=submit class="button" name=""
 					  value="View Database Queries" />
 					 </form>
-					 <form action="../php/query_mice.php" method=post target="_blank">
+					 <form action="../php/query_animals.php" method=post target="_blank">
 					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 					 <input type=submit class="button" name=""
-					  value="View Mice" />
+					  value="View animals" />
 					 </form>
 					  
 			</div>
@@ -379,7 +382,7 @@ $conn->close();
 
 <!--CONTENT SECTION-->
 			<div id="right_content" class="centertext">
-			<form id="add_mice_form" name="add_mice_form" method=post>
+			<form id="add_animals_form" name="add_animals_form" method=post>
 
 
 					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
@@ -391,7 +394,7 @@ $conn->close();
 <script type="text/javascript">
 function submitForm()
 {
-	document.getElementById("add_mice_form").submit();
+	document.getElementById("add_animals_form").submit();
 }
 </script>
 			<table>
@@ -407,9 +410,9 @@ function submitForm()
 					<td rowspan=10>
 						<table>
 						<tr><td>
-						<?php echo $mice_listbox; ?></td></tr>
+						<?php echo $animals_listbox; ?></td></tr>
 						<tr><th>Original Contents:</th></tr>
-						<tr><td><?php echo $mice_string_display; ?></td></tr>
+						<tr><td><?php echo $animals_string_display; ?></td></tr>
 						
 						</table>
 						</td>
@@ -445,7 +448,7 @@ function submitForm()
 					
 				</tr>
 			</table>
-			<input type=submit id="generate_mice" name="generate_mice" value="generate mice">
+			<input type=submit id="generate_animals" name="generate_animals" value="generate animals">
 			
 			<?php echo $testtable; ?>
 			<br>
