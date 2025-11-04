@@ -725,7 +725,7 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			
 			<div id="footer">
 					 <p class="righttext">
-					  NeurobehavioralCore.com &copy; 2016
+					  @realchrisward &copy; 2025
 					 </p>
  					<?php echo $sqlreport; ?>
 			</div>

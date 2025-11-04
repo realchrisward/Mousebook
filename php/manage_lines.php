@@ -593,7 +593,7 @@ function showLine(newValue)
 			</div>
 			<div id="footer">
 					 <p class="righttext">
-					  NeurobehavioralCore.com &copy; 2016
+					  @realchrisward &copy; 2025
 					 </p>
 					 
 			</div>
