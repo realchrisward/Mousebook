@@ -303,9 +303,22 @@ $deaths_6monthprev=$row['deaths_6monthprev'];
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //$results = $conn->query("call get_weanlist();");
 
-$sqltext = "select `currentcage`, max(datediff(curdate(),`dob`)) as age, `dob`, `line` from `".$dbname."`.`table_animals` "
-."where (dod is null and (left(currentcage,1)='L' or left(currentcage,1)='F')) "
-."group by `currentcage` order by age desc, currentcage asc;";
+$sqltext = "
+SELECT a.currentcage,
+       DATEDIFF(CURDATE(), a.dob) AS age,
+       a.dob,
+       a.line
+FROM {$dbname}.table_animals a
+INNER JOIN (
+    SELECT currentcage, MAX(dob) AS dob
+    FROM {$dbname}.table_animals
+    WHERE dod IS NULL
+      AND (LEFT(currentcage,1) IN ('L','F'))
+    GROUP BY currentcage
+) b ON a.currentcage = b.currentcage AND a.dob = b.dob
+ORDER BY age DESC, a.currentcage ASC;
+";
+
 
 //$sqltext = "call get_weanlist();"
 
