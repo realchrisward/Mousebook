@@ -69,7 +69,7 @@
 			
 </head>
 <body>
-	<img class="logo" src="../images/logo.png" alt="Mouse Metabolism and Phenotyping Core" width="50%">
+	<img class="logo" src="../images/logo.jpg" alt="Mouse Metabolism and Phenotyping Core" width="50%">
 	<div class="content-center">
 		 
 		<h1 class="section">
