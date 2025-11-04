@@ -40,7 +40,7 @@ ini_set('display_errors', 1);
 		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
 		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
 	
-		$conn=new mysqli($host,$ubname,$ubpass,"userbook");
+		$conn=new mysqli("localhost",$ubname,$ubpass,"userbook");
 		$results=$conn->query($sql);
 		$conn->close();
 		while($row=mysqli_fetch_array($results)){
