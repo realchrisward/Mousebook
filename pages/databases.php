@@ -78,7 +78,7 @@
 		
 		{}
 	}
-	
+	$dbaccesstext="<table><tr>".$dbaccesstext."</tr></table>"
 	?>	
 			
 </head>
@@ -91,7 +91,7 @@
 		</h1>
 					 	 
 		<form id="loginbox" action="" method="post">
-			<table class="server_sign_in">
+			<table>
 				<tr>
 					<th>Server Connection Status</th>
 					<td>
@@ -100,7 +100,7 @@
 					</td>
 				</tr>
 			</table>
-			<table class="server_sign_in">
+			<table>
 				<tr>
 					<th>USERNAME</th>
 					<td>
