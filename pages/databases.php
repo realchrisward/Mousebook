@@ -78,7 +78,7 @@
 		
 		{}
 	}
-	$dbaccesstext="<table><tr>".$dbaccesstext."</tr></table>"
+	
 	?>	
 			
 </head>
@@ -134,7 +134,14 @@
 			</table>
 
 		</form>
-		<?php echo $dbaccesstext; ?>
+		<table>
+			<tr>
+				<td>
+					<?php echo $dbaccesstext; ?>
+				</td>
+			</tr>
+		</table>
+		
 	</div>
 
 	<div >
