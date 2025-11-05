@@ -676,11 +676,12 @@ $results=$conn->query($sqltext);
 $row=mysqli_fetch_array($results);
 $cage4no=$row[0]+4;
 $cage4name=$category_selection.' : '.$line_assignment.' : '.strval($row[0]+4);
+$sqlerror=$conn->error;
 $conn->close();
 
 //form inputs for movement type, new cage category, new cage set-up date, new cage line assignment
 //form displays (and temp tables in mysql) for 4 potential new cages
-$sqlerror=$conn->error;
+
 
 ?>
 <head>
