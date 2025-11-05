@@ -463,7 +463,7 @@ $danimals_batchlist[]=$row['man'];
 }
 //close the table
 $danimals_listbox.='</select>';
-$danimals_batchlist='('.implode('),(',$animals_batchlist).')';
+$danimals_batchlist='('.implode('),(',$animals_batchlist ?? []).')';
 
 $conn->close();
 //echo $sqltext;

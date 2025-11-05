@@ -63,7 +63,6 @@
 		"	<input type='hidden' name='accessun' value='".$row['db_accessun']."'>".
 		"	<input type='hidden' name='accesspw' value='".$row['db_accesspw']."'>".
 		"	<input type='hidden' name='dbname' value='".$row['db_name']."'>".
-		"	<input type='hidden' name='dbhost' value='".$row['db_host']."'>".
 		"	<input type='submit' class='dbbutton' name='".$row['db_name']."' value='".$row['db_name']."'>".
 		"</form>";
 		
