@@ -35,8 +35,18 @@
 		}
 	
 	//get info provided by user
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	if (isset($_POST['xusername'])){
+		$xusername=$_POST['xusername'];
+	} else {
+		$xusername='';
+	}
+	if (isset($_POST['xpassword'])){
+		$xpassword=$_POST['xpassword'];
+	} else {
+		$xpassword='';
+	}
+
+	
 	
 	if (isset($_POST['button_disco'])){
 		$xusername="";
