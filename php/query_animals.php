@@ -178,7 +178,7 @@ $aglist[$row["allelegroup"]][$row["genderspecific"]].='<option value="'.$row['al
 }
 $conn->close();
 //echo $sqltext;
-$genecount=count($genelist);
+$genecount=count($genelist ?? []);
 $genepost='';
 foreach (range(0,$genecount-1,1) as $i){
 $genepost.='<input type=hidden id="geno'.$i.'" name="geno'.$i.'" value="'.$genelist[$i].'">';
