@@ -91,7 +91,7 @@
 		</h1>
 					 	 
 		<form id="loginbox" action="" method="post">
-			<table class="table-center">
+			<table class="table-center", id="server_sign_in">
 				<tr>
 					<th>Server Connection Status</th>
 					<td>
@@ -100,7 +100,7 @@
 					</td>
 				</tr>
 			</table>
-			<table class="table-center">
+			<table class="table-center", id="server_sign_in">
 				<tr>
 					<th>USERNAME</th>
 					<td>
