@@ -73,7 +73,7 @@ $querylist=array(
 
 $curquery=$querylist[$xquerytorun];
 
-$sqltext="SELECT * From ".$xquerytorun.";";
+$sqltext="SELECT * From ".$xquerytorun ?? 'view_activeanimals'.";";
 //run query 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqltext);

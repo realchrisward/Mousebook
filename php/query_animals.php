@@ -78,8 +78,8 @@ foreach (range(0,$gfcount-1,1) as $i){
   $gfor[]='(allelegroup="'.$agarray[$i].'" and allele="'.$gt.'")';
   }
  }
-$genofiltertext=implode('<br>',$gfor);
-$genowhere=implode(' or ',$gfor);
+$genofiltertext=implode('<br>',$gfor ?? []);
+$genowhere=implode(' or ',$gfor ?? []);
 $gfsql='select animalautono from '.
 '(select animalautono, count(animalautono) as gtct from table_genotypes '.
 'where '.$genowhere.' group by animalautono) as tmp_tab_gt '.
@@ -161,7 +161,7 @@ $genelist[]=$ag;
 $aglist[$ag]=array('M'=>'','F'=>'','all'=>'');
 $agfilt[]="`allelegroup`='".$ag."'";
 }
-$agfilt=implode(' or ',$agfilt);
+$agfilt=implode(' or ',$agfilt ?? []);
 
 
 //get allelegroups
@@ -301,7 +301,7 @@ $arraygensel[$ck].'
 $testtable='<input type=submit id="get_genofilt" name="get_genofilt" value="Geno Filter" >'.'<br>'.$genofiltertext.'<br>'.
 $temptable.$temprow.'</table>
 <br><br>
-<input type=hidden id="mankey" name="mankey" value="'.implode(',',$arrayman).'">';
+<input type=hidden id="mankey" name="mankey" value="'.implode(',',$arrayman ?? []).'">';
 $conn->close();
 }
 
@@ -564,7 +564,7 @@ $animals_batchlist[]=$row['man'];
 }
 //close the table
 $animals_listbox.='</select>';
-$animals_batchlist='('.implode('),(',$animals_batchlist).')';
+$animals_batchlist='('.implode('),(',$animals_batchlist ?? []).')';
 
 $conn->close();
 
