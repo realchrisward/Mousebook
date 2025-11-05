@@ -74,7 +74,7 @@ if (isset($_POST['querytorun'])){
 	$xquerytorun=$_POST['querytorun'];
 
 } else {
-	$xquerytorun=array_values($querylist)[0];
+	$xquerytorun=array_keys($querylist)[0];
 }
 
 $curquery=$querylist[$xquerytorun];
