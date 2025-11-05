@@ -485,7 +485,7 @@ $cage1_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$ro
 }
 $animalc1[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
-$cage1contents=implode(', ',$animalc1);
+$cage1contents=implode(', ',$animalc1 ?? []);
 //close the table
 $cage1_listbox.='</select>';
 $conn->close();
@@ -506,7 +506,7 @@ $cage2_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$ro
 }
 $animalc2[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
-$cage2contents=implode(', ',$animalc2);
+$cage2contents=implode(', ',$animalc2 ?? []);
 //close the table
 $cage2_listbox.='</select>';
 $conn->close();
@@ -527,7 +527,7 @@ $cage3_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$ro
 }
 $animalc3[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
-$cage3contents=implode(', ',$animalc3);
+$cage3contents=implode(', ',$animalc3 ?? []);
 //close the table
 $cage3_listbox.='</select>';
 $conn->close();
@@ -548,7 +548,7 @@ $cage4_listbox.='<option value="'.$row['animalautono'].'">'.$row['line'].'-'.$ro
 }
 $animalc4[]=$row['line'].'-'.$row['idno'].'('.$row['gender'].')';
 }
-$cage4contents=implode(', ',$animalc4);
+$cage4contents=implode(', ',$animalc4 ?? []);
 //close the table
 $cage4_listbox.='</select>';
 $conn->close();
@@ -640,7 +640,7 @@ $animals_batchlist[]=$row['man'];
 }
 //close the table
 $animals_listbox.='</select>';
-$animals_batchlist='('.implode('),(',$animals_batchlist).')';
+$animals_batchlist='('.implode('),(',$animals_batchlist ?? []).')';
 
 $conn->close();
 //echo $sqltext;
