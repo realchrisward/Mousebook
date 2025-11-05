@@ -35,7 +35,7 @@
 		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
 		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
 	
-		$conn=new mysqli($host,$ubname,$ubpass,"userbook");
+		$conn=new mysqli("localhost",$ubname,$ubpass,"userbook");
 		$results=$conn->query($sql);
 		$conn->close();
 		while($row=mysqli_fetch_array($results)){
@@ -62,7 +62,7 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //retreive animals data from db of animals
 //*****generate temp list of animals*****
 
-$xquerytorun=$_POST['querytorun'];
+
 
 $querylist=array(
 	'view_linestatus' =>'Line Status',
@@ -70,6 +70,12 @@ $querylist=array(
         'view_cagestatus' =>'Cage Status',
         'view_activeanimals' =>'Active animals'
 	);
+if (isset($_POST['querytorun'])){
+	$xquerytorun=$_POST['querytorun'];
+
+} else {
+	$xquerytorun=array_values($querylist)[0];
+}
 
 $curquery=$querylist[$xquerytorun];
 
