@@ -546,7 +546,7 @@ $animals_batchlist[]=$row['man'];
 }
 //close the table
 $animals_listbox.='</select>';
-$animals_batchlist='('.implode('),(',$animals_batchlist).')';
+$animals_batchlist='('.implode('),(',$animals_batchlist ?? []).')';
 
 $conn->close();
 
