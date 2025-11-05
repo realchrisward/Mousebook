@@ -138,10 +138,11 @@ $arraypar[$arrayman[$i]]=$row['parents'];
 $arraycom[$arrayman[$i]]='';
 $arraybkc[$arrayman[$i]]='';
 }
+$sqlerror=$conn->error;
 $conn->close();
 //query table_genotypes
 
-$sqlerror=$conn->error;
+
 
 
 //query table_genotypes
