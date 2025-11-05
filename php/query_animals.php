@@ -111,7 +111,7 @@ $sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob
 else {
 $sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '".$commenttextfilter."') as dc on table_animals.animalautono=dc.animalautono where ".$sql_where_text." GROUP By table_animals.animalautono ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
 
-$sqlgenotypes="SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '".$commenttextfilter."') as dc on table_animals.animalautono=dc.animalautono WHERE ".$sql_where_text." GROUP BY table_animals.animalautono,allelegroup ;";
+$sqlgenotypes="SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '".$commenttextfilter."') as dc on table_animals.animalautono=dc.animalautono WHERE ".$sql_where_text." GROUP BY table_animals.animalautono,allelegroup,allele;";
 }
 //echo $sqlgenotypes;
 $sqldatacomments="SELECT `data_comments`.`animalautono` as 'man',`commentdate`,`general_comment` FROM `data_comments` JOIN `table_animals` ON `data_comments`.`animalautono` = `table_animals`.`animalautono`  where ".$sql_where_text." ;";
@@ -147,7 +147,7 @@ $conn->close();
 
 //query table_genotypes
 $aglist=[];
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=new mysqli("localhost",$accessun,$accesspw,$dbname);
 $results=$conn->query($sqlgenotypes);
 $geno_results=$results;
 
