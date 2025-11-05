@@ -86,9 +86,10 @@ $table[$row['line'].'-'.$row['idno']][$row['generxn']]=$row['allele'];
 $lineidtab[$row['line'].'-'.$row['idno']]=array('line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob']);
 $genelist[]=$row['generxn'];
 }
+$sqlerror=$conn->error;
 $conn->close();
 
-$sqlerror=$conn->error;
+
 
 
 
