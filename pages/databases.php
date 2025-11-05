@@ -9,6 +9,11 @@
 	<?php
 	//collect config values
 	$config = require '../config.php';
+
+	if ($config['debug_mode']=='True'){
+		error_reporting(E_ALL);
+		ini_set('display_errors', 1);
+	}
 	
 
 	//setup sql variables

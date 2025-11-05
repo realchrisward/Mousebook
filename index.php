@@ -4,8 +4,7 @@
 test
 <!--php code: login-->
 	<?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+
 	//setup sql variables
 	$xusername=$_POST['xusername'];
 	$xpassword=$_POST['xpassword'];
@@ -29,6 +28,11 @@ ini_set('display_errors', 1);
 	// use userbook to check credentials
 	// collect config values
 	$config = require './config.php';
+
+	if ($config['debug_mode']=='True'){
+		error_reporting(E_ALL);
+		ini_set('display_errors', 1);
+	}
 	
 	//setup sql variables
 	$ubname=$config['server_user'];
