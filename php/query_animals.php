@@ -565,11 +565,11 @@ $animals_batchlist[]=$row['man'];
 //close the table
 $animals_listbox.='</select>';
 $animals_batchlist='('.implode('),(',$animals_batchlist ?? []).')';
-
+$sqlerror=$conn->error;
 $conn->close();
 
 
-$sqlerror=$conn->error;
+
 ?>
 
 <head>
