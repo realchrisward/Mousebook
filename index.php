@@ -30,6 +30,7 @@ test
 	$config = require './config.php';
 
 	if ($config['debug_mode']=='True'){
+		echo "DEBUGGING ENABLED";
 		error_reporting(E_ALL);
 		ini_set('display_errors', 1);
 	}
