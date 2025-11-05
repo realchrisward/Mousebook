@@ -162,12 +162,15 @@ $genelist[]=$ag;
 $aglist[$ag]=array('M'=>'','F'=>'','all'=>'');
 $agfilt[]="`allelegroup`='".$ag."'";
 }
-$agfilt=implode(' or ',$agfilt ?? []);
-
+if (isset($agfilt)){
+	$agfilt=" WHERE ".implode(' or ',$agfilt ?? []);
+} else {
+	$agfilt="";
+}
 
 //get allelegroups
-$sqltext="SELECT `allelegroup`,`allele`,`genderspecific` FROM `list_allele` WHERE ".$agfilt.";";
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT `allelegroup`,`allele`,`genderspecific` FROM `list_allele` ".$agfilt.";";
+$conn=new mysqli("localhost",$accessun,$accesspw,$dbname);
 $results=$conn->query($sqltext);
 $aglist=[];
 while($row=mysqli_fetch_array($results)){
