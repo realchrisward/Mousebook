@@ -157,7 +157,7 @@ $arraygeno[$row['allelegroup']][$row['man']]="<option value='".$row['allele']."'
 }
 $conn->close();
 $aglist=[];
-foreach (array_keys($arraygeno) as $ag){
+foreach (array_keys($arraygeno ?? []) as $ag){
 $genelist[]=$ag;
 $aglist[$ag]=array('M'=>'','F'=>'','all'=>'');
 $agfilt[]="`allelegroup`='".$ag."'";
