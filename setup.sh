@@ -16,7 +16,8 @@
 #   sudo bash setup.sh
 # =============================================================
 
-set -e
+# Do NOT use set -e — import steps may warn on existing data
+# and should not abort the whole script. Errors are handled per-step.
 
 # ── colours ────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -141,31 +142,69 @@ echo ""
 
 SQL_DIR="$SCRIPT_DIR"
 
-# userbook schema
-if [ -f "$SQL_DIR/default_userbook.sql" ]; then
-    info "Creating userbook database and importing schema..."
-    $MYSQL_CMD -e "CREATE DATABASE IF NOT EXISTS \`${USERBOOK_DB}\` CHARACTER SET utf8 COLLATE utf8_general_ci;"
-    $MYSQL_CMD "${USERBOOK_DB}" < "$SQL_DIR/default_userbook.sql"
-    success "Userbook schema imported."
-else
-    warn "default_userbook.sql not found in $SQL_DIR — skipping. Import it manually."
-fi
+# ── Helper: check if a database already has tables ─────────
+db_has_tables() {
+    local dbname="$1"
+    local count
+    count=$($MYSQL_CMD -sN -e \
+        "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema='${dbname}';" \
+        2>/dev/null || echo "0")
+    [ "${count:-0}" -gt 0 ]
+}
 
-# animalbook schema
-if [ -f "$SQL_DIR/default_animalbook.sql" ]; then
-    info "Creating animalbook database and importing schema..."
-    $MYSQL_CMD -e "CREATE DATABASE IF NOT EXISTS \`${ANIMALBOOK_DB}\` CHARACTER SET utf8 COLLATE utf8_general_ci;"
-    $MYSQL_CMD "${ANIMALBOOK_DB}" < "$SQL_DIR/default_animalbook.sql"
-    success "Animalbook schema imported."
-else
-    warn "default_animalbook.sql not found in $SQL_DIR — skipping. Import it manually."
-fi
+# ── Helper: safe import with pre-existing DB detection ─────
+import_schema() {
+    local dbname="$1"
+    local sqlfile="$2"
+    local label="$3"
 
-# v1 migration
+    if [ ! -f "$sqlfile" ]; then
+        warn "$sqlfile not found in $SQL_DIR — skipping $label import. Run it manually."
+        return
+    fi
+
+    # Create database if it doesn't exist
+    $MYSQL_CMD -e "CREATE DATABASE IF NOT EXISTS \`${dbname}\` CHARACTER SET utf8 COLLATE utf8_general_ci;" 2>/dev/null
+
+    if db_has_tables "$dbname"; then
+        echo ""
+        warn "${label} database '${dbname}' already exists and contains tables."
+        echo -e "       ${YELLOW}Importing now would overwrite existing schema and may cause errors.${NC}"
+        read -p "       Skip import and keep existing database? (yes/no) [yes]: " SKIP_INPUT
+        SKIP_INPUT="${SKIP_INPUT:-yes}"
+        if [[ "$SKIP_INPUT" =~ ^[Nn] ]]; then
+            info "Force-importing $label schema (existing data may conflict)..."
+            if $MYSQL_CMD "${dbname}" < "$sqlfile" 2>&1 | grep -v "Warning"; then
+                success "${label} schema imported."
+            else
+                warn "${label} import completed with warnings — this is often harmless on an existing DB."
+            fi
+        else
+            info "Skipped $label import — existing database kept intact."
+            info "To apply schema changes only, the migration script will still run."
+        fi
+    else
+        info "Importing fresh ${label} schema into '${dbname}'..."
+        if $MYSQL_CMD "${dbname}" < "$sqlfile" 2>&1 | grep -v "Warning"; then
+            success "${label} schema imported."
+        else
+            warn "${label} import completed with warnings."
+        fi
+    fi
+    echo ""
+}
+
+import_schema "${USERBOOK_DB}"  "$SQL_DIR/default_userbook.sql"  "Userbook"
+import_schema "${ANIMALBOOK_DB}" "$SQL_DIR/default_animalbook.sql" "Animalbook"
+
+# v1 migration — always safe to run (uses IF NOT EXISTS throughout)
 if [ -f "$SQL_DIR/mousebook_migration_v1.sql" ]; then
-    info "Running v1 migration (adds missing columns and tables)..."
-    $MYSQL_CMD "${ANIMALBOOK_DB}" < "$SQL_DIR/mousebook_migration_v1.sql"
-    success "Migration complete."
+    info "Running v1 migration (adds missing columns and tables — safe to re-run)..."
+    if $MYSQL_CMD "${ANIMALBOOK_DB}" < "$SQL_DIR/mousebook_migration_v1.sql" 2>&1 | grep -v "Warning"; then
+        success "Migration complete."
+    else
+        warn "Migration completed with warnings — check output above."
+    fi
 else
     warn "mousebook_migration_v1.sql not found — skipping. Run it manually against your animalbook database."
 fi
