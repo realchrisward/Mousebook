@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 4.0.10.18
+-- Sanitized for public distribution
 -- https://www.phpmyadmin.net
 --
--- Host: localhost:3306
--- Generation Time: Sep 07, 2017 at 09:27 AM
--- Server version: 5.6.36-cll-lve
--- PHP Version: 5.6.30
+-- Host: localhost
+-- Generation Time: (sanitized)
+-- Server version: 5.6+
+-- PHP Version: 7.4+
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
@@ -24,7 +24,7 @@ DELIMITER $$
 --
 -- Procedures
 --
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `clear_cages1234`()
+CREATE PROCEDURE `clear_cages1234`()
 BEGIN
 truncate table temp_cage1;
 truncate table temp_cage2;
@@ -32,21 +32,21 @@ truncate table temp_cage3;
 truncate table temp_cage4;
 END$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_activecages`()
+CREATE PROCEDURE `get_activecages`()
     NO SQL
     DETERMINISTIC
 select `currentcage` from `table_animals` where (dod is null) group by `currentcage`
 
 order by `currentcage`$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_activelines`()
+CREATE PROCEDURE `get_activelines`()
     NO SQL
     DETERMINISTIC
 select `line` from `table_lines` where deactivated_line <> "1" or deactivated_line is null
 
 order by `line` asc$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_allelegroups`()
+CREATE PROCEDURE `get_allelegroups`()
     NO SQL
     DETERMINISTIC
 Begin
@@ -55,35 +55,35 @@ SELECT * FROM list_allelegroup
 order by allelegroup;
 End$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_cage1`()
+CREATE PROCEDURE `get_cage1`()
     NO SQL
     DETERMINISTIC
 SELECT * FROM temp_cage4
 
 order by animalautono$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_cage2`()
+CREATE PROCEDURE `get_cage2`()
     NO SQL
     DETERMINISTIC
 SELECT * FROM temp_cage2
 
 order by animalautono$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_cage3`()
+CREATE PROCEDURE `get_cage3`()
     NO SQL
     DETERMINISTIC
 SELECT * FROM temp_cage3
 
 order by animalautono$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_cage4`()
+CREATE PROCEDURE `get_cage4`()
     NO SQL
     DETERMINISTIC
 SELECT * FROM temp_cage4
 
 order by animalautono$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_cagecounts`()
+CREATE PROCEDURE `get_cagecounts`()
     NO SQL
     DETERMINISTIC
 select count(distinct(currentcage)), lineassignment 
@@ -94,7 +94,7 @@ where dod is null group by lineassignment
 
 order by lineassignment$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_colonystats`()
+CREATE PROCEDURE `get_colonystats`()
     NO SQL
     DETERMINISTIC
 select sum(if(dob is not null,1,0)) as totalanimalsindb, 
@@ -219,7 +219,7 @@ sum(if(concat(month(dod),"-",year(dod))=
 
 from table_animals$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_genes`()
+CREATE PROCEDURE `get_genes`()
     NO SQL
     DETERMINISTIC
 BEGIN
@@ -228,26 +228,26 @@ SELECT * FROM `list_gene`
 order by gene;
 END$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_genorxns`()
+CREATE PROCEDURE `get_genorxns`()
     NO SQL
     DETERMINISTIC
 SELECT * FROM list_genotypingrxns order by genotypingrxn asc$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_lines`()
+CREATE PROCEDURE `get_lines`()
     NO SQL
     DETERMINISTIC
 select * from `table_lines` 
 
 order by `line` asc$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_strains`()
+CREATE PROCEDURE `get_strains`()
     NO SQL
     DETERMINISTIC
 SELECT * FROM `list_strains` 
 
 order by strains$$
 
-CREATE DEFINER=`realchrisward`@`localhost` PROCEDURE `get_weanlist`()
+CREATE PROCEDURE `get_weanlist`()
     NO SQL
     DETERMINISTIC
 select `currentcage`,max(datediff(curdate(),`dob`)) as age from `table_animals` 
@@ -434,7 +434,7 @@ CREATE TABLE IF NOT EXISTS `data_comments` (
   PRIMARY KEY (`commentid`),
   UNIQUE KEY `commentid_UNIQUE` (`commentid`),
   KEY `fk_data_comments_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=9598 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 
@@ -498,7 +498,7 @@ CREATE TABLE IF NOT EXISTS `key_allelebyline` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_key_allelebyline_list_allelegroup1_idx` (`allelegroup`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=88 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 -- --------------------------------------------------------
@@ -519,7 +519,7 @@ CREATE TABLE IF NOT EXISTS `key_allelegroupbygenotypingrxn` (
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_key_allelegroupbygenotypingrxn_list_allelegroup1_idx` (`allelegroup`),
   KEY `fk_key_allelegroupbygenotypingrxn_list_genotypingrxns1_idx` (`genotypingrxn`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=69 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 --
 -- Dumping data for table `key_allelegroupbygenotypingrxn`
@@ -544,7 +544,7 @@ CREATE TABLE IF NOT EXISTS `list_allele` (
   PRIMARY KEY (`indexkey`),
   UNIQUE KEY `indexkey_UNIQUE` (`indexkey`),
   KEY `fk_list_allele_list_allelegroup1_idx` (`allelegroup`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=326 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 -- --------------------------------------------------------
@@ -602,7 +602,7 @@ CREATE TABLE IF NOT EXISTS `list_genotypingprimers` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_list_genotypingprimers_list_genotypingrxns1_idx` (`genotypingrxn`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=75 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 -- --------------------------------------------------------
@@ -711,7 +711,7 @@ CREATE TABLE IF NOT EXISTS `table_deadpups` (
   `death_type` char(45) DEFAULT NULL,
   PRIMARY KEY (`death_autono`),
   UNIQUE KEY `death_autono_UNIQUE` (`death_autono`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 --
 -- Dumping data for table `table_deadpups`
@@ -735,7 +735,7 @@ CREATE TABLE IF NOT EXISTS `table_genotypes` (
   PRIMARY KEY (`genoid`),
   UNIQUE KEY `genoid_UNIQUE` (`genoid`),
   KEY `fk_table_genotypes_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=4724 ;
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 
 
@@ -900,8 +900,6 @@ CREATE TABLE IF NOT EXISTS `temp_shufcg1` (
 -- Dumping data for table `temp_shufcg1`
 --
 
-INSERT INTO `temp_shufcg1` (`animalautono`) VALUES
-(1986);
 
 -- --------------------------------------------------------
 
@@ -1033,7 +1031,7 @@ CREATE TABLE IF NOT EXISTS `view_unkgenos` (
 --
 DROP TABLE IF EXISTS `view_goodanimals`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_goodanimals` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) where isnull(`table_animals`.`dod`) having ((`goodgeno` = `table_genotypes`.`allele`) and ((`cagetype` = 'H') or (`cagetype` = 'L')));
+CREATE OR REPLACE VIEW `view_goodanimals` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) where isnull(`table_animals`.`dod`) having ((`goodgeno` = `table_genotypes`.`allele`) and ((`cagetype` = 'H') or (`cagetype` = 'L')));
 
 -- --------------------------------------------------------
 
@@ -1042,7 +1040,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_goodanimals_all`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_goodanimals_all` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) having (`goodgeno` = `table_genotypes`.`allele`);
+CREATE OR REPLACE VIEW `view_goodanimals_all` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) having (`goodgeno` = `table_genotypes`.`allele`);
 
 -- --------------------------------------------------------
 
@@ -1051,7 +1049,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_goodanimals_filtered`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_goodanimals_filtered` AS select `view_goodanimals`.`line` AS `line`,`view_goodanimals`.`idno` AS `idno`,`view_goodanimals`.`animalautono` AS `animalautono`,`view_goodanimals`.`numalleles` AS `numalleles`,`view_goodanimals`.`curagegrp` AS `curagegrp`,`view_goodanimals`.`curagedays` AS `curagedays`,`view_goodanimals`.`curagemo` AS `curagemo` from `view_goodanimals` group by `view_goodanimals`.`line`,`view_goodanimals`.`idno` having (count(0) = `view_goodanimals`.`numalleles`);
+CREATE OR REPLACE VIEW `view_goodanimals_filtered` AS select `view_goodanimals`.`line` AS `line`,`view_goodanimals`.`idno` AS `idno`,`view_goodanimals`.`animalautono` AS `animalautono`,`view_goodanimals`.`numalleles` AS `numalleles`,`view_goodanimals`.`curagegrp` AS `curagegrp`,`view_goodanimals`.`curagedays` AS `curagedays`,`view_goodanimals`.`curagemo` AS `curagemo` from `view_goodanimals` group by `view_goodanimals`.`line`,`view_goodanimals`.`idno` having (count(0) = `view_goodanimals`.`numalleles`);
 
 -- --------------------------------------------------------
 
@@ -1060,7 +1058,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_goodanimals_filtered_all`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_goodanimals_filtered_all` AS select `view_goodanimals_all`.`line` AS `line`,`view_goodanimals_all`.`idno` AS `idno`,`view_goodanimals_all`.`animalautono` AS `animalautono`,`view_goodanimals_all`.`numalleles` AS `numalleles`,`view_goodanimals_all`.`curagegrp` AS `curagegrp`,`view_goodanimals_all`.`curagedays` AS `curagedays`,`view_goodanimals_all`.`curagemo` AS `curagemo` from `view_goodanimals_all` group by `view_goodanimals_all`.`line`,`view_goodanimals_all`.`idno` having (count(0) = `view_goodanimals_all`.`numalleles`);
+CREATE OR REPLACE VIEW `view_goodanimals_filtered_all` AS select `view_goodanimals_all`.`line` AS `line`,`view_goodanimals_all`.`idno` AS `idno`,`view_goodanimals_all`.`animalautono` AS `animalautono`,`view_goodanimals_all`.`numalleles` AS `numalleles`,`view_goodanimals_all`.`curagegrp` AS `curagegrp`,`view_goodanimals_all`.`curagedays` AS `curagedays`,`view_goodanimals_all`.`curagemo` AS `curagemo` from `view_goodanimals_all` group by `view_goodanimals_all`.`line`,`view_goodanimals_all`.`idno` having (count(0) = `view_goodanimals_all`.`numalleles`);
 
 -- --------------------------------------------------------
 
@@ -1069,7 +1067,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_linestatus`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_linestatus` AS select `table_lines`.`line` AS `line`,sum(if((`view_goodanimals_filtered`.`curagemo` <= 3),1,0)) AS `animals_0-3mo`,sum(if(((`view_goodanimals_filtered`.`curagemo` > 3) and (`view_goodanimals_filtered`.`curagemo` <= 6)),1,0)) AS `animals_4-6mo`,sum(if((`view_goodanimals_filtered`.`curagemo` > 6),1,0)) AS `animals_7+`,`view_matingcount`.`matings_0-3mo` AS `matings_0-3mo`,`view_matingcount`.`matings_4+mo` AS `matings_4+mo` from ((`table_lines` left join `view_goodanimals_filtered` on((`table_lines`.`line` = `view_goodanimals_filtered`.`line`))) left join `view_matingcount` on((`table_lines`.`line` = convert(`view_matingcount`.`lineassignment` using utf8)))) group by `table_lines`.`line`;
+CREATE OR REPLACE VIEW `view_linestatus` AS select `table_lines`.`line` AS `line`,sum(if((`view_goodanimals_filtered`.`curagemo` <= 3),1,0)) AS `animals_0-3mo`,sum(if(((`view_goodanimals_filtered`.`curagemo` > 3) and (`view_goodanimals_filtered`.`curagemo` <= 6)),1,0)) AS `animals_4-6mo`,sum(if((`view_goodanimals_filtered`.`curagemo` > 6),1,0)) AS `animals_7+`,`view_matingcount`.`matings_0-3mo` AS `matings_0-3mo`,`view_matingcount`.`matings_4+mo` AS `matings_4+mo` from ((`table_lines` left join `view_goodanimals_filtered` on((`table_lines`.`line` = `view_goodanimals_filtered`.`line`))) left join `view_matingcount` on((`table_lines`.`line` = convert(`view_matingcount`.`lineassignment` using utf8)))) group by `table_lines`.`line`;
 
 -- --------------------------------------------------------
 
@@ -1078,7 +1076,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_matingcount`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_matingcount` AS select `view_matingstatus`.`lineassignment` AS `lineassignment`,sum(if((`view_matingstatus`.`MatingAgeMos` <= 3),1,0)) AS `matings_0-3mo`,sum(if((`view_matingstatus`.`MatingAgeMos` > 3),1,0)) AS `matings_4+mo` from `view_matingstatus` group by `view_matingstatus`.`lineassignment`;
+CREATE OR REPLACE VIEW `view_matingcount` AS select `view_matingstatus`.`lineassignment` AS `lineassignment`,sum(if((`view_matingstatus`.`MatingAgeMos` <= 3),1,0)) AS `matings_0-3mo`,sum(if((`view_matingstatus`.`MatingAgeMos` > 3),1,0)) AS `matings_4+mo` from `view_matingstatus` group by `view_matingstatus`.`lineassignment`;
 
 -- --------------------------------------------------------
 
@@ -1087,7 +1085,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_matingstatus`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_matingstatus` AS select `table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,(to_days(curdate()) - to_days(`table_cages`.`setupdate`)) AS `MatingAgeDays`,floor(((to_days(curdate()) - to_days(`table_cages`.`setupdate`)) / 30)) AS `MatingAgeMos`,count(distinct `table_pups`.`idno`) AS `pupsmade`,count(distinct `view_goodanimals_filtered_all`.`idno`) AS `goodpupsmade`,count(distinct `table_pups`.`dob`) AS `Litters`,count(distinct `table_deadpups`.`dob`) AS `Dead Litters`,max(`table_pups`.`dob`) AS `LastLitterDOB`,max(`table_deadpups`.`dob`) AS `LastDeadLitterDOB` from (((`table_cages` left join `table_animals` on((`table_cages`.`cageid` = `table_animals`.`currentcage`))) left join (`table_animals` `table_pups` left join `view_goodanimals_filtered_all` on((`table_pups`.`animalautono` = `view_goodanimals_filtered_all`.`animalautono`))) on((`table_cages`.`cageid` = `table_pups`.`matingcage`))) left join `table_deadpups` on((`table_cages`.`cageid` = `table_deadpups`.`cageid`))) where ((`table_cages`.`cagetype` = 'Mating') and (`table_animals`.`gender` = 'F') and isnull(`table_animals`.`dod`)) group by `table_cages`.`cageid` order by `table_cages`.`lineassignment`,`table_cages`.`cageno`;
+CREATE OR REPLACE VIEW `view_matingstatus` AS select `table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,(to_days(curdate()) - to_days(`table_cages`.`setupdate`)) AS `MatingAgeDays`,floor(((to_days(curdate()) - to_days(`table_cages`.`setupdate`)) / 30)) AS `MatingAgeMos`,count(distinct `table_pups`.`idno`) AS `pupsmade`,count(distinct `view_goodanimals_filtered_all`.`idno`) AS `goodpupsmade`,count(distinct `table_pups`.`dob`) AS `Litters`,count(distinct `table_deadpups`.`dob`) AS `Dead Litters`,max(`table_pups`.`dob`) AS `LastLitterDOB`,max(`table_deadpups`.`dob`) AS `LastDeadLitterDOB` from (((`table_cages` left join `table_animals` on((`table_cages`.`cageid` = `table_animals`.`currentcage`))) left join (`table_animals` `table_pups` left join `view_goodanimals_filtered_all` on((`table_pups`.`animalautono` = `view_goodanimals_filtered_all`.`animalautono`))) on((`table_cages`.`cageid` = `table_pups`.`matingcage`))) left join `table_deadpups` on((`table_cages`.`cageid` = `table_deadpups`.`cageid`))) where ((`table_cages`.`cagetype` = 'Mating') and (`table_animals`.`gender` = 'F') and isnull(`table_animals`.`dod`)) group by `table_cages`.`cageid` order by `table_cages`.`lineassignment`,`table_cages`.`cageno`;
 
 -- --------------------------------------------------------
 
@@ -1096,4 +1094,4 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFI
 --
 DROP TABLE IF EXISTS `view_unkgenos`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`realchrisward`@`localhost` SQL SECURITY DEFINER VIEW `view_unkgenos` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod` from (`table_genotypes` join `table_animals` on((`table_genotypes`.`animalautono` = `table_animals`.`animalautono`))) where ((`table_genotypes`.`allele` = 'unk') and isnull(`table_animals`.`dod`)) order by `table_genotypes`.`allelegroup`,`table_animals`.`line`,cast(`table_animals`.`idno` as unsigned),`table_animals`.`idno`;
+CREATE OR REPLACE VIEW `view_unkgenos` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod` from (`table_genotypes` join `table_animals` on((`table_genotypes`.`animalautono` = `table_animals`.`animalautono`))) where ((`table_genotypes`.`allele` = 'unk') and isnull(`table_animals`.`dod`)) order by `table_genotypes`.`allelegroup`,`table_animals`.`line`,cast(`table_animals`.`idno` as unsigned),`table_animals`.`idno`;
