@@ -113,6 +113,30 @@ echo ""
 echo -e "${BOLD}--- Step 3: Write config.php ---${NC}"
 echo ""
 
+# ── Detect the web server's running user ───────────────────
+# Apache on RHEL/CentOS uses 'apache'; on Debian/Ubuntu 'www-data'.
+# This ensures config.php (chmod 640) is readable by the web server
+# even when the file is owned by a different OS user.
+detect_web_user() {
+    # Try to find from running processes first (most reliable)
+    local wu
+    wu=$(ps aux | grep -E '\b(httpd|apache2)\b' | grep -v root | grep -v grep \
+         | head -1 | awk '{print $1}')
+    if [ -n "$wu" ]; then echo "$wu"; return; fi
+    # Fall back to known defaults by distro
+    if id apache  &>/dev/null; then echo "apache";   return; fi
+    if id www-data &>/dev/null; then echo "www-data"; return; fi
+    # Last resort: ask
+    echo ""
+}
+
+WEB_USER=$(detect_web_user)
+if [ -z "$WEB_USER" ]; then
+    read -p "Could not auto-detect web server user. Enter it (e.g. apache or www-data): " WEB_USER
+    WEB_USER="${WEB_USER:-apache}"
+fi
+info "Web server user detected as: $WEB_USER"
+
 CONFIG_PATH="$APP_DIR/config.php"
 
 cat > "$CONFIG_PATH" << CONFIGEOF
@@ -133,8 +157,13 @@ return [
 ];
 CONFIGEOF
 
+# 640 = owner rw, group r, others none.
+# Owner = current user, group = web server so Apache/httpd can read it
+# but it is never world-readable.
+CURRENT_USER="${SUDO_USER:-$(whoami)}"
+chown "${CURRENT_USER}:${WEB_USER}" "$CONFIG_PATH"
 chmod 640 "$CONFIG_PATH"
-success "config.php written to $CONFIG_PATH"
+success "config.php written to $CONFIG_PATH (owner: ${CURRENT_USER}, group: ${WEB_USER}, mode: 640)"
 
 echo ""
 echo -e "${BOLD}--- Step 4: Import SQL schemas ---${NC}"
@@ -213,13 +242,44 @@ echo ""
 echo -e "${BOLD}--- Step 5: Create MySQL read-only userbook account ---${NC}"
 echo ""
 
-info "Creating MySQL user '${UB_USER}'..."
-$MYSQL_CMD << MYSQLEOF
+info "Creating MySQL user '${UB_USER}'@'${MYSQL_HOST}'..."
+
+# Write SQL to a temp file so the password is never exposed on the command line
+# and heredoc quoting issues with special characters can't break the statement.
+MYSQL_SETUP_SQL=$(mktemp /tmp/mousebook_setup_XXXXXX.sql)
+chmod 600 "$MYSQL_SETUP_SQL"
+
+cat > "$MYSQL_SETUP_SQL" << SQLEOF
 CREATE USER IF NOT EXISTS '${UB_USER}'@'${MYSQL_HOST}' IDENTIFIED BY '${UB_PASS}';
 GRANT SELECT ON \`${USERBOOK_DB}\`.* TO '${UB_USER}'@'${MYSQL_HOST}';
 FLUSH PRIVILEGES;
-MYSQLEOF
-success "MySQL user '${UB_USER}' created with SELECT on ${USERBOOK_DB}."
+SQLEOF
+
+if $MYSQL_CMD < "$MYSQL_SETUP_SQL" 2>&1; then
+    success "MySQL user '${UB_USER}'@'${MYSQL_HOST}' created with SELECT on ${USERBOOK_DB}."
+else
+    warn "MySQL user creation may have failed — see error above."
+    warn "Run this manually to fix it:"
+    warn "  mysql -u ${MYSQL_ADMIN} -p"
+    warn "  CREATE USER IF NOT EXISTS '${UB_USER}'@'${MYSQL_HOST}' IDENTIFIED BY 'YOUR_PASS';"
+    warn "  GRANT SELECT ON \`${USERBOOK_DB}\`.* TO '${UB_USER}'@'${MYSQL_HOST}';"
+    warn "  FLUSH PRIVILEGES;"
+fi
+
+# Clean up the temp SQL file immediately — it contains the password
+rm -f "$MYSQL_SETUP_SQL"
+
+# Verify the user can actually connect
+info "Verifying connection as '${UB_USER}'..."
+if mysql -h"${MYSQL_HOST}" -P"${MYSQL_PORT}" \
+         -u"${UB_USER}" -p"${UB_PASS}" \
+         "${USERBOOK_DB}" \
+         -e "SELECT COUNT(*) FROM userpass;" > /dev/null 2>&1; then
+    success "Connection verified — '${UB_USER}' can connect to ${USERBOOK_DB}."
+else
+    warn "Could not verify connection as '${UB_USER}'. Check password and grants."
+    warn "Test manually: mysql -u ${UB_USER} -p ${USERBOOK_DB} -e 'SELECT 1;'"
+fi
 
 echo ""
 echo -e "${BOLD}--- Step 6: Patch query_viewer.php (localhost hardcode) ---${NC}"
@@ -272,7 +332,7 @@ echo -e "${BOLD}============================================${NC}"
 echo -e "${BOLD}   Setup Complete — Post-Install Checklist  ${NC}"
 echo -e "${BOLD}============================================${NC}"
 echo ""
-echo -e " ${GREEN}✔${NC}  config.php written to: $CONFIG_PATH"
+echo -e " ${GREEN}✔${NC}  config.php written and owned by ${CURRENT_USER}:${WEB_USER} (mode 640)"
 echo -e " ${GREEN}✔${NC}  MySQL user '${UB_USER}' created"
 echo -e " ${GREEN}✔${NC}  Schemas imported and migration applied"
 echo ""
