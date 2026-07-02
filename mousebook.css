@@ -7,23 +7,27 @@
 
 /* --- Custom properties ----------------------------- */
 :root {
-  --mb-dark:   #034262;
-  --mb-med:    #217190;
-  --mb-light:  #2b92b9;
+  --mb-dark: #034262;
+  --mb-med: #217190;
+  --mb-light: #2b92b9;
   --mb-vlight: #77afcb;
   --mb-orange: #ef7000;
-  --mb-gold:   #cc9900;
-  --mb-grey:   #474747;
-  --mb-bg:     #f4f6f8;
-  --mb-nav-w:  158px;
-  --mb-nav-min:40px;
+  --mb-gold: #cc9900;
+  --mb-grey: #474747;
+  --mb-bg: #f4f6f8;
+  --mb-nav-w: 158px;
+  --mb-nav-min: 40px;
   --mb-head-h: 46px;
-  --mb-r:      4px;
-  --mb-t:      0.2s ease;
+  --mb-r: 4px;
+  --mb-t: 0.2s ease;
 }
 
 /* --- Reset / Base ---------------------------------- */
-*, *::before, *::after { box-sizing: border-box; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -41,8 +45,14 @@ body {
     "nav     content"
     "footer  footer";
   grid-template-columns: var(--mb-nav-w) 1fr;
-  grid-template-rows: var(--mb-head-h) 1fr auto;
+  /* Use auto (not 1fr) for content row so it grows with content.
+     1fr would constrain content to viewport height, causing the
+     footer to intrude mid-page on tall tables. */
+  grid-template-rows: var(--mb-head-h) auto auto;
+  min-height: 100vh;
+  /* footer still reaches bottom on short pages */
 }
+
 body:has(#left_navmenu.collapsed) {
   grid-template-columns: var(--mb-nav-min) 1fr;
 }
@@ -63,6 +73,7 @@ body:has(#left_navmenu.collapsed) {
      elements (h1, h2, login table) contained before JS restructures them */
   contain: layout style;
 }
+
 /* Inner flex row built by mousebook.js */
 .mb-header-inner {
   display: flex;
@@ -72,16 +83,51 @@ body:has(#left_navmenu.collapsed) {
   gap: 10px;
   position: relative;
 }
-.mb-header-left  { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
-.mb-header-right { display: flex; align-items: center; flex-shrink: 0; }
-.mb-header-titles { display: flex; flex-direction: column; justify-content: center; line-height: 1.25; min-width: 0; }
-.mb-header-subtitle { font-size: 10px; font-weight: bold; color: var(--mb-vlight); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mb-header-db       { font-size: 15px; font-weight: bold; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.mb-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.mb-header-right {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mb-header-titles {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.mb-header-subtitle {
+  font-size: 10px;
+  font-weight: bold;
+  color: var(--mb-vlight);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mb-header-db {
+  font-size: 15px;
+  font-weight: bold;
+  color: white;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Header toggle button */
 .mb-nav-toggle-header {
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   border-radius: var(--mb-r);
   color: white;
   width: 30px;
@@ -94,15 +140,18 @@ body:has(#left_navmenu.collapsed) {
   flex-shrink: 0;
   padding: 0;
 }
-.mb-nav-toggle-header:hover { background: rgba(255,255,255,0.20); }
+
+.mb-nav-toggle-header:hover {
+  background: rgba(255, 255, 255, 0.20);
+}
 
 /* User / credential button */
 .mb-user-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   border-radius: var(--mb-r);
   color: white;
   font-size: 11px;
@@ -111,8 +160,17 @@ body:has(#left_navmenu.collapsed) {
   cursor: pointer;
   white-space: nowrap;
 }
-.mb-user-btn:hover { background: rgba(255,255,255,0.20); }
-.mb-status-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+.mb-user-btn:hover {
+  background: rgba(255, 255, 255, 0.20);
+}
+
+.mb-status-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 
 /* Credential dropdown */
 .mb-dropdown {
@@ -121,40 +179,59 @@ body:has(#left_navmenu.collapsed) {
   top: var(--mb-head-h);
   right: 0;
   background: var(--mb-dark);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-top: none;
   border-radius: 0 0 6px 6px;
   padding: 14px;
   z-index: 200;
   min-width: 215px;
 }
-.mb-dropdown.open { display: block; }
+
+.mb-dropdown.open {
+  display: block;
+}
+
 .mb-form-label {
   display: block;
   font-size: 10px;
   color: var(--mb-vlight);
   margin-bottom: 3px;
 }
+
 .mb-form-input {
   display: block;
   width: 100%;
-  background: rgba(255,255,255,0.10);
-  border: 1px solid rgba(255,255,255,0.20);
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.20);
   border-radius: 3px;
   color: white;
   padding: 5px 7px;
   font-size: 11px;
   margin-bottom: 10px;
 }
-.mb-form-input::placeholder { color: rgba(255,255,255,0.4); }
-.mb-form-input:focus { outline: none; border-color: var(--mb-light); background: rgba(255,255,255,0.15); }
-.mb-dropdown-actions { display: flex; gap: 6px; }
-.mb-btn-connect, .mb-btn-disco {
+
+.mb-form-input::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.mb-form-input:focus {
+  outline: none;
+  border-color: var(--mb-light);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mb-dropdown-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.mb-btn-connect,
+.mb-btn-disco {
   flex: 1;
   padding: 6px 8px;
   border-radius: var(--mb-r);
-  border: 1px solid rgba(255,255,255,0.25);
-  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.10);
   color: white;
   font-size: 11px;
   font-weight: bold;
@@ -164,7 +241,11 @@ body:has(#left_navmenu.collapsed) {
   justify-content: center;
   gap: 4px;
 }
-.mb-btn-connect:hover, .mb-btn-disco:hover { background: rgba(255,255,255,0.22); }
+
+.mb-btn-connect:hover,
+.mb-btn-disco:hover {
+  background: rgba(255, 255, 255, 0.22);
+}
 
 /* --- Sidebar --------------------------------------- */
 #left_navmenu {
@@ -182,7 +263,10 @@ body:has(#left_navmenu.collapsed) {
   height: auto !important;
   min-height: calc(100vh - var(--mb-head-h));
 }
-#left_navmenu.collapsed { width: var(--mb-nav-min); }
+
+#left_navmenu.collapsed {
+  width: var(--mb-nav-min);
+}
 
 /* Nav toggle (standalone toggle inside nav, added by JS) */
 .mb-nav-toggle {
@@ -191,8 +275,8 @@ body:has(#left_navmenu.collapsed) {
   justify-content: center;
   width: 100%;
   padding: 7px;
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--mb-r);
   color: #ccc;
   font-size: 15px;
@@ -200,7 +284,11 @@ body:has(#left_navmenu.collapsed) {
   margin-bottom: 3px;
   flex-shrink: 0;
 }
-.mb-nav-toggle:hover { background: rgba(255,255,255,0.15); color: white; }
+
+.mb-nav-toggle:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
 
 /* Section labels and dividers added by JS */
 .mb-nav-label {
@@ -213,13 +301,23 @@ body:has(#left_navmenu.collapsed) {
   white-space: nowrap;
   overflow: hidden;
 }
-.mb-nav-divider { border-top: 1px solid rgba(255,255,255,0.10); margin: 3px 0; }
+
+.mb-nav-divider {
+  border-top: 1px solid rgba(255, 255, 255, 0.10);
+  margin: 3px 0;
+}
 
 #left_navmenu.collapsed .mb-nav-label,
-#left_navmenu.collapsed .mb-nav-text { display: none; }
+#left_navmenu.collapsed .mb-nav-text {
+  display: none;
+}
 
 /* Nav forms */
-#left_navmenu form { display: block; margin: 0; padding: 0; }
+#left_navmenu form {
+  display: block;
+  margin: 0;
+  padding: 0;
+}
 
 /* Nav buttons — covers both original input[type=submit] and JS-replaced buttons */
 #left_navmenu .button,
@@ -229,7 +327,7 @@ body:has(#left_navmenu.collapsed) {
   gap: 8px;
   width: 100%;
   padding: 7px 8px;
-  background: rgba(255,255,255,0.07);
+  background: rgba(255, 255, 255, 0.07);
   border: none;
   border-radius: var(--mb-r);
   color: #d0d0d0;
@@ -244,11 +342,13 @@ body:has(#left_navmenu.collapsed) {
   margin: 0 !important;
   position: relative;
 }
+
 #left_navmenu .button:hover,
 #left_navmenu button[type=submit]:hover {
   background: var(--mb-med);
   color: white;
 }
+
 /* Home button always highlighted */
 #left_navmenu form:first-of-type .button,
 #left_navmenu form:first-of-type button[type=submit] {
@@ -256,10 +356,23 @@ body:has(#left_navmenu.collapsed) {
   color: white;
   margin-bottom: 3px !important;
 }
+
 /* Icon sizing inside nav buttons */
-#left_navmenu button[type=submit] i { font-size: 15px; flex-shrink: 0; width: 16px; text-align: center; }
-#left_navmenu button[type=submit] svg { flex-shrink: 0; }
-.mb-nav-text { overflow: hidden; text-overflow: ellipsis; }
+#left_navmenu button[type=submit] i {
+  font-size: 15px;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+#left_navmenu button[type=submit] svg {
+  flex-shrink: 0;
+}
+
+.mb-nav-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 /* Tooltip in collapsed state — !important ensures display:none wins
    against any cascade conflicts when nav is expanded */
@@ -277,11 +390,17 @@ body:has(#left_navmenu.collapsed) {
   white-space: nowrap;
   z-index: 300;
   pointer-events: none;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
+
 /* Only show tooltip when explicitly activated */
-.mb-nav-tooltip.visible { display: block !important; }
-#left_navmenu.collapsed button[type=submit]:hover .mb-nav-tooltip { display: block !important; }
+.mb-nav-tooltip.visible {
+  display: block !important;
+}
+
+#left_navmenu.collapsed button[type=submit]:hover .mb-nav-tooltip {
+  display: block !important;
+}
 
 /* --- Content area ---------------------------------- */
 #right_content {
@@ -292,19 +411,48 @@ body:has(#left_navmenu.collapsed) {
   min-width: 0;
   min-height: calc(100vh - var(--mb-head-h));
 }
-#right_content h1 { font-size: 20px; color: var(--mb-dark); margin: 0 0 14px; }
-#right_content h2 { font-size: 16px; color: var(--mb-dark); margin: 0 0 12px; border-bottom: 2px solid var(--mb-vlight); padding-bottom: 7px; }
-#right_content h3 { font-size: 14px; color: var(--mb-med); margin: 12px 0 8px; }
+
+#right_content h1 {
+  font-size: 20px;
+  color: var(--mb-dark);
+  margin: 0 0 14px;
+}
+
+#right_content h2 {
+  font-size: 16px;
+  color: var(--mb-dark);
+  margin: 0 0 12px;
+  border-bottom: 2px solid var(--mb-vlight);
+  padding-bottom: 7px;
+}
+
+#right_content h3 {
+  font-size: 14px;
+  color: var(--mb-med);
+  margin: 12px 0 8px;
+}
 
 /* --- Tables ---------------------------------------- */
-table { border-collapse: collapse; border-spacing: 0; }
-th, td { border: none; }
+table {
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+th,
+td {
+  border: none;
+}
 
 #right_content table {
+  /* Keep tables as display:table — display:block breaks thead/tbody
+     column alignment. For horizontal scroll on wide tables, wrap the
+     table in a div.mb-table-scroll using PHP or JS if needed. */
   width: 100%;
   font-size: 12px;
   margin: 0 0 16px;
+  max-width: 100%;
 }
+
 #right_content table th {
   background: var(--mb-dark);
   color: white;
@@ -314,22 +462,34 @@ th, td { border: none; }
   font-weight: bold;
   white-space: nowrap;
 }
+
 #right_content table td {
   padding: 6px 10px;
   border-bottom: 1px solid #e0eaf0;
   color: var(--mb-grey);
   text-align: left;
 }
-#right_content table tr:hover td { background: #eef5f9; }
-#right_content table tr:last-child td { border-bottom: none; }
-/* Wrap tables for horizontal scroll on small screens */
-#right_content table { display: block; overflow-x: auto; white-space: nowrap; }
-#right_content table thead,
-#right_content table tbody,
-#right_content table tr { display: table; width: 100%; table-layout: auto; }
+
+#right_content table tr:hover td {
+  background: #eef5f9;
+}
+
+#right_content table tr:last-child td {
+  border-bottom: none;
+}
+
+/* Horizontal scroll wrapper for wide tables (added by JS or manually) */
+.mb-table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
 
 /* Hide old login table styling */
-.logintable, .logintable th, .logintable td { border: none !important; }
+.logintable,
+.logintable th,
+.logintable td {
+  border: none !important;
+}
 
 /* --- Form controls --------------------------------- */
 #right_content select,
@@ -343,15 +503,33 @@ th, td { border: none; }
   color: var(--mb-dark);
   background: white;
 }
+
 #right_content select:focus,
 #right_content input[type=text]:focus,
-#right_content input[type=date]:focus { outline: 2px solid var(--mb-light); border-color: var(--mb-light); }
+#right_content input[type=date]:focus {
+  outline: 2px solid var(--mb-light);
+  border-color: var(--mb-light);
+}
 
-.mediumlistbox { width: 200px; }
-.smalllistbox  { width: 125px; }
-.largelistbox  { width: 350px; }
-.largelistbox2 { min-width: 350px; }
-.tinylistbox   { width: 50px; }
+.mediumlistbox {
+  width: 200px;
+}
+
+.smalllistbox {
+  width: 125px;
+}
+
+.largelistbox {
+  width: 350px;
+}
+
+.largelistbox2 {
+  min-width: 350px;
+}
+
+.tinylistbox {
+  width: 50px;
+}
 
 /* --- Action buttons (content area) ----------------- */
 #right_content input[type=submit],
@@ -366,9 +544,15 @@ th, td { border: none; }
   cursor: pointer;
   transition: background var(--mb-t);
 }
+
 #right_content input[type=submit]:hover,
-#right_content input[type=button]:hover { background-color: #012d43; }
-input[name=REFRESH] { background-color: var(--mb-med) !important; }
+#right_content input[type=button]:hover {
+  background-color: #012d43;
+}
+
+input[name=REFRESH] {
+  background-color: var(--mb-med) !important;
+}
 
 /* --- Footer ---------------------------------------- */
 #footer {
@@ -382,13 +566,43 @@ input[name=REFRESH] { background-color: var(--mb-med) !important; }
 }
 
 /* --- Utility --------------------------------------- */
-.centertext { text-align: center; margin: auto; width: 100%; }
-.righttext  { text-align: right; margin: 10px; }
-.lefttext   { text-align: left; margin: 10px; }
-.plain      { border: none !important; }
-.label      { text-align: right; width: 75px; }
-.whitespace { text-align: center; margin: auto; width: 90%; max-width: 900px; }
-.centervert { position: absolute; top: 50%; transform: translateY(-50%); }
+.centertext {
+  text-align: center;
+  margin: auto;
+  width: 100%;
+}
+
+.righttext {
+  text-align: right;
+  margin: 10px;
+}
+
+.lefttext {
+  text-align: left;
+  margin: 10px;
+}
+
+.plain {
+  border: none !important;
+}
+
+.label {
+  text-align: right;
+  width: 75px;
+}
+
+.whitespace {
+  text-align: center;
+  margin: auto;
+  width: 90%;
+  max-width: 900px;
+}
+
+.centervert {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
 
 /* --- Login page (databases.php) -------------------- */
 body.mb-login-page {
@@ -401,12 +615,17 @@ body.mb-login-page {
   grid-template-columns: none;
   grid-template-rows: none;
 }
+
 body.mb-login-page #header {
   width: 100%;
   position: static;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0, 0, 0, 0.25);
 }
-body.mb-login-page #left_navmenu { display: none; }
+
+body.mb-login-page #left_navmenu {
+  display: none;
+}
+
 body.mb-login-page #right_content {
   background: transparent;
   display: flex;
@@ -417,6 +636,7 @@ body.mb-login-page #right_content {
   min-height: calc(100vh - var(--mb-head-h));
   margin-left: 0 !important;
 }
+
 .mb-login-card {
   background: white;
   border-radius: 10px;
@@ -424,9 +644,28 @@ body.mb-login-page #right_content {
   width: 100%;
   max-width: 340px;
 }
-.mb-login-card h2 { font-size: 18px; margin: 0 0 4px; border: none; padding: 0; }
-.mb-login-card .mb-login-sub { font-size: 11px; color: #888; margin-bottom: 18px; }
-.mb-login-card label { font-size: 11px; font-weight: bold; color: var(--mb-med); display: block; margin-bottom: 3px; }
+
+.mb-login-card h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+  border: none;
+  padding: 0;
+}
+
+.mb-login-card .mb-login-sub {
+  font-size: 11px;
+  color: #888;
+  margin-bottom: 18px;
+}
+
+.mb-login-card label {
+  font-size: 11px;
+  font-weight: bold;
+  color: var(--mb-med);
+  display: block;
+  margin-bottom: 3px;
+}
+
 .mb-login-card input[type=text],
 .mb-login-card input[type=password] {
   width: 100%;
@@ -438,6 +677,7 @@ body.mb-login-page #right_content {
   margin-bottom: 12px;
   background: white;
 }
+
 .mb-login-connect {
   width: 100%;
   padding: 9px;
@@ -450,6 +690,7 @@ body.mb-login-page #right_content {
   cursor: pointer;
   margin-bottom: 18px;
 }
+
 .mb-db-section-label {
   font-size: 10px;
   font-weight: bold;
@@ -458,7 +699,13 @@ body.mb-login-page #right_content {
   letter-spacing: 0.5px;
   margin-bottom: 8px;
 }
-.mb-db-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.mb-db-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
 .mb-db-btn {
   padding: 10px 8px;
   border-radius: 6px;
@@ -470,12 +717,23 @@ body.mb-login-page #right_content {
   cursor: pointer;
   text-align: center;
 }
-.mb-db-btn:hover { background: var(--mb-med); color: white; border-color: var(--mb-med); }
+
+.mb-db-btn:hover {
+  background: var(--mb-med);
+  color: white;
+  border-color: var(--mb-med);
+}
 
 /* --- Responsive ------------------------------------ */
 @media (max-width: 900px) {
-  body { grid-template-columns: var(--mb-nav-min) 1fr; }
-  #left_navmenu { width: var(--mb-nav-min); }
+  body {
+    grid-template-columns: var(--mb-nav-min) 1fr;
+  }
+
+  #left_navmenu {
+    width: var(--mb-nav-min);
+  }
+
   #left_navmenu:not(.collapsed) {
     position: fixed;
     z-index: 50;
@@ -483,15 +741,31 @@ body.mb-login-page #right_content {
     left: 0;
     height: calc(100vh - var(--mb-head-h));
     width: var(--mb-nav-w);
-    box-shadow: 2px 0 10px rgba(0,0,0,0.25);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.25);
   }
+
   #left_navmenu:not(.collapsed) .mb-nav-text,
-  #left_navmenu:not(.collapsed) .mb-nav-label { display: block; }
+  #left_navmenu:not(.collapsed) .mb-nav-label {
+    display: block;
+  }
 }
+
 @media (max-width: 600px) {
-  :root { --mb-head-h: 50px; }
-  .mb-header-db { font-size: 14px; }
-  #right_content { padding: 12px; }
+  :root {
+    --mb-head-h: 50px;
+  }
+
+  .mb-header-db {
+    font-size: 14px;
+  }
+
+  #right_content {
+    padding: 12px;
+  }
+
   #right_content table th,
-  #right_content table td { padding: 5px 7px; font-size: 11px; }
+  #right_content table td {
+    padding: 5px 7px;
+    font-size: 11px;
+  }
 }
