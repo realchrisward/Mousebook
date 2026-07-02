@@ -713,6 +713,30 @@ CREATE TABLE IF NOT EXISTS `table_deadpups` (
   UNIQUE KEY `death_autono_UNIQUE` (`death_autono`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `table_litterlog`
+--   Used by: litterlogger.php
+--
+
+CREATE TABLE IF NOT EXISTS `table_litterlog` (
+  `dob` date DEFAULT NULL,
+  `line_assign` varchar(255) DEFAULT NULL,
+  `cagename` varchar(255) DEFAULT NULL,
+  `actual_obs` date DEFAULT NULL,
+  `obs_by` varchar(255) DEFAULT NULL,
+  `litter name` varchar(255) DEFAULT NULL,
+  `estimate_male` int(11) DEFAULT NULL,
+  `estimate_female` int(11) DEFAULT NULL,
+  `estimate_unknown` int(11) DEFAULT NULL,
+  `litter_comments` text,
+  `just_sac` varchar(45) DEFAULT NULL,
+  `litterlog_autono` bigint(20) NOT NULL AUTO_INCREMENT,
+  PRIMARY KEY (`litterlog_autono`),
+  UNIQUE KEY `litterlog_autono_UNIQUE` (`litterlog_autono`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
 --
 -- Dumping data for table `table_deadpups`
 --
