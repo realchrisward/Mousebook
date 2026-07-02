@@ -6,8 +6,8 @@ echo "<h2>PHP is working. Version: " . phpversion() . "</h2>";
 // Test config.php load
 $config = @include './config.php';
 if ($config === false) {
-    echo "<p style='color:red'>ERROR: config.php not found or failed to load at ../config.php</p>";
-    echo "<p>Looking in: " . realpath('../config.php') . "</p>";
+    echo "<p style='color:red'>ERROR: config.php not found or failed to load at ./config.php</p>";
+    echo "<p>Looking in: " . realpath('./config.php') . "</p>";
 } else {
     echo "<p style='color:green'>config.php loaded OK</p>";
     echo "<pre>server_ip: " . ($config['server_ip'] ?? 'NOT SET') . "\n";
