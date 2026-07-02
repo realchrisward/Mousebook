@@ -732,5 +732,6 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			</div>
 
 
+<script src="../mousebook.js"></script>
 </body>
 </html>

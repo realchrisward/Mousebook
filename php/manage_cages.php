@@ -999,6 +999,7 @@ $conn->close();
 	<br>
 	<?php echo $sqlstatusclear; ?>
 
+<script src="../mousebook.js"></script>
 </body>
 
 </html>

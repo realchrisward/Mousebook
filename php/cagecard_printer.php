@@ -640,5 +640,6 @@ function submitForm()
 <br>
 <?php echo $sqlstatusclear; ?>
 
+<script src="../mousebook.js"></script>
 </body>
 </html>

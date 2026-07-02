@@ -484,5 +484,6 @@ function submitForm()
 					 </p>
 
 			</div>
+<script src="../mousebook.js"></script>
 </body>
 </html>

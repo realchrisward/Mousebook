@@ -202,5 +202,6 @@ $results->close(); $conn->close();
 	<div id="footer">
 		<p class="righttext">@realchrisward &copy; 2025</p>
 	</div>
+<script src="../mousebook.js"></script>
 </body>
 </html>

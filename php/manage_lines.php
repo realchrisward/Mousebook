@@ -596,5 +596,6 @@ function showLine(newValue)
 					 </p>
 					 
 			</div>
+<script src="../mousebook.js"></script>
 </body>
 </html>
