@@ -33,13 +33,23 @@
 	$ubpass=$config['server_pass'];
 
 		//query userbook for accessible databases
-		// [mb_auth_patched]
-		require_once __DIR__ . '/../includes/auth.php';
-		$_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
-		if ($_mb_conn) {
-			[$host, $accessun, $accesspw] = $_mb_conn;
-		}
+		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl from ".
+		"(userpass join userdbaccess on userpass.user_idno=userdbaccess.user_idno) ".
+		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
+		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
 
+		// -------------------------------------------------------
+		// PATCHED: replaced hardcoded "localhost" with
+		// $config['server_host'] so remote MySQL servers work.
+		// -------------------------------------------------------
+		$conn=new mysqli($config['server_host'],$ubname,$ubpass,"userbook");
+		$results=$conn->query($sql);
+		$conn->close();
+		while($row=mysqli_fetch_array($results)){
+			$accessun=$row['db_accessun'];
+			$accesspw=$row['db_accesspw'];
+			$host=$row['db_host'];
+		}
 
 	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
 	//check connection

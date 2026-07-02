@@ -35,13 +35,20 @@
 	$ubpass=$config['server_pass'];	
 
 		//query userbook for accessable databases
-		// [mb_auth_patched]
-		require_once __DIR__ . '/../includes/auth.php';
-		$_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
-		if ($_mb_conn) {
-			[$host, $accessun, $accesspw] = $_mb_conn;
+		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl from ".
+		"(userpass join userdbaccess on userpass.user_idno=userdbaccess.user_idno) ".
+		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
+		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
+	
+		$conn=new mysqli($host,$ubname,$ubpass,"userbook");
+		$results=$conn->query($sql);
+		$conn->close();
+		while($row=mysqli_fetch_array($results)){
+			$accessun=$row['db_accessun'];
+			$accesspw=$row['db_accesspw'];
+			$host=$row['db_host'];
+		
 		}
-
 		
 	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
 	//check connection
@@ -66,6 +73,14 @@ $contact1=$_POST['contactinfo1'];
 $contact2=$_POST['contactinfo2'];	
 
 
+//get animal history document - save as csv
+/*select currentcage, line, idno, matingcage, group_concat(xcom.general_comment order by xcom.commentdate SEParator '->') as animal_history 
+from ((table_animals join table_cages on currentcage=table_cages.cageid) 
+join CagesForPrinting on currentcage=CagesForPrinting.cageid) 
+left join (select * from data_comments  where data_comments.general_comment like '%moved to cage%') as xcom on table_animals.animalautono=xcom.animalautono 
+group by table_animals.animalautono order by currentcage;
+*/
+
 
 
 
@@ -82,7 +97,7 @@ $gender_listbox.='<option value="'.$row.'" >'.$row.'</option>';
 $gender_listbox.='</select>';
 
 //source category type filter
-$source_category_options=array('all','Holding','Rearrange','Mating','Experimental','Litter','Founder','Sac');
+$source_category_options=array('all','Holding','Mating','Experimental','Litter','Founder','Euthanasia');
 $source_category_listbox='<select id="source_category_selection" name="source_category_selection" onchange="submitForm()">';
 foreach ($source_category_options as $row){
 if ($row===$source_category_selection){
@@ -131,12 +146,12 @@ $lineassign_listbox .= '</select>';
 $conn->close();
 
 
-//CagesFoInfo contents
+//CagesForPrinting contents
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="SELECT `cageid` FROM `CagesForInfo`;";
+$sqltext="SELECT `cageid` FROM `CagesForPrinting`;";
 
 $results=$conn->query($sqltext);
-$cage_listbox='<select id="cagelist_selection" name="cagelist_selection" size=6 class="largelistbox onchange="">;';
+$cage_listbox='<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
 //echo $row['cageid'];
@@ -171,11 +186,11 @@ $sf='left(`currentcage`,1)=left("'.$source_category_selection.'",1) and ';}
 $sql_where_text=substr($lf.$gf.$sf,0,-4);
 if (strlen($sql_where_text)>0){
 $sql_where_text=' and '.$sql_where_text;}
-$sqltext="SELECT `currentcage` FROM `table_animals` left join CagesForInfo on table_animals.currentcage=CagesForInfo.cageid where dod is null and
-CagesForInfo.cageid is null ".$sql_where_text." GROUP BY `currentcage`;";
+$sqltext="SELECT `currentcage` FROM `table_animals` left join CagesForPrinting on table_animals.currentcage=CagesForPrinting.cageid where dod is null and
+CagesForPrinting.cageid is null ".$sql_where_text." GROUP BY `currentcage`;";
 //echo $sqltext;
 $results=$conn->query($sqltext);
-$sourcecage_listbox='<select id="cage_selection" name="cage_selection" size=14 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
+$sourcecage_listbox='<select id="cage_selection" name="cage_selection[]" size=14 class="largelistbox" multiple="multiple" >';
 while($row=mysqli_fetch_array($results)){
 if ($row['currentcage']===$cage_selection){
 $sourcecage_listbox.='<option value="'.$row['currentcage'].'" selected>'.$row['currentcage'].'</option>';
@@ -195,30 +210,35 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //Add cage to list
 if (isset($_POST['addcage_single'])){
 $cage_selection=$_POST['cage_selection'];
-$sqlaction='add cage:'.$cage_selection;
-$sqltext="INSERT INTO `".$dbname."`.`CagesForInfo` (`cageid`) VALUES ('".$cage_selection."');";
+$cageselection='("'.implode('"),("',$cage_selection).'")';
+$sqlaction='add cage:'.$cageselection;
+$sqltext="INSERT INTO `".$dbname."`.`CagesForPrinting` (`cageid`) VALUES ".$cageselection.";";
 if ($conn->query($sqltext) === TRUE) {
-$sqlstatus= 'successful';} else {
+$sqlstatus= 'successful'.'...'.$sqltext;} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+
 }
+echo $sqlstatus;
 }
 
 //Remove cage individually
 if (isset($_POST['remcage_single'])){
 $cagelist_selection=$_POST['cagelist_selection'];
-$sqlaction='rem cage:'.$cagelist_selection;
-$sqltext="DELETE FROM `".$dbname."`.`CagesForInfo` WHERE `cageid`='".$cagelist_selection."';";
+$cagelistselection='"'.implode('","',$cagelist_selection).'"';
+$sqlaction='rem cage:'.$cagelistselection;
+$sqltext="DELETE FROM `".$dbname."`.`CagesForPrinting` WHERE `cageid` IN (".$cagelistselection.");";
 if ($conn->query($sqltext) === TRUE) {
-$sqlstatus= 'successful';} else {
+$sqlstatus= 'successful'.'...'.$sqltext;} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 }
+echo $sqlstatus;
 }
 
 //Bulk add to cage list
 if (isset($_POST['addcage_batch'])){
 $cage_batch=$_POST['cage_batchlist'];
 $sqlaction='add cage:'.$cage_batch;
-$sqltext="INSERT INTO `".$dbname."`.`CagesForInfo` (`cageid`) VALUES ".$cage_batchlist.";";
+$sqltext="INSERT INTO `".$dbname."`.`CagesForPrinting` (`cageid`) VALUES ".$cage_batchlist.";";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -228,7 +248,7 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 //Bulk remove from cage list
 if (isset($_POST['remcage_batch'])){
 $sqlaction='clear cage';
-$sqltext="DELETE FROM `".$dbname."`.`CagesForInfo`;";
+$sqltext="DELETE FROM `".$dbname."`.`CagesForPrinting`;";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
@@ -276,10 +296,13 @@ while ($row=mysqli_fetch_array($results)){
 $conn->close();
 
 
-$sqltext="Select `table_cages`.`cageid`,`cagetype`,`cageno`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`,`animalautono`,`gender`,`matingcage` ";
-$sqltext.="from `table_animals` ";
-$sqltext.="join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForInfo` on `table_cages`.`cageid`=`CagesForInfo`.`cageid`) on `currentcage`=`CagesForInfo`.`cageid` where `dod` is null;";
+$sqltext="Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`animalautono`,`x`.`gender`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_animals`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_animals`.`animalautono`,`gender`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_animals` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` join `table_genotypes` on `table_animals`.`animalautono`=`table_genotypes`.`animalautono` group by `table_animals`.`animalautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`animalautono`";
 
+/* old query
+"Select `table_cages`.`cageid`,`cagetype`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`card_color`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y')  `dob`,`eartag`,`animalautono`,`gender` ";
+$sqltext.="from `table_animals` ";
+$sqltext.="join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` where `dod` is null;";
+*/
 
 //query table_animals
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
@@ -295,19 +318,20 @@ while($row=mysqli_fetch_array($results)){
 	'type'=>$row['cagetype'],'cageline'=>$row['lineassignment'],
 	'cagegender'=>$row['gender'],
         'setupdate'=>$row['setupdate'],
-        'cageno'=>$row['cageno'],
 	'cagegenos'=>$cagegenokey[$row['lineassignment']],
+	'papercolor'=>$row['card_color'],
 	'cardcolorR'=>$colorkey[$row['color_assignment']]["R"],
 	'cardcolorG'=>$colorkey[$row['color_assignment']]["G"],
 	'cardcolorB'=>$colorkey[$row['color_assignment']]["B"], 'animals'=>array());
-	$animals[$row['animalautono']]=array('cage'=>$row['cageid'],'line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob'],'sourcecage'=>$row['matingcage'],'ear'=>$row['eartag'],'geno'=>'','gender'=>$row['gender']);
+	$animals[$row['animalautono']]=array('cage'=>$row['cageid'],'line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob'],'ear'=>$row['eartag'],'geno'=>'','gender'=>$row['gender'], 'geno'=>$row['genoshort']);
 }
 $conn->close();
 
+/*not needed anymore - integrated into new query
 //query table_genotypes	
 // need query to grab and annotate genos
 $sqlgenotypes="SELECT `table_genotypes`.`animalautono`,`allelegroup`,`allele` " ;
-$sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_animals` INNER JOIN `CagesForInfo` on `currentcage`=`CagesForInfo`.`cageid`) ";
+$sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_animals` INNER JOIN `CagesForPrinting` on `currentcage`=`CagesForPrinting`.`cageid`) ";
 $sqlgenotypes.="ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where `dod` is null order by `allelegroup`;";
 
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
@@ -318,6 +342,7 @@ while ($row=mysqli_fetch_array($results)){
 	$animals[$row['animalautono']]['geno'].=$row['allele']."; ";
 }
 // need geno short hand table???
+*/
 
 //combine animals into cage array
 
@@ -330,286 +355,42 @@ $sqlaction='submit cages for printing';
 
 $conn->close();
 
-//geno conversion key
-$genoconv=array(
-'3f:tg/wt; ' => 'TG',
-'3f:wt/wt; ' => 'WT',
-'3f:wt/y; ' => 'WT',
-'3f:tg;/y; ' => 'TG',
-'ank3-flox:flox/wt; ' => 'FLOX',
-'ank3-flox:wt/wt; ' => 'WT',
-'b6-testers-dv:unk; ' => 'WT',
-'b6-testers-dv:wt; ' => 'WT',
-'brtc:stop/wt; tg/wt; cre/wt; ' => 'STOP,C,TG',
-'brtc:stop/wt; tg/wt; wt/wt; ' => 'STOP, TG',
-'brtc:stop/wt; wt/wt; cre/wt; ' => 'STOP, CRE',
-'brtc:stop/wt; wt/wt; wt/wt; ' => 'STOP',
-'brtc:stop/y; tg/wt; cre/wt; ' => 'STOP,C,TG',
-'brtc:stop/y; tg/wt; wt/wt; ' => 'STOP, TG',
-'brtc:stop/y; wt/wt; cre/wt; ' => 'STOP, CRE',
-'brtc:stop/y; wt/wt; wt/wt; ' => 'STOP',
-'brtc:unk; unk; unk; ' => 'UNK;',
-'brtc:wt/wt; tg/wt; cre/wt; ' => 'TG, CRE',
-'brtc:wt/wt; tg/wt; wt/wt; ' => 'TG',
-'brtc:wt/wt; wt/wt; cre/wt; ' => 'CRE',
-'brtc:wt/wt; wt/wt; wt/wt; ' => 'WT',
-'brtc:wt/y; tg/wt; cre/wt; ' => 'TG, CRE',
-'brtc:wt/y; tg/wt; wt/wt; ' => 'TG',
-'brtc:wt/y; wt/wt; cre/wt; ' => 'CRE',
-'brtc:wt/y; wt/wt; wt/wt; ' => 'WT',
-'brtg129:stop/wt; tg/wt; ' => 'STOP, TG',
-'brtg129:stop/wt; wt/wt; ' => 'STOP',
-'brtg129:stop/y; tg/wt; ' => 'STOP, TG',
-'brtg129:stop/y; wt/wt; ' => 'STOP',
-'brtg129:wt/wt; tg/wt; ' => 'TG',
-'brtg129:wt/wt; wt/wt; ' => 'WT',
-'brtg129:wt/y; tg/wt; ' => 'TG',
-'brtg129:wt/wt; wt/wt; ' => 'WT',
-'cdkl5-d471fs-founder:mut; ' => 'MUT',
-'cdkl5-d471fs-founder:other; ' => 'OTHER',
-'cdkl5-d471fs-founder:unk; ' => 'UNK;',
-'cdkl5-d471fs-founder:wt; ' => 'WT',
-'cdkl5-ko:ko/wt; ' => 'HET',
-'cdkl5-ko:ko/y; ' => 'KO',
-'cdkl5-ko:unk; ' => 'UNK;',
-'cdkl5-ko:wt/wt; ' => 'WT',
-'cdkl5-ko:wt/y; ' => 'WT',
-'esex:cre/wt; flox/flox; ' => 'F/F, CRE',
-'esex:cre/wt; flox/wt; ' => 'F/+, CRE',
-'esex:unk; unk; ' => 'UNK;',
-'esex:wt/wt; flox/flox; ' => 'F/F',
-'esex:wt/wt; flox/wt; ' => 'F/+',
-'f1-nt9xf:null/wt; wt/wt; ' => 'NULL',
-'f1-nt9xf:unk; unk; ' => 'UNK;',
-'f1-nt9xf:wt/wt; wt/wt; ' => 'WT',
-'f1-nt9xf:null/y; wt/wt; ' => 'NULL',
-'f1-nt9xf:wt/y; wt/wt; ' => 'WT',
-'f9:flox/wt; ' => 'FLOX',
-'f9:flox/y; ' => 'FLOX',
-'f9:unk; ' => 'UNK;',
-'f9:wt/wt; ' => 'WT',
-'f9:wt/y; ' => 'WT',
-'fmr1-ko1:ko/y; ' => 'KO',
-'fmr1-ko1:ko/wt; ' => 'KO',
-'fmr1-ko1:wt/y; ' => 'WT',
-'fmr1-ko1:wt/wt; ' => 'WT',
-'fmr1-ko2:ko/y; ' => 'KO',
-'fmr1-ko2:ko/wt; ' => 'KO',
-'fmr1-ko2:wt/y; ' => 'WT',
-'fmr1-ko2:wt/wt; ' => 'WT',
-'g2tdt:cre/wt; tom/wt; ' => 'CRE, TDT',
-'g2tdt:wt/wt; tom/wt; ' => 'TDT',
-'g2tdt:cre/wt; wt/wt; ' => 'CRE',
-'g2tdt:wt/wt; wt/wt; ' => 'WT',
-'gad2-cre:cre/wt; ' => 'CRE',
-'gad2-cre:wt/wt; ' => 'WT',
-'gad2-creer:cre/wt; ' => 'CRE',
-'gad2-creer:wt/wt; ' => 'WT',
-'mfth:flox/wt; cre/wt; ' => 'FLOX, CRE',
-'mfth:flox/wt; wt/wt; ' => 'FLOX',
-'mfth:flox/y; cre/wt; ' => 'FLOX, CRE',
-'mfth:flox/y; wt/wt; ' => 'FLOX',
-'mfth:wt/wt; cre/wt; ' => 'CRE',
-'mfth:wt/wt; wt/wt; ' => 'WT',
-'mfth:wt/y; cre/wt; ' => 'CRE',
-'mfth:wt/y; wt/wt; ' => 'WT',
-'mir155-b6:mut/wt; ' => 'MUT',
-'mir155-b6:wt/wt; ' => 'WT',
-'mir155-b6:unk; ' => 'UNK;',
-'nas:het; ' => 'HET',
-'nas:wt; ' => 'WT',
-'nas:null; ' => 'NULL',
-'nas:p-het; ' => 'P-HET',
-'nas:m-het; ' => 'M-HET',
-'nestin-cre:cre/wt; ' => 'CRE',
-'nestin-cre:wt/wt; ' => 'WT',
-'ns-chemo:blind; ' => 'BLIND',
-'nt9:null/wt; tg/wt; ' => 'HET, TG',
-'nt9:null/wt; wt/wt; ' => 'HET',
-'nt9:null/y; tg/wt; ' => 'NULL, TG',
-'nt9:null/y; wt/wt; ' => 'NULL',
-'nt9:wt/wt; tg/wt; ' => 'TG',
-'nt9:wt/wt; wt/wt; ' => 'WT',
-'nt9:wt/y; tg/wt; ' => 'TG',
-'nt9:wt/y; wt/wt; ' => 'WT',
-'ntb:null/wt; tg/wt; ' => 'HET, TG',
-'ntb:null/wt; wt/wt; ' => 'HET',
-'ntb:null/y; tg/wt; ' => 'NULL, TG',
-'ntb:null/y; wt/wt; ' => 'NULL',
-'ntb:wt/wt; tg/wt; ' => 'TG',
-'ntb:wt/wt; wt/wt; ' => 'WT',
-'ntb:wt/y; tg/wt; ' => 'TG',
-'ntb:wt/y; wt/wt; ' => 'WT',
-'ntf:null/wt; tg/wt; ' => 'HET, TG',
-'ntf:null/wt; wt/wt; ' => 'HET',
-'ntf:null/y; tg/wt; ' => 'NULL, TG',
-'ntf:null/y; wt/wt; ' => 'NULL',
-'ntf:wt/wt; tg/wt; ' => 'TG',
-'ntf:wt/wt; wt/wt; ' => 'WT',
-'ntf:wt/y; tg/wt; ' => 'TG',
-'ntf:wt/y; wt/wt; ' => 'WT',
-'oas:het; ' => 'HET',
-'oas:wt; ' => 'WT',
-'oas:null; ' => 'NULL',
-'oas:p-het; ' => 'P-HET',
-'oas:m-het; ' => 'M-HET',
-'otp-cre:cre/wt; ' => 'CRE',
-'otp-cre:wt/wt; ' => 'WT',
-'pv-cre:cre/wt; ' => 'CRE',
-'pv-cre:wt/wt; ' => 'WT',
-'pwk:unk; ' => 'WT',
-'pwk:wt; ' => 'WT',
-'shank3:mut/wt; ' => 'HET',
-'shank3:mut/mut; ' => 'NULL',
-'shank3:wt/wt; ' => 'WT',
-'th-cre:cre/wt; ' => 'CRE',
-'th-cre:wt/wt; ' => 'WT',
-'thy1-snca:tg/wt; ' => 'HET',
-'thy1-snca:tg/y; ' => 'TG',
-'thy1-snca:unk; ' => 'UNK;',
-'thy1-snca:wt/wt; ' => 'WT',
-'thy1-snca:wt/y; ' => 'WT',
-'tsc2-mixed:mut/wt; ' => 'MUT',
-'tsc2-mixed:unk; ' => 'UNK;',
-'tsc2-mixed:wt/wt; ' => 'WT',
-'v2tdt:tom/wt; cre/wt; ' => 'CRE, TDT',
-'v2tdt:tom/wt; wt/wt; ' => 'TDT',
-'v2tdt:wt/wt; cre/wt; ' => 'CRE',
-'v2tdt:wt/wt; wt/wt; ' => 'WT',
-'vglut2:cre/wt; ' => 'CRE',
-'vglut2:wt/wt; ' => 'WT',
-'wt-129s6:unk; ' => 'WT',
-'wt-129s6:wt; ' => 'WT',
-'wt-b6:unk; ' => 'WT',
-'wt-b6:wt; ' => 'WT',
-'wt-fvb:unk; ' => 'WT',
-'wt-fvb:wt; ' => 'WT',
-'fn:wt/wt; ' => 'WT',
-'fn:mut/wt; ' => 'MUT/WT',
-'fn:wt/y; ' => 'WT',
-'fn:mut/y; ' => 'MUT/Y',
-'fk:wt/wt; ' => 'WT',
-'fk:mut/wt; ' => 'MUT/WT',
-'fk:wt/y; ' => 'WT',
-'fk:mut/y; ' => 'MUT/Y',
-'fng:wt/y; wt/wt; ' => 'WT',
-'fng:mut/y; wt/wt; ' => 'FN',
-'fng:wt/y; cre/wt; ' => 'CRE',
-'fng:mut/y; cre/wt; ' => 'FN, CRE',
-'fnger:wt/y; wt/wt; ' => 'WT',
-'fnger:mut/y; wt/wt; ' => 'FN',
-'fnger:wt/y; cre/wt; ' => 'CRE',
-'fnger:mut/y; cre/wt; ' => 'FN, CRE',
-'fnv:wt/y; wt/wt; ' => 'WT',
-'fnv:mut/y; wt/wt; ' => 'FN',
-'fnv:wt/y; cre/wt; ' => 'CRE',
-'fnv:mut/y; cre/wt; ' => 'FN, CRE',
-'fkg:wt/y; wt/wt; ' => 'WT',
-'fkg:mut/y; wt/wt; ' => 'FK',
-'fkg:wt/y; cre/wt; ' => 'CRE',
-'fkg:mut/y; cre/wt; ' => 'FK, CRE',
-'fkv:wt/y; wt/wt; ' => 'WT',
-'fkv:mut/y; wt/wt; ' => 'FK',
-'fkv:wt/y; cre/wt; ' => 'CRE',
-'fkv:mut/y; cre/wt; ' => 'FK, CRE',
-'fkgtdt:wt/y; wt/wt; wt/wt; ' => 'WT',
-'fkgtdt:mut/y; wt/wt; wt/wt; ' => 'FK',
-'fkgtdt:wt/y; cre/wt; wt/wt; ' => 'CRE',
-'fkgtdt:wt/y; wt/wt; tom/wt; ' => 'TDT',
-'fkgtdt:mut/y; cre/wt; wt/wt; ' => 'FK, CRE',
-'fkgtdt:mut/y; wt/wt; tom/wt; ' => 'FK, TDT',
-'fkgtdt:wt/y; cre/wt; tom/wt; ' => 'CRE, TDT',
-'fkgtdt:mut/y; cre/wt; tom/wt; ' => 'FK,C,TDT',
-'fkvtdt:wt/y; wt/wt; wt/wt; ' => 'WT',
-'fkvtdt:mut/y; wt/wt; wt/wt; ' => 'FK',
-'fkvtdt:wt/y; tom/wt; wt/wt; ' => 'TDT',
-'fkvtdt:wt/y; wt/wt; cre/wt; ' => 'CRE',
-'fkvtdt:mut/y; tom/wt; wt/wt; ' => 'FK, TDT',
-'fkvtdt:mut/y; wt/wt; cre/wt; ' => 'FK, CRE',
-'fkvtdt:wt/y; tom/wt; cre/wt; ' => 'CRE, TDT',
-'fkvtdt:mut/y; tom/wt; cre/wt; ' => 'FK,C,TDT',
-);
-
-//echo serialize($cages);
-//"submited";
-//}
-
-$temprow='
-	<table >
-		<tr name="header" id="header">
-			<td >cage number
-			</td>
-			<td >cage
-			</td>
-			<td >line
-			</td>
-			<td >idno
-			</td>
-			<td >gender
-			</td>
-			<td >ear
-			</td>
-			<td >dob
-			</td>
-			<td >geno rxns
-			</td>
-			<td >genotype
-			</td>
-			<td >geno
-			</td>
-			<td >source cage
-			</td>
-		</tr>
-	';
+//get color cages
+$colorfilt=$_POST['colorfilt'];
+$colorlist=array('white','grey','pink','peach','yellow','green','blue','lavender');
 
 
-//prepare table of info by cage
+foreach(array_keys($cages) as $cagename){
 
-foreach ($cages as $cg=>$cgdata){
-
-	foreach ($cages[$cg]['animals'] as $man=>$mdata){
-	
-$temprow.='
-	<tr name="trow'.$man.'" id="trow'.$man.'">
-		<td >'.$cages[$cg]['cageno'].'
-		</td>
-		<td >'.$cg.'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['line'].'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['idno'].'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['gender'].'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['ear'].'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['dob'].'
-		</td>
-		<td >'.$cages[$cg]['cagegenos'].'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['geno'].'
-		</td>
-		<td >'.$genoconv[strtolower($cages[$cg]['animals'][$man]['line'].":".$cages[$cg]['animals'][$man]['geno'])].'
-		</td>
-		<td >'.$cages[$cg]['animals'][$man]['sourcecage'].'
-		</td>
-
-	</tr>
-		';
-
+if(in_array($colorfilt,$colorlist)){
+	if ($cages[$cagename]['papercolor']<>$colorfilt){
+	unset($cages[$cagename]);
 	}
-		
+}
+else {
+$colorfilt='all';
 }
 
+}
 
-$temprow.='</table>';
-
+$colorfilt_listbox= '<select id="colorfilt" name="colorfilt" size=1 class="mediumlistbox" onchange="submitForm()">';
+$colorfilt_listbox.='<option value="'.$colorfilt.'" selected >'.$colorfilt.'</option>';
+$colorfilt_listbox.='<option value="all">all</option>';
+$colorfilt_listbox.='<option value="white" >white</option>';
+$colorfilt_listbox.='<option value="grey" >grey</option>';
+$colorfilt_listbox.='<option value="pink" >pink</option>';
+$colorfilt_listbox.='<option value="peach" >peach</option>';
+$colorfilt_listbox.='<option value="yellow" >yellow</option>';
+$colorfilt_listbox.='<option value="green" >green</option>';
+$colorfilt_listbox.='<option value="blue" >blue</option>';
+$colorfilt_listbox.='<option value="lavender" >lavender</option>';
+$colorfilt_listbox.='</select>';
 
 ?>
 <head>
 			<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-			<title>animal Info Export - <?php echo $dbname; ?></title>
-			<link href="../mousebook.css" rel="stylesheet" type="text/css" />	
+			<title>Cage Card Printing Selector - <?php echo $dbname; ?></title>
+			<link href="../animalbook.css" rel="stylesheet" type="text/css" />	
 </head>
 <body>
 
@@ -618,7 +399,7 @@ $temprow.='</table>';
 					<?php echo $sqlerror; ?>
 					 <h2 class="centervert"
 					 style="position:absolute;top:0px;left:75px;"> 
-					  -animal Info Export-
+					  -Cage Card Printer-
 					 </h2>
 					 
 					 <h1 class="centervert"
@@ -752,6 +533,14 @@ $temprow.='</table>';
 					 <input type=submit class="button" name=""
 					  value="View animals" />
 					 </form>
+					 <form action="../php/animal_info_export.php" method=post target="_blank">
+					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
+					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="button_login" value="connect" />
+					 <input type=submit class="button" name=""
+					  value="Export animal Info" />
+					 </form>
 					  
 			</div>
 			<div id="right_content" class="centertext">	
@@ -774,13 +563,13 @@ function submitForm()
 			<th>Line Filter:</th>
 			<th>Gender Filter:</th>
 			<th>Source Cage Category:</th>
-			<th>Move Type:</th>
+			<th>Card Color Filter:</th>
 			</tr>
 			<tr>
 			<td><?php echo $line_listbox; ?></td>
 			<td><?php echo $gender_listbox; ?></td>
 			<td><?php echo $source_category_listbox; ?></td>
-			<td>x</td>
+			<td><?php echo $colorfilt_listbox; ?></td>
 			</tr>
 			</table>
 			
@@ -807,10 +596,12 @@ function submitForm()
 				<td colspan=2><?php echo $cage_listbox; ?></td>
 			</tr>
 			</table>
+<INPUT type="submit" id="capturedata" name="capturedata" value="capture data/update">
+<br/>
    <textarea  name='contactinfo1' id='contactinfo1' ><?php echo $contact1; ?></textarea>
    <textarea  name='contactinfo2' id='contactinfo2' ><?php echo $contact2; ?></textarea>
  </form>
- <form id="cagecard_gen" action="http://chriswardlab.com/pages/cagecard_gen3.php" method="POST" target="_blank">
+ <form id="cagecard_gen" action="../php/cagecard_gen5rs.php" method="POST" target="_blank">
 
   <p>
    <input type='hidden' name='cages' id='cages' value='<?php echo serialize($cages); ?>' />
@@ -820,12 +611,29 @@ function submitForm()
 			<input type=hidden id='contactinfo2' name='contactinfo2' value='<?php echo $contact2; ?>' />
 
   </p>
-   <INPUT type="submit" id="submit_cages" name="submit_cages" value="Generate Cards">
+   <INPUT type="submit" id="submit_cages" name="submit_cages" value="Generate Cards (RS)">
 
 
 
 </form>
-<?php echo $temprow; ?>
+
+ <form id="cagecard_gen" action="../php/cagecard_gen5rs-blindgeno.php" method="POST" target="_blank">
+
+  <p>
+   <input type='hidden' name='cages' id='cages' value='<?php echo serialize($cages); ?>' />
+  </p>
+  <p>
+			<input type=hidden id='contactinfo1' name='contactinfo1' value='<?php echo $contact1; ?>' />
+			<input type=hidden id='contactinfo2' name='contactinfo2' value='<?php echo $contact2; ?>' />
+
+  </p>
+   <INPUT type="submit" id="submit_cages" name="submit_cages" value="Generate Genotype Blind Cards">
+
+
+
+</form>
+
+
 			</div>
 
 			

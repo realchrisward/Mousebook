@@ -29,19 +29,26 @@
 	if ($config['debug_mode']=='True'){
 		error_reporting(E_ALL);
 		ini_set('display_errors', 1);
-	}
+	}	
 	//setup sql variables
 	$ubname=$config['server_user'];
 	$ubpass=$config['server_pass'];	
 
 		//query userbook for accessable databases
-		// [mb_auth_patched]
-		require_once __DIR__ . '/../includes/auth.php';
-		$_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
-		if ($_mb_conn) {
-			[$host, $accessun, $accesspw] = $_mb_conn;
+		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl from ".
+		"(userpass join userdbaccess on userpass.user_idno=userdbaccess.user_idno) ".
+		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
+		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
+	
+		$conn=new mysqli($host,$ubname,$ubpass,"userbook");
+		$results=$conn->query($sql);
+		$conn->close();
+		while($row=mysqli_fetch_array($results)){
+			$accessun=$row['db_accessun'];
+			$accesspw=$row['db_accesspw'];
+			$host=$row['db_host'];
+		
 		}
-
 		
 	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
 	//check connection
@@ -55,15 +62,35 @@ echo '<h2 class="centertext"> please connect to the database </h2>';
 		}
 
 
+//*****purge old animal number reservations*****
+$sqlpurge="LOCK table `".$dbname."`.`reservations_animals` WRITE; DELETE FROM `".$dbname."`.`reservations_animals` WHERE `user`='".$xusername."'; UNLOCK tables;";
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+if($conn->multi_query($sqlpurge)===TRUE){
+	//flush the mysql submission
+while (mysqli_next_result($conn));
+$sqlstatus='-autonumber reservations cleared'.'...';}
+else {
+$sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
+$sqlreport.=$sqlstatus;
+$conn->close();
+
+
+
 
 //*****generate temp list of animals*****
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 if (isset($_POST['generate_animals'])){
+
+//release last reservation
+
+//get line
+$line_selection=$_POST['line_selection'];
 //get max animalautono
-$xmaxanimalautono=$_POST['maxanimalautono'];
+////$xmaxanimalautono=$_POST['maxanimalautono'];
 //get max animalinline
-$xmaxanimalinline=$_POST['maxanimalinline'];
+////$xmaxanimalinline=$_POST['maxanimalinline'];
 //get line,dob,comments,source,parents
 $xline_selection=$_POST['line_selection'];
 $xdob=$_POST['dob'];
@@ -76,6 +103,68 @@ $xnumberfemale=$_POST['numberfemale'];
 $xnumberunknown=$_POST['numberunknown'];
 $xtotalnumber=$xnumbermale+$xnumberfemale+$xnumberunknown;
 
+//maxanimalautono
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT max(animalautono) as maxanimalautono FROM `".$dbname."`.`table_animals`;";
+$results=$conn->query($sqltext);
+//loop the result set and prepare table
+while($row=mysqli_fetch_array($results)) {
+$maxanimalautono1=$row['maxanimalautono'];
+}
+//maxanimalautono - reserved
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT max(maxautono) as maxanimalautono FROM `".$dbname."`.`reservations_animals`;";
+$results=$conn->query($sqltext);
+//loop the result set and prepare table
+while($row=mysqli_fetch_array($results)) {
+$maxanimalautono2=$row['maxanimalautono'];
+}
+ 
+$xmaxanimalautono=max($maxanimalautono1,$maxanimalautono2);
+
+//maxanimalinline
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT max(cast(`idno` as unsigned)) as maxanimalinline FROM `".$dbname."`.`table_animals` where `line`='".$line_selection."' ;";
+$results=$conn->query($sqltext);
+//loop the result set and prepare table
+while($row=mysqli_fetch_array($results)) {
+$maxanimalinline1=$row['maxanimalinline'];
+}
+if ($maxanimalinline1==""){
+$maxanimalinline1=0;}
+
+//maxanimalinline - reserved
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT max(maxidno) as maxanimalinline FROM `".$dbname."`.`reservations_animals` where `line`='".$line_selection."';";
+$results=$conn->query($sqltext);
+//loop the result set and prepare table
+while($row=mysqli_fetch_array($results)) {
+$maxanimalinline2=$row['maxanimalinline'];
+}
+if ($maxanimalinline2==""){
+$maxanimalinline2=0;}
+
+$xmaxanimalinline=max($maxanimalinline1,$maxanimalinline2);
+ 
+//deposit user, xmaxanimalautono, line, maxanimalinline into reservation list
+$sqlres="LOCK table `".$dbname."`.`reservations_animals` WRITE; INSERT INTO `".$dbname."`.`reservations_animals` (`user`, `line`, `maxautono`, `maxidno`, `timestamp`) "
+."VALUES ('".$xusername."', '".$xline_selection."', '".($xmaxanimalautono+$xtotalnumber)."', '".($xmaxanimalinline+$xtotalnumber)."', now())"
+." ON DUPLICATE KEY UPDATE `line`='".$xline_selection."', `maxautono`='".($xmaxanimalautono+$xtotalnumber)."', "
+."`maxidno`='".($xmaxanimalinline+$xtotalnumber)."', `timestamp`=now(); UNLOCK tables;";
+//echo $sqlres;
+if($conn->multi_query($sqlres)===TRUE){
+	//flush the mysql submission
+while (mysqli_next_result($conn));
+$sqlstatus='-successful'.'...'.$sqltext;}
+else {
+$sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
+$sqlreport.=$sqlstatus;
+$conn->close();
+/**/
+
+
+
 if ($xsource_selection==="FOUNDER"){
 $xcurrcage="FOUNDER".'-'.$xline_selection.' - '.$xdob;
 } elseif($xsource_selection==""){
@@ -84,7 +173,9 @@ $xcurrcage="FOUNDER".'-'.$xline_selection.' - '.$xdob;
 $xcurrcage="Litter-".$xsource_selection.' - '.$xdob;
 }
 
+
 //populate table
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 $xautonos=range($xmaxanimalautono+1,$xmaxanimalautono+$xtotalnumber,1);
 $autonoskv=array_combine($xautonos,$xautonos);
@@ -358,6 +449,8 @@ $sqltext.=$sqltext_table_cages.$sqltext_table_animals.$sqltext_data_comments.$sq
 }
 $sqlreport='Addition of new animals ';
 if($conn->multi_query($sqltext)===TRUE){
+	//flush the mysql submission
+while (mysqli_next_result($conn));
 $sqlstatus='-successful'.'...'.$sqltext;}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
@@ -384,7 +477,8 @@ $numberunknown=$_POST['numberunknown'];
 
 //line list
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
-$sqltext="call get_lines();";
+//$sqltext="call get_lines();";
+$sqltext="Select * from `".$dbname."`.`table_lines` order by `line`;";
 $results=$conn->query($sqltext);
 //set up static portion of table
 $line_listbox= '<select id="line_selection" name="line_selection" size=1 class="mediumlistbox" onchange="submitForm()">';
@@ -394,6 +488,34 @@ while($row=mysqli_fetch_array($results)) {
 //get results matched to current line - used for additional fields
 if($row['line']===$line_selection){
 $line_listbox .= '<option value="'.$row["line"].'" selected>'.$row["line"].'</option>';
+$line_description=$row['line_description'];
+$line_cardcolor=$row['card_color'];
+$line_stripecolor=$row['color_assignment'];
+$line_currentplan=$row['CurrentPlan'];
+$line_HoldingGeno=$row['HoldingGeno'];
+$line_HoldingSex=$row['HoldingSex'];
+$line_ExpGeno=$row['ExperimentGeno'];
+$line_ExpSex=$row['ExperimentSex'];
+$line_Primary=$row['PrimaryContact'];
+$line_Maintain=$row['MaintenanceContact'];
+$line_UpdateDate=$row['UpdateDate'];
+$line_UpdatedBy=$row['UpdatedBy'];
+$line_Project=$row['ProjectGroup'];
+
+$line_tip="<table><tr><th colspan=8>".$line_selection.":"
+."</th></tr><tr >"
+."<th>CARD:</th><td>".$line_cardcolor
+."</td><th>STRIPE:</th><td>".$line_stripecolor
+."</td><th>CONTACT:</th><td>".$line_Primary
+."</td><th>Maintainer:</th><td>".$line_Maintain."</td></tr>"
+."<tr><th colspan=8>Instructions:</th></tr><tr><td colspan=8>".$line_currentplan."</td></tr>"
+."<tr><th>Holding Cage-Genotypes:</th><td colspan=7>".$line_HoldingGeno."</td></tr>"
+."<tr><th>Holding Cage-------Sex:</th><td colspan=7>".$line_HoldingSex."</td></tr>"
+."<tr><th>Exp Cage-Genotypes:</th><td colspan=7>".$line_ExpGeno."</td></tr>"
+."<tr><th>Exp Cage-------Sex:</th><td colspan=7>".$line_ExpSex."</td></tr>"
+."<tr><td colspan=8>  -".$line_UpdatedBy."     ".$line_UpdateDate."</td></tr></table>";
+/**/
+
 } 
 //get results for additional lines
 else {
@@ -410,21 +532,43 @@ $sqltext="SELECT max(animalautono) as maxanimalautono FROM `".$dbname."`.`table_
 $results=$conn->query($sqltext);
 //loop the result set and prepare table
 while($row=mysqli_fetch_array($results)) {
-$maxanimalautono=$row['maxanimalautono'];
+$maxanimalautono1=$row['maxanimalautono'];
+}
+//maxanimalautono - reserved
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT max(maxautono) as maxanimalautono FROM `".$dbname."`.`reservations_animals`;";
+$results=$conn->query($sqltext);
+//loop the result set and prepare table
+while($row=mysqli_fetch_array($results)) {
+$maxanimalautono2=$row['maxanimalautono'];
 }
  
+$maxanimalautono=max($maxanimalautono1,$maxanimalautono2);
+
 //maxanimalinline
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT max(cast(`idno` as unsigned)) as maxanimalinline FROM `".$dbname."`.`table_animals` where `line`='".$line_selection."' ;";
 $results=$conn->query($sqltext);
 //loop the result set and prepare table
 while($row=mysqli_fetch_array($results)) {
-$maxanimalinline=$row['maxanimalinline'];
+$maxanimalinline1=$row['maxanimalinline'];
 }
-if ($maxanimalinline==""){
-$maxanimalinline=0;}
+if ($maxanimalinline1==""){
+$maxanimalinline1=0;}
 
-//echo $row['maxanimalinline'];
+//maxanimalinline - reserved
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$sqltext="SELECT max(maxidno) as maxanimalinline FROM `".$dbname."`.`reservations_animals` where `line`='".$line_selection."';";
+$results=$conn->query($sqltext);
+//loop the result set and prepare table
+while($row=mysqli_fetch_array($results)) {
+$maxanimalinline2=$row['maxanimalinline'];
+}
+if ($maxanimalinline2==""){
+$maxanimalinline2=0;}
+
+$maxanimalinline=max($maxanimalinline1,$maxanimalinline2);
+
 //gender_listbox
 $gender_options=array('M','F','unk');
 $gender_listbox='<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
@@ -442,7 +586,7 @@ $gender_listbox.='</select>';
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT `currentcage`, `cagecontents`
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
-where left(`currentcage`,1)='M' and (`line`='".$line_selection."' or `lineassignment`='".$line_selection."') 
+where dod is null and left(`currentcage`,1)='M' and (`line`='".$line_selection."' or `lineassignment`='".$line_selection."') 
 GROUP BY `currentcage`;";
 $results=$conn->query($sqltext);
 $source_listbox='<select id="source_selection" name="source_selection" size=10 class="largelistbox2" onchange="submitForm()">';
@@ -469,13 +613,15 @@ $conn->close();
 //mating cage contents current
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
-$sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
+$sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' order by gender desc, line, idno ;";
 $results=$conn->query($sqltext);
 $animals_results=$results;
+$curparents="";
 $animals_listbox='<select id="animals_selection" name="animals_selection" size=5 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
 $animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].'</option>';
+$curparents.=$row['line']."-".$row['idno']." (".$row['gender']."),";
 }
 //close the table
 $animals_listbox.='</select>';
@@ -490,8 +636,8 @@ $results=$conn->query($sqltext);
 $animals_results=$results;
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-$animals_string=$source_selection.' | '.$row['cagecontents'];
-$animals_string_display=$source_selection.' <br> '.$row['cagecontents'];
+$animals_string=$source_selection.' | '.$row['cagecontents'].' | ['.$curparents.']';
+$animals_string_display=$source_selection.' <br> '.$row['cagecontents'].' <br>['.$curparents.']';
 }
 //close the table
 $conn->close();
@@ -500,7 +646,7 @@ $conn->close();
 ?>	
 <head>
 			<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
-			<title>Add animals (inc stopped mats)- <?php echo $dbname; ?></title>
+			<title>Add animals - <?php echo $dbname; ?></title>
 			<link href="../mousebook.css" rel="stylesheet" type="text/css" />
 
 	
@@ -512,7 +658,7 @@ $conn->close();
 					 <form id="loginbox" action="" method="post">
 					 <h2 class="centervert"
 					 style="position:absolute;top:0px;left:75px;"> 
-					  -Add animals (inc stopped)-
+					  -Add animals-
 					 </h2>
 					 
 					 <h1 class="centervert"
@@ -650,6 +796,14 @@ $conn->close();
 					 <input type=submit class="button" name=""
 					  value="View animals" />
 					 </form>
+					 <form action="../php/add_animals_includestoppedmatings.php" method=post target="_blank">
+					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
+					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="button_login" value="connect" />
+					 <input type=submit class="button" name=""
+					  value="Add animals - Include Stopped Matings" />
+					 </form>
 					  
 			</div>
 
@@ -720,7 +874,7 @@ function submitForm()
 			<input type=submit id="generate_animals" name="generate_animals" value="generate animals">
 			<br><br>
 			<?php echo $testtable; ?>
-			
+			<?php echo $line_tip; ?>
 			<?php echo $sqlreport; ?>
 			
 			<input type=hidden id="minauto" name="minauto" value="<?php echo $minauto; ?>">
