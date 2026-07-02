@@ -55,13 +55,13 @@ if ($conn->connect_error) {
 
 
 //posted variables
-$line_selection = $_POST['line_selection'];
-$source_selection = $_POST['source_selection'];
-$bulkcomments = $_POST['bulkcomments'];
-$dob = $_POST['dob'];
-$numbermale = $_POST['numbermale'];
-$numberfemale = $_POST['numberfemale'];
-$numberunknown = $_POST['numberunknown'];
+$line_selection = $_POST['line_selection'] ?? '';
+$source_selection = $_POST['source_selection'] ?? '';
+$bulkcomments = $_POST['bulkcomments'] ?? '';
+$dob = $_POST['dob'] ?? '';
+$numbermale = $_POST['numbermale'] ?? '';
+$numberfemale = $_POST['numberfemale'] ?? '';
+$numberunknown = $_POST['numberunknown'] ?? '';
 
 $testtable = "";
 
@@ -166,7 +166,7 @@ $litterlog = ""
 	. "<table><tr><th>line</th><th>mating cage</th><th>dob</th><th>#F</th><th>#M</th><th>#U</th><th>CLIP DATE</th><th>actual clip</th><th>WEAN DATE</th><th>actual wean</th><th>JUST SAC (y/n)</th><th>Manage animals</th><th>Comments</th></tr>";
 
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while ($results && ($row = mysqli_fetch_array($results))) {
 	//catch results of each row
 
 	$ManageClip = ""
@@ -249,7 +249,7 @@ $results = $conn->query($sqltext);
 //set up static portion of table
 $line_listbox = '<select id="line_selection" name="line_selection" size=1 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while ($results && ($row = mysqli_fetch_array($results))) {
 	//catch results of each row
 	//get results matched to current line - used for additional fields
 	if ($row['line'] === $line_selection) {
@@ -313,7 +313,7 @@ GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
 $source_listbox = '<select id="source_selection" name="source_selection" size=10 class="largelistbox2" onchange="submitForm()">';
 
-while ($row = mysqli_fetch_array($results)) {
+while ($results && ($row = mysqli_fetch_array($results))) {
 	$cage[] = $row['currentcage'];
 	$cgcont[$row['currentcage']] = $row['cagecontents'];
 }
@@ -339,7 +339,7 @@ $results = $conn->query($sqltext);
 $animals_results = $results;
 $animals_listbox = '<select id="animals_selection" name="animals_selection" size=5 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while ($results && ($row = mysqli_fetch_array($results))) {
 	$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . '</option>';
 }
 //close the table
@@ -354,7 +354,7 @@ $sqltext = "SELECT table_cages.cagecontents FROM `table_cages` where `cageid`='"
 $results = $conn->query($sqltext);
 $animals_results = $results;
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while ($results && ($row = mysqli_fetch_array($results))) {
 	$animals_string = $source_selection . ' | ' . $row['cagecontents'];
 	$animals_string_display = $source_selection . ' <br> ' . $row['cagecontents'];
 }
