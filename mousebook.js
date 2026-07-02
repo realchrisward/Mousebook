@@ -16,11 +16,24 @@
 (function () {
   'use strict';
 
-  /* ── Tabler icons ────────────────────────────────── */
-  if (!document.querySelector('link[href*="tabler-icons"]')) {
+  /* ── Tabler icons — load from CDN with fallback ─────
+     If the CDN is unreachable (internal network / VPN),
+     icons degrade gracefully to text labels only.
+     The rest of the JS runs regardless.              */
+  function loadTablerIcons(callback) {
+    if (document.querySelector('link[href*="tabler-icons"]')) {
+      callback(); return;
+    }
     var lnk = document.createElement('link');
-    lnk.rel = 'stylesheet';
-    lnk.href = 'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css';
+    lnk.rel  = 'stylesheet';
+    lnk.href = 'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.33.0/dist/tabler-icons.min.css';
+
+    var done = false;
+    function finish() { if (!done) { done = true; callback(); } }
+
+    lnk.onload  = finish;
+    lnk.onerror = finish;                    // CDN failed — continue without icons
+    setTimeout(finish, 3000);                // 3 s timeout — continue either way
     document.head.appendChild(lnk);
   }
 
@@ -322,9 +335,14 @@
   /* ── Boot ────────────────────────────────────────── */
   document.addEventListener('DOMContentLoaded', function () {
     setDefaultSidebarState();
-    enhanceHeader();
-    enhanceNav();
-    enhanceLoginPage();
+    // Load icons then run all enhancements.
+    // If CDN unreachable, enhancements still run after 3s timeout —
+    // nav buttons show text labels only (no icons).
+    loadTablerIcons(function () {
+      enhanceHeader();
+      enhanceNav();
+      enhanceLoginPage();
+    });
   });
 
 })();

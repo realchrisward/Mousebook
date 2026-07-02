@@ -57,6 +57,11 @@ body:has(#left_navmenu.collapsed) {
   top: 0;
   z-index: 100;
   width: 100%;
+  /* position:sticky acts as containing block for absolute children
+     in modern browsers, but we also set overflow:hidden as a
+     belt-and-suspenders to keep old absolutely-positioned header
+     elements (h1, h2, login table) contained before JS restructures them */
+  contain: layout style;
 }
 /* Inner flex row built by mousebook.js */
 .mb-header-inner {
@@ -256,9 +261,10 @@ body:has(#left_navmenu.collapsed) {
 #left_navmenu button[type=submit] svg { flex-shrink: 0; }
 .mb-nav-text { overflow: hidden; text-overflow: ellipsis; }
 
-/* Tooltip in collapsed state */
+/* Tooltip in collapsed state — !important ensures display:none wins
+   against any cascade conflicts when nav is expanded */
 .mb-nav-tooltip {
-  display: none;
+  display: none !important;
   position: absolute;
   left: calc(var(--mb-nav-min) + 6px);
   top: 50%;
@@ -273,9 +279,9 @@ body:has(#left_navmenu.collapsed) {
   pointer-events: none;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
 }
-.mb-nav-tooltip.visible { display: block; }
-#left_navmenu.collapsed button[type=submit] { justify-content: center; padding: 8px 0; }
-#left_navmenu.collapsed button[type=submit]:hover .mb-nav-tooltip { display: block; }
+/* Only show tooltip when explicitly activated */
+.mb-nav-tooltip.visible { display: block !important; }
+#left_navmenu.collapsed button[type=submit]:hover .mb-nav-tooltip { display: block !important; }
 
 /* --- Content area ---------------------------------- */
 #right_content {
