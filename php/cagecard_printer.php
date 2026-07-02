@@ -193,6 +193,7 @@ CagesForPrinting.cageid is null " . $sql_where_text . " GROUP BY `currentcage`;"
 //echo $sqltext;
 $results = $conn->query($sqltext);
 $sourcecage_listbox = '<select id="cage_selection" name="cage_selection[]" size=14 class="largelistbox" multiple="multiple" >';
+$cage_batchlist = array();
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['currentcage'] === $cage_selection) {
 		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
@@ -210,7 +211,7 @@ $cage_batchlist = '("' . implode('"),("', $cage_batchlist) . '")';
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //Add cage to list
 if (isset($_POST['addcage_single'])) {
-	$cage_selection = $_POST['cage_selection'];
+	$cage_selection = $_POST['cage_selection'] ?? array();
 	$cageselection = '("' . implode('"),("', $cage_selection) . '")';
 	$sqlaction = 'add cage:' . $cageselection;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`CagesForPrinting` (`cageid`) VALUES " . $cageselection . ";";
@@ -224,7 +225,7 @@ if (isset($_POST['addcage_single'])) {
 
 //Remove cage individually
 if (isset($_POST['remcage_single'])) {
-	$cagelist_selection = $_POST['cagelist_selection'];
+	$cagelist_selection = $_POST['cagelist_selection'] ?? array();
 	$cagelistselection = '"' . implode('","', $cagelist_selection) . '"';
 	$sqlaction = 'rem cage:' . $cagelistselection;
 	$sqltext = "DELETE FROM `" . $dbname . "`.`CagesForPrinting` WHERE `cageid` IN (" . $cagelistselection . ");";
