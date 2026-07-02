@@ -142,22 +142,28 @@ VALUES
 -- --------------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS `userpass` (
-  `user_idno`  bigint(20)  NOT NULL AUTO_INCREMENT,
-  `user_name`  varchar(45) NOT NULL,
-  `user_pass`  varchar(45) NOT NULL,
-  `user_salt`  varchar(45) NOT NULL,
+  `user_idno`  bigint(20)   NOT NULL AUTO_INCREMENT,
+  `user_name`  varchar(45)  NOT NULL,
+  `user_pass`  varchar(255) NOT NULL,  -- bcrypt = 60 chars; varchar(255) allows future upgrades
+  `user_salt`  varchar(255) NOT NULL DEFAULT '',  -- unused: bcrypt embeds its own salt
   PRIMARY KEY (`user_idno`),
   UNIQUE KEY `user_idno_UNIQUE` (`user_idno`),
   UNIQUE KEY `username_UNIQUE` (`user_name`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1 AUTO_INCREMENT=2;
 
--- Default admin account. CHANGE THE PASSWORD before use.
--- Add more rows for additional users (each needs a row in
--- userdbaccess too to grant them database access).
-
-INSERT IGNORE INTO `userpass` (`user_idno`, `user_name`, `user_pass`, `user_salt`)
-VALUES
-  (1, 'admin', 'CHANGE_THIS_PASSWORD', '');
+-- No plain-text passwords are seeded here.
+-- Passwords must be hashed with PHP's password_hash() before insertion.
+--
+-- setup.sh handles this automatically: it prompts for a username and
+-- password, hashes with bcrypt, and inserts the hash.
+--
+-- To add a user manually, use migrate_passwords.php or run:
+--   php -r "
+--     \$hash = password_hash('YOUR_PASSWORD', PASSWORD_BCRYPT);
+--     echo \"INSERT INTO userpass (user_name, user_pass, user_salt) \"
+--        . \"VALUES ('YOUR_USER', '\$hash', '');\n\";
+--   "
+-- then run the printed INSERT statement in MySQL.
 
 -- Example: add a second user
 -- INSERT INTO `userpass` (`user_name`, `user_pass`, `user_salt`)

@@ -230,12 +230,24 @@ import_schema "${ANIMALBOOK_DB}" "$SQL_DIR/default_animalbook.sql" "Animalbook"
 if [ -f "$SQL_DIR/mousebook_migration_v1.sql" ]; then
     info "Running v1 migration (adds missing columns and tables — safe to re-run)..."
     if $MYSQL_CMD "${ANIMALBOOK_DB}" < "$SQL_DIR/mousebook_migration_v1.sql" 2>&1 | grep -v "Warning"; then
-        success "Migration complete."
+        success "Migration v1 complete."
     else
-        warn "Migration completed with warnings — check output above."
+        warn "Migration v1 completed with warnings — check output above."
     fi
 else
-    warn "mousebook_migration_v1.sql not found — skipping. Run it manually against your animalbook database."
+    warn "mousebook_migration_v1.sql not found — skipping."
+fi
+
+# v2 migration — widens user_pass to varchar(255) for bcrypt hashes
+if [ -f "$SQL_DIR/mousebook_migration_v2.sql" ]; then
+    info "Running v2 migration (widens user_pass column for bcrypt — safe to re-run)..."
+    if $MYSQL_CMD "${USERBOOK_DB}" < "$SQL_DIR/mousebook_migration_v2.sql" 2>&1 | grep -v "Warning"; then
+        success "Migration v2 complete."
+    else
+        warn "Migration v2 completed with warnings — check output above."
+    fi
+else
+    warn "mousebook_migration_v2.sql not found — skipping. Run it manually against your userbook database."
 fi
 
 echo ""
@@ -244,8 +256,29 @@ echo ""
 
 info "Creating MySQL user '${UB_USER}'@'${MYSQL_HOST}'..."
 
-# Write SQL to a temp file so the password is never exposed on the command line
-# and heredoc quoting issues with special characters can't break the statement.
+# ── Show password policy so the user knows what's required ─
+POLICY=$($MYSQL_CMD -sN \
+    -e "SELECT VALUE FROM performance_schema.global_variables \
+        WHERE VARIABLE_NAME='validate_password.policy';" 2>/dev/null \
+    || $MYSQL_CMD -sN \
+    -e "SELECT @@validate_password_policy;" 2>/dev/null \
+    || echo "unknown")
+MIN_LEN=$($MYSQL_CMD -sN \
+    -e "SELECT VALUE FROM performance_schema.global_variables \
+        WHERE VARIABLE_NAME='validate_password.length';" 2>/dev/null \
+    || $MYSQL_CMD -sN \
+    -e "SELECT @@validate_password_length;" 2>/dev/null \
+    || echo "8")
+
+if [ "$POLICY" != "unknown" ]; then
+    info "MySQL password policy: level=${POLICY}, min_length=${MIN_LEN}"
+    if [ "$POLICY" = "MEDIUM" ] || [ "$POLICY" = "STRONG" ]; then
+        info "Your password must contain: uppercase, lowercase, number, and special character."
+    fi
+fi
+
+# ── Write SQL to a temp file ────────────────────────────────
+# Avoids heredoc shell-expansion issues with special characters in passwords.
 MYSQL_SETUP_SQL=$(mktemp /tmp/mousebook_setup_XXXXXX.sql)
 chmod 600 "$MYSQL_SETUP_SQL"
 
@@ -255,21 +288,49 @@ GRANT SELECT ON \`${USERBOOK_DB}\`.* TO '${UB_USER}'@'${MYSQL_HOST}';
 FLUSH PRIVILEGES;
 SQLEOF
 
-if $MYSQL_CMD < "$MYSQL_SETUP_SQL" 2>&1; then
-    success "MySQL user '${UB_USER}'@'${MYSQL_HOST}' created with SELECT on ${USERBOOK_DB}."
-else
-    warn "MySQL user creation may have failed — see error above."
-    warn "Run this manually to fix it:"
-    warn "  mysql -u ${MYSQL_ADMIN} -p"
-    warn "  CREATE USER IF NOT EXISTS '${UB_USER}'@'${MYSQL_HOST}' IDENTIFIED BY 'YOUR_PASS';"
-    warn "  GRANT SELECT ON \`${USERBOOK_DB}\`.* TO '${UB_USER}'@'${MYSQL_HOST}';"
-    warn "  FLUSH PRIVILEGES;"
-fi
+CREATE_OUTPUT=$($MYSQL_CMD < "$MYSQL_SETUP_SQL" 2>&1)
+CREATE_EXIT=$?
 
 # Clean up the temp SQL file immediately — it contains the password
 rm -f "$MYSQL_SETUP_SQL"
 
-# Verify the user can actually connect
+if [ $CREATE_EXIT -eq 0 ]; then
+    success "MySQL user '${UB_USER}'@'${MYSQL_HOST}' created with SELECT on ${USERBOOK_DB}."
+else
+    echo "$CREATE_OUTPUT"
+    warn "MySQL user creation failed — see error above."
+
+    # Detect password policy rejection specifically
+    if echo "$CREATE_OUTPUT" | grep -q "1819\|password.*policy\|validate_password"; then
+        echo ""
+        echo -e "${YELLOW}  PASSWORD POLICY ERROR detected.${NC}"
+        echo -e "  Your MySQL server requires a stronger password."
+        echo -e "  Current policy: level=${POLICY}, min_length=${MIN_LEN}"
+        echo ""
+        echo -e "  To check full requirements:"
+        echo -e "    mysql -u root -p -e \"SHOW VARIABLES LIKE 'validate_password%';\""
+        echo ""
+        echo -e "  A MEDIUM-policy compliant password looks like: ${BOLD}MyColony#2024!${NC}"
+        echo -e "  (uppercase + lowercase + number + special character, 8+ chars)"
+        echo ""
+        echo -e "  Re-run setup.sh with a stronger password, or create the user manually:"
+        echo -e "    mysql -u ${MYSQL_ADMIN} -p"
+        echo -e "    CREATE USER '${UB_USER}'@'${MYSQL_HOST}' IDENTIFIED BY 'StrongPass#1';"
+        echo -e "    GRANT SELECT ON \`${USERBOOK_DB}\`.* TO '${UB_USER}'@'${MYSQL_HOST}';"
+        echo -e "    FLUSH PRIVILEGES;"
+        echo ""
+        echo -e "  Then update config.php:"
+        echo -e "    'server_pass' => 'StrongPass#1',"
+    else
+        warn "To fix manually:"
+        warn "  mysql -u ${MYSQL_ADMIN} -p"
+        warn "  CREATE USER '${UB_USER}'@'${MYSQL_HOST}' IDENTIFIED BY 'YOUR_PASS';"
+        warn "  GRANT SELECT ON \`${USERBOOK_DB}\`.* TO '${UB_USER}'@'${MYSQL_HOST}';"
+        warn "  FLUSH PRIVILEGES;"
+    fi
+fi
+
+# ── Verify the user can actually connect ───────────────────
 info "Verifying connection as '${UB_USER}'..."
 if mysql -h"${MYSQL_HOST}" -P"${MYSQL_PORT}" \
          -u"${UB_USER}" -p"${UB_PASS}" \
@@ -277,8 +338,9 @@ if mysql -h"${MYSQL_HOST}" -P"${MYSQL_PORT}" \
          -e "SELECT COUNT(*) FROM userpass;" > /dev/null 2>&1; then
     success "Connection verified — '${UB_USER}' can connect to ${USERBOOK_DB}."
 else
-    warn "Could not verify connection as '${UB_USER}'. Check password and grants."
-    warn "Test manually: mysql -u ${UB_USER} -p ${USERBOOK_DB} -e 'SELECT 1;'"
+    warn "Could not verify connection as '${UB_USER}'."
+    warn "If user creation failed above, fix that first then test with:"
+    warn "  mysql -u ${UB_USER} -p ${USERBOOK_DB} -e 'SELECT 1;'"
 fi
 
 echo ""
@@ -326,6 +388,83 @@ HTEOF
     success ".htaccess created to block direct access to config.php."
 fi
 
+echo ""
+echo -e "${BOLD}--- Step 8: Create admin user and colony database entry ---${NC}"
+echo ""
+
+# ── Collect admin user details ─────────────────────────────
+read -p "Admin username for Mousebook [admin]: " ADMIN_USER
+ADMIN_USER="${ADMIN_USER:-admin}"
+
+while true; do
+    read -s -p "Admin password (will be hashed with bcrypt): " ADMIN_PASS; echo ""
+    read -s -p "Confirm password: " ADMIN_PASS2; echo ""
+    [ "$ADMIN_PASS" = "$ADMIN_PASS2" ] && break
+    warn "Passwords do not match — try again."
+done
+
+# ── Hash the password with PHP (never stored plain text) ───
+command -v php >/dev/null 2>&1 || error "php CLI not found — needed to hash the password."
+ADMIN_HASH=$(php -r "echo password_hash('${ADMIN_PASS}', PASSWORD_BCRYPT);")
+[ -n "$ADMIN_HASH" ] || error "password_hash() failed — check PHP installation."
+unset ADMIN_PASS ADMIN_PASS2
+success "Password hashed with bcrypt."
+
+# ── Collect colony database details ────────────────────────
+echo ""
+read -p "Colony database name [${ANIMALBOOK_DB}]: " COLONY_DB
+COLONY_DB="${COLONY_DB:-$ANIMALBOOK_DB}"
+read -p "MySQL user for colony DB (the app read/write account): " COLONY_USER
+read -s -p "MySQL password for ${COLONY_USER}: " COLONY_PASS; echo ""
+read -p "Full URL to Mousebook index.php [http://localhost/${APP_SUBDIR}/index.php]: " COLONY_URL
+COLONY_URL="${COLONY_URL:-http://localhost/${APP_SUBDIR}/index.php}"
+read -p "Subject plural label (e.g. mice, rats) [mice]: " SUBJECT_PLURAL
+SUBJECT_PLURAL="${SUBJECT_PLURAL:-mice}"
+read -p "Subject singular label (e.g. mouse, rat) [mouse]: " SUBJECT_SINGLE
+SUBJECT_SINGLE="${SUBJECT_SINGLE:-mouse}"
+
+# ── Write and execute setup SQL ────────────────────────────
+ADMIN_SQL=$(mktemp /tmp/mousebook_admin_XXXXXX.sql)
+chmod 600 "$ADMIN_SQL"
+
+cat > "$ADMIN_SQL" << SQLEOF
+-- Insert admin user with bcrypt-hashed password
+INSERT IGNORE INTO \`${USERBOOK_DB}\`.\`userpass\`
+    (\`user_name\`, \`user_pass\`, \`user_salt\`)
+VALUES
+    ('${ADMIN_USER}', '${ADMIN_HASH}', '');
+
+-- Register colony database
+INSERT IGNORE INTO \`${USERBOOK_DB}\`.\`dbaccess\`
+    (\`db_name\`, \`db_accessun\`, \`db_accesspw\`,
+     \`db_formurl\`, \`db_host\`,
+     \`db_subject_plural\`, \`db_subject_single\`)
+VALUES
+    ('${COLONY_DB}', '${COLONY_USER}', '${COLONY_PASS}',
+     '${COLONY_URL}', '${MYSQL_HOST}',
+     '${SUBJECT_PLURAL}', '${SUBJECT_SINGLE}');
+
+-- Grant admin access to colony database
+INSERT IGNORE INTO \`${USERBOOK_DB}\`.\`userdbaccess\`
+    (\`user_idno\`, \`db_name\`, \`db_accesstier\`)
+SELECT user_idno, '${COLONY_DB}', '1'
+FROM \`${USERBOOK_DB}\`.\`userpass\`
+WHERE user_name = '${ADMIN_USER}'
+LIMIT 1;
+SQLEOF
+
+if $MYSQL_CMD < "$ADMIN_SQL" 2>&1 | grep -v "Warning"; then
+    success "Admin user '${ADMIN_USER}' created with bcrypt password."
+    success "Colony database '${COLONY_DB}' registered in userbook."
+    success "Access granted: ${ADMIN_USER} → ${COLONY_DB}."
+else
+    warn "Admin setup may have failed — check output above."
+    warn "You can re-run this step manually using the SQL in ${ADMIN_SQL}"
+fi
+
+rm -f "$ADMIN_SQL"
+unset COLONY_PASS
+
 # ── post-install checklist ─────────────────────────────────
 echo ""
 echo -e "${BOLD}============================================${NC}"
@@ -333,31 +472,23 @@ echo -e "${BOLD}   Setup Complete — Post-Install Checklist  ${NC}"
 echo -e "${BOLD}============================================${NC}"
 echo ""
 echo -e " ${GREEN}✔${NC}  config.php written and owned by ${CURRENT_USER}:${WEB_USER} (mode 640)"
-echo -e " ${GREEN}✔${NC}  MySQL user '${UB_USER}' created"
-echo -e " ${GREEN}✔${NC}  Schemas imported and migration applied"
+echo -e " ${GREEN}✔${NC}  MySQL read-only user '${UB_USER}' created"
+echo -e " ${GREEN}✔${NC}  Schemas imported and migrations applied"
+echo -e " ${GREEN}✔${NC}  Admin user '${ADMIN_USER}' created with bcrypt-hashed password"
+echo -e " ${GREEN}✔${NC}  Colony database '${COLONY_DB}' registered"
 echo ""
-echo -e " ${YELLOW}TODO — Manual steps required:${NC}"
+echo -e " ${YELLOW}TODO — Remaining manual steps:${NC}"
 echo ""
-echo -e "  1. ${BOLD}Add your colony database to userbook.dbaccess:${NC}"
-echo -e "     INSERT INTO \`${USERBOOK_DB}\`.\`dbaccess\`"
-echo -e "       (db_name, db_accessun, db_accesspw, db_formurl, db_host)"
-echo -e "       VALUES ('${ANIMALBOOK_DB}', 'YOUR_DB_USER', 'YOUR_DB_PASS',"
-echo -e "               'http://YOUR_SERVER/${APP_SUBDIR}/index.php', '${MYSQL_HOST}');"
-echo ""
-echo -e "  2. ${BOLD}Add your first user to userbook.userpass:${NC}"
-echo -e "     INSERT INTO \`${USERBOOK_DB}\`.\`userpass\`"
-echo -e "       (user_name, user_pass, user_salt) VALUES ('admin','your_password','');"
-echo ""
-echo -e "  3. ${BOLD}Grant that user access to your colony database:${NC}"
-echo -e "     INSERT INTO \`${USERBOOK_DB}\`.\`userdbaccess\`"
-echo -e "       (user_idno, db_name, db_accesstier) VALUES (1,'${ANIMALBOOK_DB}','1');"
-echo ""
-echo -e "  4. ${BOLD}Customise room/location options in your animalbook DB:${NC}"
+echo -e "  1. ${BOLD}Customise room/location options in your animalbook DB:${NC}"
 echo -e "     Edit list_cage_locations and list_cage_role_assignments"
-echo -e "     to match your facility. (Already seeded with defaults.)"
+echo -e "     to match your facility's rooms and workflows."
 echo ""
-echo -e "  5. ${BOLD}Set debug_mode to 'False' in config.php when ready for production.${NC}"
+echo -e "  2. ${BOLD}Apply the auth patcher to update PHP login checks:${NC}"
+echo -e "     php ${APP_DIR}/patch_auth.php --dry-run   # preview"
+echo -e "     php ${APP_DIR}/patch_auth.php             # apply"
 echo ""
-echo -e "  6. ${BOLD}Test login at:${NC}"
+echo -e "  3. ${BOLD}Set debug_mode to 'False' in config.php when ready for production.${NC}"
+echo ""
+echo -e "  4. ${BOLD}Test login at:${NC}"
 echo -e "     http://YOUR_SERVER/${APP_SUBDIR}/pages/databases.php"
 echo ""
