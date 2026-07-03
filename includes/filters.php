@@ -41,7 +41,7 @@ if (!defined('MB_CAGETYPE_OPTIONS')) {
 // Option column name in list_cage_role_assignments.
 // TODO: confirm via  DESCRIBE list_cage_role_assignments;
 if (!defined('MB_ROLE_OPTION_COL')) {
-    define('MB_ROLE_OPTION_COL', 'Role_Option');
+    define('MB_ROLE_OPTION_COL', 'roleassignment_option');
 }
 
 if (!defined('MB_GENDER_OPTIONS')) {

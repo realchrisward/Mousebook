@@ -465,12 +465,12 @@ if ($source_category_selection === "all") {
 if ($location_filter === "all" || $location_filter === "") {
 	$locf = "";
 } else {
-	$locf = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room="' . $conn->real_escape_string($location_filter) . '") and ';
+	$locf = "currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room='" . $conn->real_escape_string($location_filter) . "') and ";
 }
 if ($role_filter === "all" || $role_filter === "") {
 	$rolef = "";
 } else {
-	$rolef = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment="' . $conn->real_escape_string($role_filter) . '") and ';
+	$rolef = "currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment='" . $conn->real_escape_string($role_filter) . "') and ";
 }
 
 if ($bornbefore == "") {
