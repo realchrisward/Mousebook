@@ -41,6 +41,7 @@ $_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
 if ($_mb_conn) {
 	[$host, $accessun, $accesspw] = $_mb_conn;
 }
+require_once __DIR__ . '/../includes/filters.php';
 
 
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
@@ -394,6 +395,8 @@ $cage1_selection = $_POST['cage1_selection'];
 $cage2_selection = $_POST['cage2_selection'];
 $cage3_selection = $_POST['cage3_selection'];
 $cage4_selection = $_POST['cage4_selection'];
+$location_filter = $_POST['location_filter'] ?? 'all';
+$role_filter     = $_POST['role_filter']     ?? 'all';
 
 //gender filter
 $gender_options = array('all', 'M', 'F', 'unk');
@@ -590,8 +593,21 @@ if ($source_category_selection === "all") {
 } else {
 	$sf = 'left(`currentcage`,1)=left("' . $source_category_selection . '",1) and ';
 }
+//location + role (subquery form — no table_cages join on this page)
+$location_listbox = filter_selectbox(location_filter_options($conn), $location_filter, 'location_filter', 'submitForm()', true);
+$role_listbox     = filter_selectbox(role_filter_options($conn),     $role_filter,     'role_filter',     'submitForm()', true);
+if ($location_filter === "all" || $location_filter === "") {
+	$locf = "";
+} else {
+	$locf = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room="' . $conn->real_escape_string($location_filter) . '") and ';
+}
+if ($role_filter === "all" || $role_filter === "") {
+	$rolef = "";
+} else {
+	$rolef = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment="' . $conn->real_escape_string($role_filter) . '") and ';
+}
 
-$sql_where_text = substr($lf . $gf . $mf . $sf, 0, -4);
+$sql_where_text = substr($lf . $gf . $mf . $sf . $locf . $rolef, 0, -4);        // 594
 if (strlen($sql_where_text) > 0) {
 	$sql_where_text = ' and ' . $sql_where_text;
 }
@@ -646,7 +662,7 @@ if ($sourcecage_selection == "" or $sourcecage_selection === "all") {
 	$cf = '`currentcage`="' . $sourcecage_selection . '" and ';
 }
 
-$sql_where_text = substr($lf . $gf . $mf . $sf . $cf, 0, -4);
+$sql_where_text = substr($lf . $gf . $mf . $sf . $cf . $locf . $rolef, 0, -4);  // 649
 if (strlen($sql_where_text) > 0) {
 	$sql_where_text = ' and ' . $sql_where_text;
 }
@@ -900,12 +916,16 @@ $conn->close();
 					<th>Gender Filter:</th>
 					<th>Source Cage Category:</th>
 					<th>Move Type:</th>
+					<th>Location Filter:</th>
+					<th>Role Filter:</th>
 				</tr>
 				<tr>
 					<td><?php echo $line_listbox; ?></td>
 					<td><?php echo $gender_listbox; ?></td>
 					<td><?php echo $source_category_listbox; ?></td>
 					<td><?php echo $move_listbox; ?></td>
+					<td><?php echo $location_listbox; ?></td>
+					<td><?php echo $role_listbox; ?></td>
 				</tr>
 			</table>
 
@@ -999,7 +1019,7 @@ $conn->close();
 	<br>
 	<?php echo $sqlstatusclear; ?>
 
-<script src="../mousebook.js"></script>
+	<script src="../mousebook.js"></script>
 </body>
 
 </html>
