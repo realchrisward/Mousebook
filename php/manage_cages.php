@@ -597,14 +597,14 @@ if ($source_category_selection === "all") {
 $location_listbox = filter_selectbox(location_filter_options($conn), $location_filter, 'location_filter', 'submitForm()', true);
 $role_listbox     = filter_selectbox(role_filter_options($conn),     $role_filter,     'role_filter',     'submitForm()', true);
 if ($location_filter === "all" || $location_filter === "") {
-	$locf = "";
+	$locf = '';
 } else {
-	$locf = "currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room='" . $conn->real_escape_string($location_filter) . "') and ";
+	$locf = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room="' . $conn->real_escape_string($location_filter) . '") and ';
 }
 if ($role_filter === "all" || $role_filter === "") {
-	$rolef = "";
+	$rolef = '';
 } else {
-	$rolef = "currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment='" . $conn->real_escape_string($role_filter) . "') and ";
+	$rolef = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment="' . $conn->real_escape_string($role_filter) . '") and ';
 }
 
 $sql_where_text = substr($lf . $gf . $mf . $sf . $locf . $rolef, 0, -4);        // 594
