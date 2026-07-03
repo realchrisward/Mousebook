@@ -148,6 +148,21 @@ $conn->close();
 // any installation regardless of database name.
 // -------------------------------------------------------
 
+//add a new location option to the list (mirrors the manage_roles add pattern)
+if (isset($_POST['button_addlocation'])){
+	$newloc=trim($_POST['textaddlocation'] ?? '');
+	if ($newloc!==''){
+		$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+		$newloc_esc=$conn->real_escape_string($newloc);
+		$sqltext="INSERT IGNORE INTO `".$dbname."`.`list_cage_locations` (`Location_Option`) VALUES ('".$newloc_esc."')";
+		if ($conn->query($sqltext)===TRUE){$loc_addstatus='Added location: '.$newloc;}
+		else {$loc_addstatus='Could not add location: '.$conn->error;}
+		$conn->close();
+	} else {
+		$loc_addstatus='Please enter a location name.';
+	}
+}
+
 //locationA/B selector
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT * FROM `".$dbname."`.`list_cage_locations`";
@@ -468,6 +483,12 @@ function submitForm()
 			</tr>
 			<tr>
 				<td colspan=2><?php echo $cage_listbox; ?></td>
+			</tr>
+			<tr>
+				<th>Add new location:</th>
+			</tr>
+			<tr>
+				<td colspan=2><input type=text id="textaddlocation" name="textaddlocation" placeholder="new location name"> <input type=submit name="button_addlocation" value="Add Location"><?php if (isset($loc_addstatus)) { echo ' <span style="font-size:11px;color:#555;">'.htmlspecialchars($loc_addstatus).'</span>'; } ?></td>
 			</tr>
 			</table>
 

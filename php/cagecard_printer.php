@@ -394,7 +394,7 @@ $colorfilt_listbox .= '</select>';
 <head>
 	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" />
 	<title>Cage Card Printing Selector - <?php echo $dbname; ?></title>
-	<link href="../animalbook.css" rel="stylesheet" type="text/css" />
+	<link href="../mousebook.css" rel="stylesheet" type="text/css" />
 </head>
 
 <body>
@@ -606,7 +606,7 @@ $colorfilt_listbox .= '</select>';
 		<form id="cagecard_gen" action="../php/cagecard_gen5rs.php" method="POST" target="_blank">
 
 			<p>
-				<input type='hidden' name='cages' id='cages' value='<?php echo serialize($cages); ?>' />
+				<input type='hidden' name='cages' id='cages' value='<?php echo base64_encode(serialize($cages)); ?>' />
 			</p>
 			<p>
 				<input type=hidden id='contactinfo1' name='contactinfo1' value='<?php echo $contact1; ?>' />
@@ -622,7 +622,7 @@ $colorfilt_listbox .= '</select>';
 		<form id="cagecard_gen" action="../php/cagecard_gen5rs-blindgeno.php" method="POST" target="_blank">
 
 			<p>
-				<input type='hidden' name='cages' id='cages' value='<?php echo serialize($cages); ?>' />
+				<input type='hidden' name='cages' id='cages' value='<?php echo base64_encode(serialize($cages)); ?>' />
 			</p>
 			<p>
 				<input type=hidden id='contactinfo1' name='contactinfo1' value='<?php echo $contact1; ?>' />

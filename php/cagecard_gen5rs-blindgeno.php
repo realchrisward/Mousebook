@@ -233,7 +233,8 @@ $Genoconver=array(
 $ContactInfo1=$_POST['contactinfo1'];
 $ContactInfo2=$_POST['contactinfo2'];
 
-$cages=unserialize($_POST['cages']);
+$cages = unserialize(base64_decode($_POST['cages'] ?? ''));
+if (!is_array($cages)) { $cages = array(); }
 
 //echo $_POST['cages'];
 
