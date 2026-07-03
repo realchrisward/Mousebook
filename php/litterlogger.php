@@ -135,7 +135,7 @@ if (isset($_POST['confirm_litter'])) {
 	$sqltext = "INSERT INTO `" . $dbname . "`.`table_litterlog` (`dob`, `line_assign`, `cagename`, `actual_obs`, `obs_by`, `litter name`, `estimate_male`, `estimate_female`, `estimate_unknown`, `litter_comments`)"
 		. " VALUES ('" . $zdob . "', '" . $zline_assign . "', '" . $zcagename . "', '" . $zactualobs . "', '" . $zobsby . "', '" . $zcurrcage . "', '" . $zestmale . "', '" . $zestfemale . "', '" . $zestunknown . "', '" . $zcomments . "');";
 
-	echo $sqltext;
+	//echo $sqltext;
 
 	//submit litter to db
 	if ($zdob == "") {

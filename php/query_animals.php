@@ -41,6 +41,7 @@ $_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
 if ($_mb_conn) {
 	[$host, $accessun, $accesspw] = $_mb_conn;
 }
+require_once __DIR__ . '/../includes/filters.php';
 
 
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
@@ -327,18 +328,11 @@ $linetextfilter = $_POST['linetextfilter'] ?? '';
 $idnotextfilter = $_POST['idnotextfilter'] ?? '';
 $sourcetextfilter = $_POST['sourcetextfilter'] ?? '';
 $parenttextfilter = $_POST['parenttextfilter'] ?? '';
+$location_filter = $_POST['location_filter'] ?? 'all';
+$role_filter     = $_POST['role_filter']     ?? 'all';
 
-//gender filter
-$gender_options = array('all', 'M', 'F', 'unk');
-$gender_listbox = '<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
-foreach ($gender_options as $row) {
-	if ($row === $gender_filter) {
-		$gender_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
-	} else {
-		$gender_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
-	}
-}
-$gender_listbox .= '</select>';
+//gender filter — via shared library
+$gender_listbox = filter_selectbox(gender_options(), $gender_filter, 'gender_filter', 'submitForm()', true, '');
 
 //deadoralive filter
 $deadoralive_options = array('alive', 'dead', 'all');
@@ -352,43 +346,18 @@ foreach ($deadoralive_options as $row) {
 }
 $deadoralive_listbox .= '</select>';
 
-//source category type filter
-$source_category_options = array('all', 'Holding', 'Rearrange', 'Mating', 'Experimental', 'Litter', 'Founder', 'Sac');
-$source_category_listbox = '<select id="source_category_selection" name="source_category_selection" onchange="submitForm()">';
-foreach ($source_category_options as $row) {
-	if ($row === $source_category_selection) {
-		$source_category_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
-	} else {
-		$source_category_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
-	}
-}
-$source_category_listbox .= '</select>';
+//source category (cage type) filter — canonical vocab via shared library
+$source_category_listbox = filter_selectbox(cagetype_options(), $source_category_selection, 'source_category_selection', 'submitForm()', true, '');
 
-//line lists
+//line filter — via shared library
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "call get_lines();";
-$results = $conn->query($sqltext);
-//set up static portion of table
-$line_listbox = '<select id="line_filter" name="line_filter" size=8 class="mediumlistbox" onchange="submitForm()">';
-if ($line_filter === "all") {
-	$line_listbox .= '<option value="all" selected>all</option>';
-} else {
-	$line_listbox .= '<option value="all">all</option>';
-}
-//loop the result set and prepare table
-while (($results) && ($row = mysqli_fetch_array($results))) {
-	//catch results of each row
-	//get results matched to current line - used for additional fields
-	if ($row['line'] === $line_filter) {
-		$line_listbox .= '<option value="' . $row["line"] . '" selected>' . $row["line"] . '</option>';
-	}
-	//get results for additional lines
-	else {
-		$line_listbox .= '<option value="' . $row["line"] . '">' . $row["line"] . '</option>';
-	}
-}
-//close the table
-$line_listbox .= '</select>';
+$line_listbox = filter_selectbox(line_filter_options($conn), $line_filter, 'line_filter', 'submitForm()', true, 'mediumlistbox', 8);
+$conn->close();
+
+//location and role filters
+$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$location_listbox = filter_selectbox(location_filter_options($conn), $location_filter, 'location_filter', 'submitForm()', true);
+$role_listbox     = filter_selectbox(role_filter_options($conn),     $role_filter,     'role_filter',     'submitForm()', true);
 $conn->close();
 
 //cage list filtered by line, gender, etc
@@ -469,9 +438,20 @@ if ($parenttextfilter == "") {
 	$ptf = "`parents` REGEXP '\\\\b" . $parenttextfilter . "\\\\b' and ";
 }
 
+if ($location_filter === "all" || $location_filter === "") {
+	$locf = "";
+} else {
+	$locf = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room="' . $conn->real_escape_string($location_filter) . '") and ';
+}
 
-$sql_where_untrim = '`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $dbf . $daf . $ltf . $itf . $stf . $ptf;
-$sql_where_text = substr('`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $dbf . $daf . $ltf . $itf . $stf . $ptf, 0, -4);
+if ($role_filter === "all" || $role_filter === "") {
+	$rolef = "";
+} else {
+	$rolef = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment="' . $conn->real_escape_string($role_filter) . '") and ';
+}
+
+$sql_where_untrim = '`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $dbf . $daf . $ltf . $itf . $stf . $ptf . $locf . $rolef;
+$sql_where_text = substr('`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $dbf . $daf . $ltf . $itf . $stf . $ptf . $locf . $rolef, 0, -4);
 //echo $sql_where_text;
 $sqltext = "SELECT `currentcage` FROM `table_animals` where " . $sql_where_text . " GROUP BY `currentcage` ORDER BY `currentcage`;";
 //echo $sqltext;
@@ -775,67 +755,75 @@ $conn->close();
 										<tr>
 											<th>IdNo</th>
 											<td><input type="text" class="smallerlistbox" name="idnotextfilter" id="idnotextfilter" value="<?php echo $idnotextfilter; ?>" onchange="submitForm()"></td>
+										<tr>
+											<th>Location</th>
+											<td><?php echo $location_listbox; ?></td>
 										</tr>
-									</table>
-								</td>
+										<tr>
+											<th>Role</th>
+											<td><?php echo $role_listbox; ?></td>
+										</tr>
+							</tr>
+						</table>
+					</td>
 
-								<td>
-									<table>
-										<tr>
-											<th>Cage Type</th>
-											<td><?php echo $source_category_listbox; ?></td>
-										</tr>
-										<tr>
-											<th colspan=2>Source Cage</th>
-										</tr>
-										<tr>
-											<td colspan=2><input type="text" class="mediumlistbox" name="sourcetextfilter" id="sourcetextfilter" value="<?php echo $sourcetextfilter; ?>" onchange="submitForm()"></td>
-										</tr>
-										<tr>
-											<th>Parents</th>
-											<td><input type="text" class="smallerlistbox" name="parenttextfilter" id="parenttextfilter" value="<?php echo $parenttextfilter; ?>" onchange="submitForm()"></td>
-										</tr>
-									</table>
-								</td>
+					<td>
+						<table>
+							<tr>
+								<th>Cage Type</th>
+								<td><?php echo $source_category_listbox; ?></td>
+							</tr>
+							<tr>
+								<th colspan=2>Source Cage</th>
+							</tr>
+							<tr>
+								<td colspan=2><input type="text" class="mediumlistbox" name="sourcetextfilter" id="sourcetextfilter" value="<?php echo $sourcetextfilter; ?>" onchange="submitForm()"></td>
+							</tr>
+							<tr>
+								<th>Parents</th>
+								<td><input type="text" class="smallerlistbox" name="parenttextfilter" id="parenttextfilter" value="<?php echo $parenttextfilter; ?>" onchange="submitForm()"></td>
+							</tr>
+						</table>
+					</td>
 
+					<td>
+						<table>
+							<tr>
+								<th>born before</th>
+								<th>born after</th>
+							</tr>
+							<tr>
 								<td>
-									<table>
-										<tr>
-											<th>born before</th>
-											<th>born after</th>
-										</tr>
-										<tr>
-											<td>
-												<input type=date id="bornbefore" name="bornbefore" value="<?php echo $bornbefore; ?>" onchange="submitForm()">
-											</td>
-											<td>
-												<input type=date id="bornafter" name="bornafter" value="<?php echo $bornafter; ?>" onchange="submitForm()">
-											</td>
-										</tr>
-										<tr>
-											<th>died before</th>
-											<th>died after</th>
-										</tr>
-										<tr>
-											<td>
-												<input type=date id="deadbefore" name="deadbefore" value="<?php echo $deadbefore; ?>" onchange="submitForm()">
-											</td>
-											<td>
-												<input type=date id="deadafter" name="deadafter" value="<?php echo $deadafter; ?>" onchange="submitForm()">
-											</td>
-										</tr>
-									</table>
+									<input type=date id="bornbefore" name="bornbefore" value="<?php echo $bornbefore; ?>" onchange="submitForm()">
+								</td>
+								<td>
+									<input type=date id="bornafter" name="bornafter" value="<?php echo $bornafter; ?>" onchange="submitForm()">
+								</td>
+							</tr>
+							<tr>
+								<th>died before</th>
+								<th>died after</th>
+							</tr>
+							<tr>
+								<td>
+									<input type=date id="deadbefore" name="deadbefore" value="<?php echo $deadbefore; ?>" onchange="submitForm()">
+								</td>
+								<td>
+									<input type=date id="deadafter" name="deadafter" value="<?php echo $deadafter; ?>" onchange="submitForm()">
 								</td>
 							</tr>
 						</table>
 					</td>
 				</tr>
-				<tr>
-					<th>Comments filter:</th>
-					<td colspan=2>
-						<input class="largelistbox" type="text" name="commenttextfilter" id="commenttextfilter" value="<?php echo $commenttextfilter; ?>">
-					</td>
-				</tr>
+			</table>
+			</td>
+			</tr>
+			<tr>
+				<th>Comments filter:</th>
+				<td colspan=2>
+					<input class="largelistbox" type="text" name="commenttextfilter" id="commenttextfilter" value="<?php echo $commenttextfilter; ?>">
+				</td>
+			</tr>
 			</table>
 
 			<input type=submit id="get_tempanimals" name="get_tempanimals" value="Get animals">
