@@ -209,6 +209,8 @@ $locRetire_listbox  = filter_selectbox(location_assign_options($conn),  '', 'ret
 $locRestore_listbox = filter_selectbox(location_retired_options($conn), '', 'restore_location', '', false);
 $conn->close();
 
+$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+
 // PATCHED: fixed malformed HTML attribute (missing closing quote on onchange)
 $cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox" onchange="">';
 //loop and prepare table
