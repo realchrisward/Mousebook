@@ -616,6 +616,7 @@ left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left 
 left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and
 temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null" . $sql_where_text . " GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
+echo $sqltext;
 $sourcecage_listbox = '<select id="sourcecage_selection" name="sourcecage_selection" size=14 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['currentcage'] === $sourcecage_selection) {
