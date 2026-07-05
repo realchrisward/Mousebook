@@ -319,6 +319,7 @@ where dod is null and left(`currentcage`,1)='M' and (`line`='" . $line_selection
 	. location_where_join($conn, $location_selection) . "
 GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
+echo $sqltext
 
 $source_listbox = '<select id="source_selection" name="source_selection" size=10 class="largelistbox2" onchange="submitForm()">';
 
