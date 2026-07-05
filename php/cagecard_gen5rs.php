@@ -290,26 +290,25 @@ function MatingCard($pdf, $cagearray, $cagename, $contact1, $contact2)
 	//Father row - table headers
 	$pdf->Cell(4, 5);
 	$pdf->Cell(20, 5, 'Father:', 'TB', 0, 'C');
-	$father1string = $cagearray[$cagename]['animals'][$fatherarray[1]]['line'] . ' - ' .
-		$cagearray[$cagename]['animals'][$fatherarray[1]]['idno'] . ' (' .
-		$cagearray[$cagename]['animals'][$fatherarray[1]]['ear'] . ') ' .
-		$cagearray[$cagename]['animals'][$fatherarray[1]]['dob'];
+	$fa = (isset($fatherarray[1]) && isset($cagearray[$cagename]['animals'][$fatherarray[1]]))
+		? $cagearray[$cagename]['animals'][$fatherarray[1]] : array();
+	$father1string = $fa ? (($fa['line'] ?? '') . ' - ' . ($fa['idno'] ?? '') . ' (' . ($fa['ear'] ?? '') . ') ' . ($fa['dob'] ?? '')) : '';
 
 	$pdf->Cell(96, 5, $father1string, 'TB', 1);
 
 	//Mother row
 	$pdf->Cell(4, 5);
 	$pdf->Cell(20, 10, 'Mother(s):', 'TB', 0, 'C');
-	$pdf->Cell(96, 5, $cagearray[$cagename]['animals'][$motherarray[1]]['line'] . ' - ' .
-		$cagearray[$cagename]['animals'][$motherarray[1]]['idno'] . ' (' .
-		$cagearray[$cagename]['animals'][$motherarray[1]]['ear'] . ') ' .
-		$cagearray[$cagename]['animals'][$motherarray[1]]['dob'], 'TB', 1);
+	$m1 = (isset($motherarray[1]) && isset($cagearray[$cagename]['animals'][$motherarray[1]]))
+		? $cagearray[$cagename]['animals'][$motherarray[1]] : array();
+	$mother1string = $m1 ? (($m1['line'] ?? '') . ' - ' . ($m1['idno'] ?? '') . ' (' . ($m1['ear'] ?? '') . ') ' . ($m1['dob'] ?? '')) : '';
+	$pdf->Cell(96, 5, $mother1string, 'TB', 1);
 	if ($femaleanimals > 1) {
 		$pdf->Cell(24, 5);
-		$pdf->Cell(96, 5, $cagearray[$cagename]['animals'][$motherarray[2]]['line'] . ' - ' .
-			$cagearray[$cagename]['animals'][$motherarray[2]]['idno'] . ' (' .
-			$cagearray[$cagename]['animals'][$motherarray[2]]['ear'] . ') ' .
-			$cagearray[$cagename]['animals'][$motherarray[2]]['dob'], 'TB', 1);
+		$m2 = (isset($motherarray[2]) && isset($cagearray[$cagename]['animals'][$motherarray[2]]))
+			? $cagearray[$cagename]['animals'][$motherarray[2]] : array();
+		$mother2string = $m2 ? (($m2['line'] ?? '') . ' - ' . ($m2['idno'] ?? '') . ' (' . ($m2['ear'] ?? '') . ') ' . ($m2['dob'] ?? '')) : '';
+		$pdf->Cell(96, 5, $mother2string, 'TB', 1);
 	} else {
 		$pdf->Cell(24, 5);
 		$pdf->Cell(96, 5, '', 'TB', 1);
