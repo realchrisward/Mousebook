@@ -313,11 +313,10 @@ $conn->close();
 
 //mating list filtered by line (+ location)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `currentcage`, `cagecontents`
+$sqltext = 'SELECT `currentcage`, `cagecontents`
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
-where dod is null and left(`currentcage`,1)='M' and (`line`='" . $line_selection . "' or `lineassignment`='" . $line_selection . "') "
-	. location_where_join($conn, $location_selection) . "
-GROUP BY `currentcage`;";
+where dod is null and left(`currentcage`,1)="M" and (`line`="' . $line_selection . '" or `lineassignment`="' . $line_selection . '") '
+	. location_where_join($conn, $location_selection) . ' GROUP BY `currentcage`;';
 $results = $conn->query($sqltext);
 echo $sqltext;
 
