@@ -135,14 +135,14 @@ if (!function_exists('mb_filters_loaded')) {
     function cage_attr_where_join(mysqli $conn, $selected, $cageCol)
     {
         if ($selected === null || $selected === '' || $selected === 'all') return '';
-        return ' AND ' . $cageCol . ' = "' . $conn->real_escape_string($selected) . '"';
+        return ' AND `' . $cageCol . '` = "' . $conn->real_escape_string($selected) . '"';
     }
     /** WHERE for an animal-based page with NO cage join (subquery on currentcage). */
     function cage_attr_where_sub(mysqli $conn, $selected, $attrCol)
     {
         if ($selected === null || $selected === '' || $selected === 'all') return '';
         $safe = $conn->real_escape_string($selected);
-        return ' AND currentcage IN (SELECT cageid FROM table_cages WHERE ' . $attrCol . ' = "' . $safe . '")';
+        return ' AND currentcage IN (SELECT `cageid` FROM `table_cages` WHERE `' . $attrCol . '` = "' . $safe . '")';
     }
 
     /* ---- LOCATION wrappers ---------------------------------------------- */
