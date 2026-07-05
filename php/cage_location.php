@@ -441,14 +441,7 @@ if (isset($_POST['addcage_single'])) {
 			<input type=submit class="button" name=""
 				value="Card Printer" />
 		</form>
-		<form action="../php/animal_info_export.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Export Animal Info" />
-		</form>
+
 
 	</div>
 	<div id="right_content" class="centertext">
