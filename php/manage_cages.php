@@ -262,6 +262,18 @@ if (isset($_POST['submit_cages'])) {
 	$xcage2contents = $_POST['cage2contents'];
 	$xcage3contents = $_POST['cage3contents'];
 	$xcage4contents = $_POST['cage4contents'];
+	$xcage1location = $_POST['cage1location'] ?? 'Limbo';
+	$xcage2location = $_POST['cage2location'] ?? 'Limbo';
+	$xcage3location = $_POST['cage3location'] ?? 'Limbo';
+	$xcage4location = $_POST['cage4location'] ?? 'Limbo';
+	$xcage1role = $_POST['cage1role'] ?? '';
+	$xcage2role = $_POST['cage2role'] ?? '';
+	$xcage3role = $_POST['cage3role'] ?? '';
+	$xcage4role = $_POST['cage4role'] ?? '';
+	if ($xcage1location === '') { $xcage1location = 'Limbo'; }
+	if ($xcage2location === '') { $xcage2location = 'Limbo'; }
+	if ($xcage3location === '') { $xcage3location = 'Limbo'; }
+	if ($xcage4location === '') { $xcage4location = 'Limbo'; }
 	$xline_assignment = $_POST['line_assignment'];
 	$xmove_selection = $_POST['move_selection'];
 	$xcategory_selection = $_POST['category_selection'];
@@ -275,7 +287,7 @@ if (isset($_POST['submit_cages'])) {
 	$c1updates = $c2updates = $c3updates = $c4updates = "";
 	if ($xcage1size > 0) {
 		$PrintCages .= "('" . $xcage1name . "'),";
-		$c1values = "('" . $xcage1name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage1no . ",'" . $xcage1contents . "'),";
+		$c1values = "('" . $xcage1name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage1no . ",'" . $xcage1contents . "','" . $conn->real_escape_string($xcage1location) . "','" . $conn->real_escape_string($xcage1role) . "'),";
 		if ($xmove_selection === "Weaning") {
 			$c1updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage1` 
 ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono`
@@ -294,7 +306,7 @@ Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . 
 
 	if ($xcage2size > 0) {
 		$PrintCages .= "('" . $xcage2name . "'),";
-		$c2values = "('" . $xcage2name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage2no . ",'" . $xcage2contents . "'),";
+		$c2values = "('" . $xcage2name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage2no . ",'" . $xcage2contents . "','" . $conn->real_escape_string($xcage2location) . "','" . $conn->real_escape_string($xcage2role) . "'),";
 		if ($xmove_selection === "Weaning") {
 			$c2updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage2` 
 ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono`
@@ -312,7 +324,7 @@ Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . 
 	}
 	if ($xcage3size > 0) {
 		$PrintCages .= "('" . $xcage3name . "'),";
-		$c3values = "('" . $xcage3name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage3no . ",'" . $xcage3contents . "'),";
+		$c3values = "('" . $xcage3name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage3no . ",'" . $xcage3contents . "','" . $conn->real_escape_string($xcage3location) . "','" . $conn->real_escape_string($xcage3role) . "'),";
 		if ($xmove_selection === "Weaning") {
 			$c3updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage3` 
 ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono`
@@ -330,7 +342,7 @@ Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . 
 	}
 	if ($xcage4size > 0) {
 		$PrintCages .= "('" . $xcage4name . "'),";
-		$c4values = "('" . $xcage4name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage4no . ",'" . $xcage4contents . "'),";
+		$c4values = "('" . $xcage4name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage4no . ",'" . $xcage4contents . "','" . $conn->real_escape_string($xcage4location) . "','" . $conn->real_escape_string($xcage4role) . "'),";
 		if ($xmove_selection === "Weaning") {
 			$c4updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage4` 
 ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono`
@@ -350,7 +362,7 @@ Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . 
 	$PrintCages = substr($PrintCages, 0, -1);
 
 	//insert into table_cages
-	$insertTableCages = "INSERT INTO `" . $dbname . "`.`table_cages` (`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`,`cageno`,`cagecontents`) VALUES " . $xInsertValues . ";";
+	$insertTableCages = "INSERT INTO `" . $dbname . "`.`table_cages` (`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`,`cageno`,`cagecontents`,`cagelocation_room`,`cagerole_assignment`) VALUES " . $xInsertValues . ";";
 	//insert into printing list
 	$printlist = "Insert INTO `" . $dbname . "`.`CagesForPrinting` (`cageid`) VALUES " . $PrintCages . ";";
 	//clear cages
@@ -564,6 +576,45 @@ while ($row = mysqli_fetch_array($results)) {
 $cage4contents = implode(', ', $animalc4 ?? []);
 //close the table
 $cage4_listbox .= '</select>';
+$conn->close();
+
+// ---- assign-mode Location + Role for each destination cage ----
+// default location follows the first animal assigned to each temp cage; manual overrides preserved via *_locsync
+$cage_location_listbox = array();
+$cage_role_listbox     = array();
+$cage_locsync          = array();
+$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$loc_assign_values = location_assign_options($conn);
+if (!in_array('Limbo', $loc_assign_values, true)) { array_unshift($loc_assign_values, 'Limbo'); }
+$role_assign_values = role_assign_options($conn);
+foreach (array(1, 2, 3, 4) as $cn) {
+	$firstcur = '';
+	$fr = $conn->query("SELECT currentcage FROM table_animals JOIN temp_cage$cn ON table_animals.animalautono=temp_cage$cn.animalautono ORDER BY gender desc, line, idno LIMIT 1;");
+	if ($fr && ($frow = mysqli_fetch_array($fr))) { $firstcur = $frow['currentcage']; }
+	$deflorm = 'Limbo';
+	if ($firstcur !== '' && $firstcur !== null) {
+		$lr = $conn->query("SELECT cagelocation_room FROM table_cages WHERE cageid='" . $conn->real_escape_string($firstcur) . "' LIMIT 1;");
+		if ($lr && ($lrow = mysqli_fetch_array($lr))) {
+			if ($lrow['cagelocation_room'] !== null && $lrow['cagelocation_room'] !== '') { $deflorm = $lrow['cagelocation_room']; }
+		}
+	}
+	$val  = $_POST["cage{$cn}location"] ?? '';
+	$sync = $_POST["cage{$cn}locsync"] ?? chr(1);
+	if ((string)$firstcur !== (string)$sync) { $val = $deflorm; }
+	if ($val === '') { $val = $deflorm; }
+	$cage_locsync[$cn] = (string)$firstcur;
+	$locvals = $loc_assign_values;
+	if ($val !== '' && !in_array($val, $locvals, true)) { array_unshift($locvals, $val); }
+	$cage_location_listbox[$cn] = filter_selectbox($locvals, $val, "cage{$cn}location", 'submitForm()', false);
+	$rval = $_POST["cage{$cn}role"] ?? '';
+	$rl = '<select id="cage' . $cn . 'role" name="cage' . $cn . 'role" size=1 class="mediumlistbox" onchange="submitForm()">';
+	$rl .= '<option value=""' . ($rval === '' ? ' selected' : '') . '>(none)</option>';
+	foreach ($role_assign_values as $rv) {
+		$rl .= '<option value="' . htmlspecialchars($rv) . '"' . ($rv === $rval ? ' selected' : '') . '>' . htmlspecialchars($rv) . '</option>';
+	}
+	$rl .= '</select>';
+	$cage_role_listbox[$cn] = $rl;
+}
 $conn->close();
 
 
@@ -980,6 +1031,12 @@ $conn->close();
 					<td colspan=2><?php echo $cage2_listbox; ?></td>
 				</tr>
 				<tr>
+					<td colspan=2>Location: <?php echo $cage_location_listbox[1]; ?> Role: <?php echo $cage_role_listbox[1]; ?>
+						<input type=hidden name="cage1locsync" value="<?php echo htmlspecialchars($cage_locsync[1] ?? ''); ?>"></td>
+					<td colspan=2>Location: <?php echo $cage_location_listbox[2]; ?> Role: <?php echo $cage_role_listbox[2]; ?>
+						<input type=hidden name="cage2locsync" value="<?php echo htmlspecialchars($cage_locsync[2] ?? ''); ?>"></td>
+				</tr>
+				<tr>
 					<th><input type=text id="cage3name" name="cage3name" value="<?php echo $cage3name; ?>" readonly="readonly">
 						<input type=hidden id="cage3no" name="cage3no" value="<?php echo $cage3no; ?>">
 						<input type=hidden id="cage3contents" name="cage3contents" value="<?php echo $cage3contents; ?>">
@@ -1000,6 +1057,12 @@ $conn->close();
 				<tr>
 					<td colspan=2><?php echo $cage3_listbox; ?></td>
 					<td colspan=2><?php echo $cage4_listbox; ?></td>
+				</tr>
+				<tr>
+					<td colspan=2>Location: <?php echo $cage_location_listbox[3]; ?> Role: <?php echo $cage_role_listbox[3]; ?>
+						<input type=hidden name="cage3locsync" value="<?php echo htmlspecialchars($cage_locsync[3] ?? ''); ?>"></td>
+					<td colspan=2>Location: <?php echo $cage_location_listbox[4]; ?> Role: <?php echo $cage_role_listbox[4]; ?>
+						<input type=hidden name="cage4locsync" value="<?php echo htmlspecialchars($cage_locsync[4] ?? ''); ?>"></td>
 				</tr>
 			</table>
 

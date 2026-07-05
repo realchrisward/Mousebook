@@ -41,6 +41,7 @@ $_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
 if ($_mb_conn) {
 	[$host, $accessun, $accesspw] = $_mb_conn;
 }
+require_once __DIR__ . '/../includes/filters.php';
 
 
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
@@ -173,6 +174,19 @@ if (isset($_POST['generate_animals'])) {
 		$xcurrcage = "FOUNDER" . '-' . $xline_selection . ' - ' . $xdob;
 	} else {
 		$xcurrcage = "Litter-" . $xsource_selection . ' - ' . $xdob;
+	}
+	$xassign_location = $_POST['assign_location'] ?? '';
+	$xassign_role     = $_POST['assign_role'] ?? '';
+	if ($xassign_location === '') {
+		if ($xsource_selection === 'FOUNDER' || $xsource_selection === '') {
+			$xassign_location = 'Limbo';
+		} else {
+			$lc = new mysqli($host, $accessun, $accesspw, $dbname);
+			$lcr = $lc->query("SELECT cagelocation_room FROM table_cages WHERE cageid='" . $lc->real_escape_string($xsource_selection) . "' LIMIT 1;");
+			if ($lcr && ($lcrow = mysqli_fetch_array($lcr))) { $xassign_location = $lcrow['cagelocation_room']; }
+			$lc->close();
+			if ($xassign_location === null || $xassign_location === '') { $xassign_location = 'Limbo'; }
+		}
 	}
 
 
@@ -380,6 +394,8 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 
 	$testtable = $temptable . $temprow . '</table>.
 <br><br>
+<input type=hidden name="gen_assign_location" value="' . htmlspecialchars($xassign_location) . '">
+<input type=hidden name="gen_assign_role" value="' . htmlspecialchars($xassign_role) . '">
 <input type=submit id="confirm_animals" name="confirm_animals" value="confirm animals">';
 	$minauto = min($xautonos);
 	$maxauto = max($xautonos);
@@ -402,6 +418,9 @@ if (isset($_POST['confirm_animals'])) {
 	}
 
 	$sqltext = '';
+	$xassign_location = $_POST['gen_assign_location'] ?? 'Limbo';
+	$xassign_role     = $_POST['gen_assign_role'] ?? '';
+	if ($xassign_location === '') { $xassign_location = 'Limbo'; }
 	foreach (range($xminauto, $xmaxauto, 1) as $i) {
 		$man[$i] = $_POST['animalautono' . $i];
 		$line[$i] = $_POST['line' . $i];
@@ -431,8 +450,8 @@ echo $gene.':'.$genotypes[$gene][$i].'|';
 
 		$sqltext_table_cages = 'INSERT INTO `' . $dbname . '`.`table_cages` 
 (`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`
-,`cageno`,`cagecontents`) VALUES 
-("' . $currentcage[$i] . '","Litter",' . $dob[$i] . ',"1","' . $line[$i] . '",0,"pups")
+,`cageno`,`cagecontents`,`cagelocation_room`,`cagerole_assignment`) VALUES 
+("' . $currentcage[$i] . '","Litter",' . $dob[$i] . ',"1","' . $line[$i] . '",0,"pups","' . $conn->real_escape_string($xassign_location) . '","' . $conn->real_escape_string($xassign_role) . '")
 ON DUPLICATE KEY UPDATE `cageno`=`cageno`;';
 
 
@@ -657,6 +676,34 @@ while ($row = mysqli_fetch_array($results)) {
 //close the table
 $conn->close();
 
+//---- assign-mode Location + Role for the new litter/founder cage ----
+$assign_location = $_POST['assign_location'] ?? '';
+$assign_role     = $_POST['assign_role'] ?? '';
+$location_sync   = $_POST['location_sync'] ?? chr(1);
+$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+if ($source_selection === 'FOUNDER' || $source_selection === '' || $source_selection === null) {
+	$default_location = 'Limbo';
+} else {
+	$default_location = '';
+	$locres = $conn->query("SELECT cagelocation_room FROM table_cages WHERE cageid='" . $conn->real_escape_string($source_selection) . "' LIMIT 1;");
+	if ($locres && ($lr = mysqli_fetch_array($locres))) { $default_location = $lr['cagelocation_room']; }
+	if ($default_location === null || $default_location === '') { $default_location = 'Limbo'; }
+}
+if ($source_selection !== $location_sync) { $assign_location = $default_location; }
+$location_sync = $source_selection;
+if ($assign_location === '') { $assign_location = $default_location; }
+$location_assign_values = location_assign_options($conn);
+if (!in_array('Limbo', $location_assign_values, true)) { array_unshift($location_assign_values, 'Limbo'); }
+$location_assign_listbox = filter_selectbox($location_assign_values, $assign_location, 'assign_location', 'submitForm()', false);
+$role_assign_values = role_assign_options($conn);
+$role_assign_listbox = '<select id="assign_role" name="assign_role" size=1 class="mediumlistbox" onchange="submitForm()">';
+$role_assign_listbox .= '<option value=""' . ($assign_role === '' ? ' selected' : '') . '>(none)</option>';
+foreach ($role_assign_values as $rv) {
+	$role_assign_listbox .= '<option value="' . htmlspecialchars($rv) . '"' . ($rv === $assign_role ? ' selected' : '') . '>' . htmlspecialchars($rv) . '</option>';
+}
+$role_assign_listbox .= '</select>';
+$conn->close();
+
 
 ?>
 
@@ -875,6 +922,15 @@ $conn->close();
 				</tr>
 				<tr>
 					<td><textarea id="bulkcomments" name="bulkcomments" rows=5><?php echo $bulkcomments; ?></textarea></td>
+				</tr>
+				<tr>
+					<th>New Cage Location:</th>
+					<th>New Cage Role:</th>
+				</tr>
+				<tr>
+					<td><?php echo $location_assign_listbox; ?>
+						<input type=hidden name="location_sync" value="<?php echo htmlspecialchars($location_sync); ?>"></td>
+					<td><?php echo $role_assign_listbox; ?></td>
 				</tr>
 				<tr>
 					<th colspan=3>

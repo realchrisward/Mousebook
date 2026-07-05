@@ -59,7 +59,6 @@ if ($conn->connect_error) {
 $line_selection = $_POST['line_selection'] ?? '';
 $location_selection = $_POST['location_selection'] ?? 'all';
 $source_selection = $_POST['source_selection'] ?? '';
-
 $bulkcomments = $_POST['bulkcomments'] ?? '';
 $dob = $_POST['dob'] ?? '';
 $numbermale = $_POST['numbermale'] ?? '';
@@ -306,6 +305,7 @@ foreach ($gender_options as $row) {
 }
 $gender_listbox .= '</select>';
 
+
 //location filter dropdown (filter mode)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $location_listbox = filter_selectbox(location_filter_options($conn), $location_selection, 'location_selection', 'submitForm()', true);
@@ -313,13 +313,12 @@ $conn->close();
 
 //mating list filtered by line (+ location)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = 'SELECT `currentcage`, `cagecontents`
+$sqltext = "SELECT `currentcage`, `cagecontents`
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
-where dod is null and left(`currentcage`,1)="M" and (`line`="' . $line_selection . '" or `lineassignment`="' . $line_selection . '") '
-	. location_where_join($conn, $location_selection) . ' GROUP BY `currentcage`;';
+where dod is null and left(`currentcage`,1)='M' and (`line`='" . $line_selection . "' or `lineassignment`='" . $line_selection . "') "
+. location_where_join($conn, $location_selection) . "
+GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
-echo $sqltext;
-
 $source_listbox = '<select id="source_selection" name="source_selection" size=10 class="largelistbox2" onchange="submitForm()">';
 
 while ($results && ($row = mysqli_fetch_array($results))) {

@@ -93,6 +93,7 @@ if (isset($_POST['get_genofilt'])) {
 //*****generate temp list of animals*****
 
 if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($_POST['export_csv'])) {
+
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
 	$sql_where_text = $_POST['animals_sql_where_text'] ?? '';
@@ -301,41 +302,20 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 }
 // ---- CSV export: mirrors the on-screen "Get animals" table (genotype columns + bulk comments) ----
 if (isset($_POST['export_csv'])) {
-	while (ob_get_level() > 0) {
-		ob_end_clean();
-	}
-
+	while (ob_get_level() > 0) { ob_end_clean(); }
 	$genelist = $genelist ?? array();
 	$arrayman = $arrayman ?? array();
-	if (empty($gtman)) {
-		$gtman = $arrayman;
-	}
-
+	if (empty($gtman)) { $gtman = $arrayman; }
 	header('Content-Type: text/csv; charset=utf-8');
 	header('Content-Disposition: attachment; filename=DL_query_animals_' . date('Ymd_His') . '.csv');
 	$out = fopen('php://output', 'wb');
-
 	$headerrow = array('animalautono', 'line', 'idno', 'gender', 'ear_tag', 'dob', 'dow', 'dod');
-	foreach ($genelist as $ag) {
-		$headerrow[] = $ag;
-	}
+	foreach ($genelist as $ag) { $headerrow[] = $ag; }
 	array_push($headerrow, 'current cage', 'source cage', 'parents', 'bulk comments');
 	fputcsv($out, $headerrow);
-
 	foreach ($arrayman as $ck) {
-		if (!in_array($ck, $gtman, true)) {
-			continue;
-		}
-		$rowout = array(
-			$ck,
-			$arrayline[$ck]   ?? '',
-			$arrayidno[$ck]   ?? '',
-			$arraygender[$ck] ?? '',
-			$arrayeartag[$ck] ?? '',
-			$arraydob[$ck]    ?? '',
-			$arraydow[$ck]    ?? '',
-			$arraydod[$ck]    ?? '',
-		);
+		if (!in_array($ck, $gtman, true)) { continue; }
+		$rowout = array($ck, $arrayline[$ck] ?? '', $arrayidno[$ck] ?? '', $arraygender[$ck] ?? '', $arrayeartag[$ck] ?? '', $arraydob[$ck] ?? '', $arraydow[$ck] ?? '', $arraydod[$ck] ?? '');
 		foreach ($genelist as $ag) {
 			$cell = isset($arraygeno[$ag][$ck]) ? trim(strip_tags($arraygeno[$ag][$ck])) : '';
 			$rowout[] = ($cell === '') ? 'NA' : $cell;
@@ -349,6 +329,7 @@ if (isset($_POST['export_csv'])) {
 	fclose($out);
 	exit;
 }
+
 ?>
 <!--php script for display controls-->
 <?php
@@ -597,37 +578,6 @@ $animals_batchlist = '(' . implode('),(', $animals_batchlist ?? []) . ')';
 $sqlerror = $conn->error;
 $conn->close();
 
-// ---- CSV export of the current animal filter set ----
-if (isset($_POST['export_csv'])) {
-	while (ob_get_level() > 0) {
-		ob_end_clean();
-	} // drop buffered HTML so the stream is clean
-
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-	$csvsql = "SELECT table_animals.animalautono AS 'man', line, idno, gender, eartag, dob, dow, dod, matingcage, currentcage, parents "
-		. "FROM `table_animals` WHERE " . $animals_sql_where_text
-		. " ORDER BY `line` asc, `animalautono` asc;";
-	$csvres = $conn->query($csvsql);
-
-	header('Content-Type: text/csv; charset=utf-8');
-	header('Content-Disposition: attachment; filename=DL_query_animals_' . date('Ymd_His') . '.csv');
-
-	$out = fopen('php://output', 'wb');
-	$wroteheader = false;
-	while (($csvres) && ($row = mysqli_fetch_assoc($csvres))) {
-		if (!$wroteheader) {
-			fputcsv($out, array_keys($row));
-			$wroteheader = true;
-		}
-		fputcsv($out, $row);
-	}
-	if (!$wroteheader) {
-		fputcsv($out, array('man', 'line', 'idno', 'gender', 'eartag', 'dob', 'dow', 'dod', 'matingcage', 'currentcage', 'parents'));
-	}
-	$conn->close();
-	fclose($out);
-	exit;
-}
 
 
 ?>
@@ -904,9 +854,13 @@ if (isset($_POST['export_csv'])) {
 				</td>
 			</tr>
 			</table>
+
 			<input type=submit id="get_tempanimals" name="get_tempanimals" value="Get animals">
 			<input type=submit id="export_csv" name="export_csv" value="Download CSV">
 			<input type=hidden id="animals_sql_where_text" name="animals_sql_where_text" value="<?php echo htmlspecialchars($animals_sql_where_text, ENT_QUOTES); ?>">
+
+
+
 			<?php echo $testtable; ?>
 			<br>
 			<!--hidden tags used for reparsing submitted table
