@@ -492,6 +492,7 @@ ON DUPLICATE KEY UPDATE `cageno`=`cageno`;';
 //posted variables
 $line_selection = $_POST['line_selection'];
 $source_selection = $_POST['source_selection'];
+$include_stopped = !empty($_POST['include_stopped']); //§2e: show stopped matings (drop `dod is null`) when checked
 $bulkcomments = $_POST['bulkcomments'];
 $dob = $_POST['dob'];
 $numbermale = $_POST['numbermale'];
@@ -619,9 +620,10 @@ $gender_listbox .= '</select>';
 
 //mating list filtered by line
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$dod_filter = $include_stopped ? '' : 'dod is null and '; //§2e: omit when including stopped matings
 $sqltext = "SELECT `currentcage`, `cagecontents`
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
-where dod is null and left(`currentcage`,1)='M' and (`line`='" . $line_selection . "' or `lineassignment`='" . $line_selection . "') 
+where " . $dod_filter . "left(`currentcage`,1)='M' and (`line`='" . $line_selection . "' or `lineassignment`='" . $line_selection . "') 
 GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
 $source_listbox = '<select id="source_selection" name="source_selection" size=10 class="largelistbox2" onchange="submitForm()">';
@@ -858,14 +860,6 @@ $conn->close();
 			<input type=submit class="button" name=""
 				value="View animals" />
 		</form>
-		<form action="../php/add_animals_includestoppedmatings.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Add animals - Include Stopped Matings" />
-		</form>
 
 	</div>
 
@@ -894,7 +888,8 @@ $conn->close();
 						<input type=hidden id="maxanimalautono" name="maxanimalautono" value="<?php echo $maxanimalautono; ?>">
 						<input type=hidden id="maxanimalinline" name="maxanimalinline" value="<?php echo $maxanimalinline; ?>">
 					</td>
-					<td rowspan=5><?php echo $source_listbox; ?></td>
+					<td rowspan=5><?php echo $source_listbox; ?>
+						<br><label style="font-size:11px;"><input type="checkbox" name="include_stopped" value="1" onchange="submitForm()" <?php echo $include_stopped ? 'checked' : ''; ?>> include stopped matings</label></td>
 					<td rowspan=5>
 						<table>
 							<tr>

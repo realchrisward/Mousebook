@@ -523,14 +523,6 @@ $conn->close();
 			<input type=submit class="button" name=""
 				value="View animals" />
 		</form>
-		<form action="../php/add_animals_includestoppedmatings.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Add animals - Include Stopped Matings" />
-		</form>
 
 	</div>
 

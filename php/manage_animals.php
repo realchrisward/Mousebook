@@ -787,7 +787,7 @@ $conn->close();
 			<br>
 			<?php echo $sqlreport; ?>
 			<br>
-			<input type=hidden id="animals_sql_where_text" name="animals_sql_where_text" value="<?php echo $animals_sql_where_text; ?>">
+			<input type=hidden id="animals_sql_where_text" name="animals_sql_where_text" value="<?php echo htmlspecialchars($animals_sql_where_text, ENT_QUOTES); ?>">
 
 
 
