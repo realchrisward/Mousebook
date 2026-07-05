@@ -41,6 +41,7 @@ $_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
 if ($_mb_conn) {
 	[$host, $accessun, $accesspw] = $_mb_conn;
 }
+require_once __DIR__ . '/../includes/filters.php';
 
 
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
