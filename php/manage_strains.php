@@ -63,10 +63,14 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 if (isset($_POST['button_addstrain'])){
 $strain=$_POST['textaddstrain'];
 $sqlaction='add strain:';
+if (trim($strain)===''){
+$sqlstatus='failed - strain name cannot be blank';
+} else {
 $sqltext="INSERT INTO `".$dbname."`.`list_strains` (`strains`) VALUES ('".$strain."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+}
 }
 		}
 
@@ -74,10 +78,14 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 if (isset($_POST['button_deletestrain'])){
 $strain=$_POST['textdelstrain'];
 $sqlaction='delete strain:';
+if (trim($strain)===''){
+$sqlstatus='failed - no strain selected to delete';
+} else {
 $sqltext="DELETE FROM `".$dbname."`.`list_strains` WHERE `strains`='".$strain."';";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+}
 }
 		}
 //edit strain
@@ -85,10 +93,16 @@ if (isset($_POST['button_editstrain'])){
 $strain=$_POST['textselectedstrain'];
 $strainnewtext=$_POST['texteditstrain'];
 $sqlaction='edit strain:';
+if (trim($strain)===''){
+$sqlstatus='failed - no strain selected to edit';
+} elseif (trim($strainnewtext)===''){
+$sqlstatus='failed - new strain name cannot be blank';
+} else {
 $sqltext="UPDATE `".$dbname."`.`list_strains` SET `strains`='".$strainnewtext."' WHERE `strains`='".$strain."';";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+}
 }
 		}
 $buttonmessage=$sqlaction.' '.$strain.' - '.$sqlstatus;

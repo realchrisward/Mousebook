@@ -67,10 +67,14 @@ $addcard_color=$_POST['cardcolor_list'];
 $addstripe_color=$_POST['stripecolor_list'];
 $deactiv=$_POST['textadddeactiv'];
 $sqlaction='add line:';
+if (trim($line)===''){
+$sqlstatus='failed - line name cannot be blank';
+} else {
 $sqltext="INSERT INTO `".$dbname."`.`table_lines` (`line`,`line_description`,`strain`,`ucsd_number`,`color_assignment`,`deactivated_line`,`card_color`) VALUES ('".$line."','".$ldesc."', '".$strain."','".$ucsd_number."','".$addstripe_color."','".$deactiv."','".$addcard_color."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+}
 }
 		}
 
@@ -78,11 +82,15 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 if (isset($_POST['button_deleteline'])){
 $line=$_POST['textdelline'];
 $sqlaction='delete line:';
+if (trim($line)===''){
+$sqlstatus='failed - no line selected to delete';
+} else {
 //remove records from line and allele by line tables
 $sqltext="DELETE FROM `".$dbname."`.`table_lines` WHERE `line`='".$line."';DELETE FROM `".$dbname."`.`key_allelebyline` WHERE `line`='".$line."';";
 if ($conn->multi_query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+}
 }
 		}
 //edit line
@@ -96,11 +104,17 @@ $ncard_color=$_POST['currcardcolor_list'];
 $nstripe_color=$_POST['currstripecolor_list'];
 $ndeactivated=$_POST['texteditdeactiv'];
 $sqlaction='edit line:';
+if (trim($line)===''){
+$sqlstatus='failed - no line selected to edit';
+} elseif (trim($nline)===''){
+$sqlstatus='failed - new line name cannot be blank';
+} else {
 $sqltext="UPDATE `".$dbname."`.`table_lines` SET `line`='".$nline."', `line_description`='".$nldesc."', `strain`='".$nstrain."', `ucsd_number`='".$nucsd_number."', `color_assignment`='".$nstripe_color."', `deactivated_line`='".$ndeactivated."', `card_color`='".$ncard_color."' WHERE `line`='".$line."';";
 
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= 'successful';} else {
 $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
+}
 }
 		}
 //add allele<-need check for selected line
@@ -109,10 +123,16 @@ $line=$_POST['textselectedline'];
 $currline=$_POST['textselectedline'];
 $addallele=$_POST['allele_selection'];
 $sqlaction='add allele:';
+if (trim($line)===''){
+$sqlstatus='failed - no line selected';
+} elseif (trim($addallele)===''){
+$sqlstatus='failed - no allele group selected';
+} else {
 $sqltext="INSERT INTO `".$dbname."`.`key_allelebyline` (`line`, `allelegroup`) VALUES ('".$line."', '".$addallele."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus='successful';} else {
 $sqlstatus='failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -122,10 +142,16 @@ $line=$_POST['textselectedline'];
 $currline=$_POST['textselectedline'];
 $delallele=$_POST['allelebyline_selection'];
 $sqlaction='remove allele:';
+if (trim($line)===''){
+$sqlstatus='failed - no line selected';
+} elseif (trim($delallele)===''){
+$sqlstatus='failed - no allele group selected';
+} else {
 $sqltext="DELETE FROM `".$dbname."`.`key_allelebyline` WHERE (`line`='".$line."' and `allelegroup`='".$delallele."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus='successful';} else {
 $sqlstatus='failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 

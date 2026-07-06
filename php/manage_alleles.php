@@ -62,6 +62,9 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 if (isset($_POST['addgenebutton'])){
 $textgene=$_POST['textgene'];
 $sqlaction='add gene:'.$textgene;
+if (trim($textgene)===''){
+$sqlstatus='-failed - gene name cannot be blank';
+} else {
 $sqltext="INSERT INTO `list_gene` (`gene`) VALUES ('".$textgene."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= '-successful';} 
@@ -69,17 +72,22 @@ else {
 $sqlstatus= '-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove gene - need checks/abort for deletion of genes already in use
 if (isset($_POST['remgenebutton'])){
 $textgene=$_POST['textgene'];
 $sqlaction='delete gene:'.$textgene;
+if (trim($textgene)===''){
+$sqlstatus='-failed - no gene specified to delete';
+} else {
 //remove records from line and allele by line tables
 $sqltext="DELETE FROM `list_gene` WHERE `gene`='".$textgene."';";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= '-successful';} 
 else {
 $sqlstatus= '-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -91,6 +99,11 @@ $gene_selection=$_POST['gene_selection'];
 $textallelegroup=$_POST['textallelegroup'];
 $textallelegroupref=$_POST['textallelegroupref'];
 $sqlaction='add allelegroup:'.$textallelegroup;
+if (trim($textallelegroup)===''){
+$sqlstatus='-failed - allele group name cannot be blank';
+} elseif (trim($gene_selection)===''){
+$sqlstatus='-failed - no gene selected';
+} else {
 $sqltext="INSERT INTO `list_allelegroup` (`allelegroup`,`gene`,`reference`) VALUES('".$textallelegroup."','".$gene_selection."','".$textallelegroupref."');";
 if ($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -98,16 +111,21 @@ else{
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove allelegroup
 if (isset($_POST['remallelegroupbutton'])){
 $textallelegroup=$_POST['textallelegroup'];
 $sqlaction='delete allelegroup:'.$textallelegroup;
+if (trim($textallelegroup)===''){
+$sqlstatus='-failed - no allele group specified to delete';
+} else {
 $sqltext="DELETE FROM `list_allelegroup` WHERE `allelegroup`='".$textallelegroup."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else{
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -116,11 +134,15 @@ if (isset($_POST['editallelegroupbutton'])){
 $texteditallelegroup=$_POST['texteditallelegroup'];
 $texteditallelegroupref=$_POST['texteditallelegroupref'];
 $sqlaction='edit allelegroup:'.$texteditallelegroup;
+if (trim($texteditallelegroup)===''){
+$sqlstatus='-failed - no allele group selected to edit';
+} else {
 $sqltext="UPDATE `list_allelegroup` SET `reference`='".$texteditallelegroupref."' WHERE `allelegroup`='".$texteditallelegroup."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -130,11 +152,17 @@ $alleleXgendspec=$_POST['allelegendspec'];
 $textallele=$_POST['textallele'];
 $allelegrp_selection=$_POST['allelegrp_selection'];
 $sqlaction='add allele:'.$textallele.' to '.$allelegrp_selection;
+if (trim($textallele)===''){
+$sqlstatus='-failed - allele name cannot be blank';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="INSERT INTO `list_allele` (`allelegroup`,`allele`,`genderspecific`) VALUES ('".$allelegrp_selection."','".$textallele."','".$alleleXgendspec."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -143,11 +171,17 @@ if (isset($_POST['remallelebutton'])){
 $textallele=$_POST['textallele'];
 $allelegrp_selection=$_POST['allelegrp_selection'];
 $sqlaction='delete allele:'.$textallele.' from '.$allelegrp_selection;
+if (trim($textallele)===''){
+$sqlstatus='-failed - allele name cannot be blank';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="DELETE FROM `list_allele` WHERE (`allelegroup`='".$allelegrp_selection."' and `allele`='".$textallele."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 //edit allele - not currently included
@@ -158,6 +192,9 @@ $textgenorxn=$_POST['textgenorxn'];
 $textgenorxncom=$_POST['textgenorxncom'];
 $textgenorxncyc=$_POST['textgenorxncyc'];
 $sqlaction='add genorxn:'.$textgenorxn;
+if (trim($textgenorxn)===''){
+$sqlstatus='-failed - genotyping reaction name cannot be blank';
+} else {
 $sqltext="INSERT INTO `list_genotypingrxns` (`genotypingrxn`,`comments`,`recommendedcycle`) 
 VALUES ('".$textgenorxn."','".$textgenorxncom."','".$textgenorxncyc."');";
 if($conn->query($sqltext)===TRUE){
@@ -166,16 +203,21 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove genotyping rxn
 if (isset($_POST['remgenorxnbutton'])){
 $textgenorxn=$_POST['textgenorxn'];
 $sqlaction='delete genorxn:'.$textgenorxn;
+if (trim($textgenorxn)===''){
+$sqlstatus='-failed - no genotyping reaction specified to delete';
+} else {
 $sqltext="DELETE FROM `list_genotypingrxns` WHERE `genotypingrxn`='".$textgenorxn."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -185,12 +227,16 @@ $texteditgenorxn=$_POST['texteditgenorxn'];
 $texteditgenorxncom=$_POST['texteditgenorxncom'];
 $texteditgenorxncyc=$_POST['texteditgenorxncyc'];
 $sqlaction='edit:'.$texteditgenorxn;
+if (trim($texteditgenorxn)===''){
+$sqlstatus='-failed - no genotyping reaction selected to edit';
+} else {
 $sqltext="UPDATE `list_genotypingrxns` SET `comments`='".$texteditgenorxncom."', 
 `recommendedcycle`='".$texteditgenorxncyc."' WHERE `genotypingrxn`='".$texteditgenorxn."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -201,6 +247,11 @@ $textprimerseq=$_POST['textprimerseq'];
 $textprimercom=$_POST['textprimercom'];
 $genorxn_selection=$_POST['genorxn_selection'];
 $sqlaction='add primer:'.$textprimer;
+if (trim($textprimer)===''){
+$sqlstatus='-failed - primer name cannot be blank';
+} elseif (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} else {
 $sqltext="INSERT INTO `list_genotypingprimers` (`primerseq`,`primername`,`genotypingrxn`,`comments`) 
 VALUES  ('".$textprimerseq."','".$textprimer."','".$genorxn_selection."','".$textprimercom."');";
 if($conn->query($sqltext)===TRUE){
@@ -209,16 +260,23 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 //remove primer
 if(isset($_POST['remprimerbutton'])){
 $textprimer=$_POST['textprimer'];
 $genorxn_selection=$_POST['genorxn_selection'];
 $sqlaction='delete primer:'.$textprimer;
+if (trim($textprimer)===''){
+$sqlstatus='-failed - primer name cannot be blank';
+} elseif (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} else {
 $sqltext="DELETE FROM `list_genotypingprimers` WHERE (`primername`='".$textprimer."' and `genotypingrxn`='".$genorxn_selection."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -229,6 +287,11 @@ $texteditprimerseq=$_POST['texteditprimerseq'];
 $texteditprimercom=$_POST['texteditprimercom'];
 $genorxn_selection=$_POST['genorxn_selection'];
 $sqlaction='edit primer:'.$texteditprimer;
+if (trim($texteditprimer)===''){
+$sqlstatus='-failed - no primer selected to edit';
+} elseif (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} else {
 $sqltext="UPDATE `list_genotypingprimers` 
 SET `primerseq`='".$texteditprimerseq."',`comments`='".$texteditprimercom."' 
 WHERE (`primername`='".$texteditprimer."' and `genotypingrxn`='".$genorxn_selection."');";
@@ -238,12 +301,18 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //add genorxn by allelegroup pair
 if(isset($_POST['assigngenorxnbutton'])){
 $genorxn_selection=$_POST['genorxn_selection'];
 $allelegrp_selection=$_POST['allelegrp_selection'];
 $sqlaction='add rxn:'.$genorxn_selection.' to allele group:'.$allelegrp_selection;
+if (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="INSERT INTO key_allelegroupbygenotypingrxn (`allelegroup`,`genotypingrxn`) 
 VALUES ('".$allelegrp_selection."','".$genorxn_selection."');";
 if($conn->query($sqltext)===TRUE){
@@ -252,18 +321,25 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove genorxn by allelegroup pair
 if(isset($_POST['deassigngenorxnbutton'])){
 $genorxnbyallelegrp_selection=$_POST['genorxnbyallelegrp_selection'];
 $allelegrp_selection=$_POST['allelegrp_selection'];
 $sqlaction='remove rxn:'.$genorxn_selection.' from allele group:'.$allelegrp_selection;
+if (trim($genorxnbyallelegrp_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="DELETE FROM key_allelegroupbygenotypingrxn 
 WHERE (`allelegroup`='".$allelegrp_selection."' and `genotypingrxn`='".$genorxnbyallelegrp_selection."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
