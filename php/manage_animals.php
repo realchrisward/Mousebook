@@ -61,6 +61,12 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //retreive animals data from db of animals
 //*****generate temp list of animals*****
 
+// issue #14: keep output vars defined even when neither branch below
+// runs (e.g. first page load) so they are never Undefined at echo
+$testtable = '';
+$genepost = '';
+$sqlreport = '';
+
 if (isset($_POST['get_tempanimals'])) {
 
 
@@ -78,6 +84,7 @@ if (isset($_POST['get_tempanimals'])) {
 	//loop and grab data
 
 	$i = 0;
+	$arrayman = [];
 	while ($row = mysqli_fetch_array($results)) {
 		$i = $i + 1;
 		$arrayman[$i] = $row['man'];
@@ -107,56 +114,63 @@ if (isset($_POST['get_tempanimals'])) {
 	$results = $conn->query($sqlgenotypes);
 	$geno_results = $results;
 
+	// issue #13: initialise so a filter matching 0 genotypes does not
+	// leave these undefined for the guard/consumers below
+	$arraygeno = [];
+	$genelist = [];
+	$genoheader = '';
 	while ($row = mysqli_fetch_array($results)) {
 		$arraygeno[$row['allelegroup']][$row['man']] = "<option value='" . $row['allele'] . "' selected>" . $row['allele'] . "</option>";
 		//echo $row['allelegroup'];
 	}
 	$conn->close();
 	$aglist = [];
-	foreach (array_keys($arraygeno) as $ag) {
-		$genelist[] = $ag;
-		$aglist[$ag] = array('M' => '', 'F' => '', 'all' => '');
-		$agfilt[] = "`allelegroup`='" . $ag . "'";
-	}
-	$agfilt = implode(' or ', $agfilt);
+	if (!empty($arraygeno)) {
+		foreach (array_keys($arraygeno) as $ag) {
+			$genelist[] = $ag;
+			$aglist[$ag] = array('M' => '', 'F' => '', 'all' => '');
+			$agfilt[] = "`allelegroup`='" . $ag . "'";
+		}
+		$agfilt = implode(' or ', $agfilt);
 
 
-	//get allelegroups
-	$sqltext = "SELECT `allelegroup`,`allele`,`genderspecific` FROM `list_allele` WHERE " . $agfilt . ";";
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-	$results = $conn->query($sqltext);
-	$aglist = [];
-	while ($row = mysqli_fetch_array($results)) {
-		$aglist[$row["allelegroup"]][$row["genderspecific"]] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
-	}
-	$conn->close();
-	//echo $sqltext;
-	$genecount = count($genelist);
-	$genepost = '';
-	foreach (range(0, $genecount - 1, 1) as $i) {
-		$genepost .= '<input type=hidden id="geno' . $i . '" name="geno' . $i . '" value="' . $genelist[$i] . '">';
-	}
-	$genepost .= '<input type=hidden id="genecount" name="genecount" value="' . $genecount . '" >';
+		//get allelegroups
+		$sqltext = "SELECT `allelegroup`,`allele`,`genderspecific` FROM `list_allele` WHERE " . $agfilt . ";";
+		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$results = $conn->query($sqltext);
+		$aglist = [];
+		while ($row = mysqli_fetch_array($results)) {
+			$aglist[$row["allelegroup"]][$row["genderspecific"]] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
+		}
+		$conn->close();
+		//echo $sqltext;
+		$genecount = count($genelist);
+		$genepost = '';
+		foreach (range(0, $genecount - 1, 1) as $i) {
+			$genepost .= '<input type=hidden id="geno' . $i . '" name="geno' . $i . '" value="' . $genelist[$i] . '">';
+		}
+		$genepost .= '<input type=hidden id="genecount" name="genecount" value="' . $genecount . '" >';
 
-	//-----prepare selection boxes for genotypes
-	$genoheader = '';
-	//getallelegroup array with alleles
-	foreach (range(0, $genecount - 1, 1) as $i) {
-		$ag = $genelist[$i];
-		foreach ($arrayman as $j) {
-			if ($arraygeno[$ag][$j] == "") {
-				$arraygt[$ag][$j] = "<td>NA</td>";
-			} else {
-				if ($arraygender[$j] === "M") {
-					$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['all'] . '</select></td>';
-				} elseif ($arraygender[$j] === "F") {
-					$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
+		//-----prepare selection boxes for genotypes
+		$genoheader = '';
+		//getallelegroup array with alleles
+		foreach (range(0, $genecount - 1, 1) as $i) {
+			$ag = $genelist[$i];
+			foreach ($arrayman as $j) {
+				if ($arraygeno[$ag][$j] == "") {
+					$arraygt[$ag][$j] = "<td>NA</td>";
 				} else {
-					$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
+					if ($arraygender[$j] === "M") {
+						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['all'] . '</select></td>';
+					} elseif ($arraygender[$j] === "F") {
+						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
+					} else {
+						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
+					}
 				}
 			}
+			$genoheader .= '<th>' . $ag . '</th>';
 		}
-		$genoheader .= '<th>' . $ag . '</th>';
 	}
 
 	//------rearraange selection boxes 
