@@ -525,7 +525,7 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			</tr>
 			<tr>
 				<td><input type="text" id="textallelegroup" name="textallelegroup" style="width:100%;"></td>
-				<td colspan=2><input type="text" id="textallelegroupref" name="textallelegroupref" style="width:100%;"</td>
+				<td colspan=2><input type="text" id="textallelegroupref" name="textallelegroupref" style="width:100%;"></td>
 			</tr>
 			
 			<tr><td colspan=3 style="background-color:#217190;"></td></tr>
@@ -536,7 +536,7 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			</tr>
 			<tr>
 				<td><input type="text" id="texteditallelegroup" name="texteditallelegroup"  value="<?php echo $currallelegrp; ?>" style="width:100%;" readonly="readonly"></td>
-				<td colspan=2><input type="text" id="texteditallelegroupref" name="texteditallelegroupref" value="<?php echo $currallelegrpref; ?>" style="width:100%;"</td>
+				<td colspan=2><input type="text" id="texteditallelegroupref" name="texteditallelegroupref" value="<?php echo $currallelegrpref; ?>" style="width:100%;"></td>
 			</tr>
 			
 			<tr><td colspan=3 style="background-color:#217190;">-</td></tr>

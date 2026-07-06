@@ -20,6 +20,40 @@
   --mb-head-h: 46px;
   --mb-r: 4px;
   --mb-t: 0.2s ease;
+
+  /* --- Theme surface tokens (light) -----------------
+     Light defaults are byte-identical to the previous
+     hard-coded values, so the light theme is unchanged.
+     The dark theme overrides these below. The navy
+     header / sidebar / table-headers (--mb-dark, --mb-med)
+     are intentionally NOT re-themed — they read well in
+     both modes and keep the two schemes cohesive. */
+  --mb-text: #034262;          /* main foreground text (was --mb-dark) */
+  --mb-text-muted: #474747;   /* secondary text (was --mb-grey) */
+  --mb-surface: #ffffff;       /* content panels, inputs */
+  --mb-border: #9bbdd0;        /* input borders */
+  --mb-border-soft: #e0eaf0;   /* table row borders */
+  --mb-zebra: #eef5f9;         /* table row hover */
+  --mb-footer-bg: #f0f0f0;
+  --mb-footer-text: #888888;
+  --mb-footer-border: #dddddd;
+}
+
+/* --- Dark theme -------------------------------------
+   Applied via <html data-theme="dark"> (set by mousebook.js
+   from localStorage / prefers-color-scheme). These hex
+   values are a sensible first pass — tune to taste. */
+:root[data-theme="dark"] {
+  --mb-bg: #0e1620;            /* page background */
+  --mb-text: #e6eef5;
+  --mb-text-muted: #c2cfda;
+  --mb-surface: #17222d;
+  --mb-border: #345166;
+  --mb-border-soft: #223140;
+  --mb-zebra: #1e2b38;
+  --mb-footer-bg: #121b24;
+  --mb-footer-text: #90a4b4;
+  --mb-footer-border: #223140;
 }
 
 /* --- Reset / Base ---------------------------------- */
@@ -37,8 +71,9 @@ body {
   min-height: 100vh;
   font-family: Arial, Helvetica, sans-serif;
   font-size: 13px;
-  color: var(--mb-dark);
+  color: var(--mb-text);
   background: var(--mb-bg);
+  transition: background var(--mb-t), color var(--mb-t);
   display: grid;
   grid-template-areas:
     "header  header"
@@ -125,7 +160,8 @@ body:has(#left_navmenu.collapsed) {
 }
 
 /* Header toggle button */
-.mb-nav-toggle-header {
+.mb-nav-toggle-header,
+.mb-theme-toggle {
   background: rgba(255, 255, 255, 0.10);
   border: 1px solid rgba(255, 255, 255, 0.20);
   border-radius: var(--mb-r);
@@ -141,7 +177,8 @@ body:has(#left_navmenu.collapsed) {
   padding: 0;
 }
 
-.mb-nav-toggle-header:hover {
+.mb-nav-toggle-header:hover,
+.mb-theme-toggle:hover {
   background: rgba(255, 255, 255, 0.20);
 }
 
@@ -405,7 +442,7 @@ body:has(#left_navmenu.collapsed) {
 /* --- Content area ---------------------------------- */
 #right_content {
   grid-area: content;
-  background: white;
+  background: var(--mb-surface);
   padding: 18px 22px;
   margin-left: 0 !important;
   min-width: 0;
@@ -414,13 +451,13 @@ body:has(#left_navmenu.collapsed) {
 
 #right_content h1 {
   font-size: 20px;
-  color: var(--mb-dark);
+  color: var(--mb-text);
   margin: 0 0 14px;
 }
 
 #right_content h2 {
   font-size: 16px;
-  color: var(--mb-dark);
+  color: var(--mb-text);
   margin: 0 0 12px;
   border-bottom: 2px solid var(--mb-vlight);
   padding-bottom: 7px;
@@ -465,13 +502,13 @@ td {
 
 #right_content table td {
   padding: 6px 10px;
-  border-bottom: 1px solid #e0eaf0;
-  color: var(--mb-grey);
+  border-bottom: 1px solid var(--mb-border-soft);
+  color: var(--mb-text-muted, var(--mb-grey));
   text-align: left;
 }
 
 #right_content table tr:hover td {
-  background: #eef5f9;
+  background: var(--mb-zebra);
 }
 
 #right_content table tr:last-child td {
@@ -496,12 +533,12 @@ td {
 #right_content input[type=text],
 #right_content input[type=date],
 #right_content input[type=number] {
-  border: 1px solid #9bbdd0;
+  border: 1px solid var(--mb-border);
   border-radius: var(--mb-r);
   padding: 5px 8px;
   font-size: 12px;
-  color: var(--mb-dark);
-  background: white;
+  color: var(--mb-text);
+  background: var(--mb-surface);
 }
 
 #right_content select:focus,
@@ -559,10 +596,10 @@ input[name=REFRESH] {
   grid-area: footer;
   padding: 6px 16px;
   font-size: 11px;
-  color: #888;
+  color: var(--mb-footer-text);
   text-align: right;
-  background: #f0f0f0;
-  border-top: 1px solid #ddd;
+  background: var(--mb-footer-bg);
+  border-top: 1px solid var(--mb-footer-border);
 }
 
 /* --- Utility --------------------------------------- */

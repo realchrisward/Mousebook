@@ -465,7 +465,7 @@ CREATE TABLE `reservations_animals` (
   `timestamp` datetime DEFAULT NULL,
   PRIMARY KEY (`maxautono`),
   UNIQUE KEY `maxautono_UNIQUE` (`maxautono`)
-) ENGINE=InnoDB AUTO_INCREMENT=3094 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

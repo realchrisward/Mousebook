@@ -16,25 +16,81 @@
 (function () {
   'use strict';
 
-  /* ── Tabler icons — load from CDN with fallback ─────
-     If the CDN is unreachable (internal network / VPN),
-     icons degrade gracefully to text labels only.
-     The rest of the JS runs regardless.              */
+  /* Resolve the app root from this script's own URL so asset paths work
+     no matter which subdirectory the current page lives in (index.php at
+     the root, php/*.php one level down, etc.). Captured synchronously
+     here because document.currentScript is only valid during the initial
+     script run, not inside later DOMContentLoaded callbacks. */
+  var APP_ROOT = '';
+  try {
+    var _thisScript = document.currentScript && document.currentScript.src;
+    if (_thisScript) APP_ROOT = new URL('.', _thisScript).href;  // dir containing mousebook.js
+  } catch (e) { APP_ROOT = ''; }
+
+  var TABLER_LOCAL = (APP_ROOT || '') + 'assets/tabler/tabler-icons.min.css';
+  var TABLER_CDN   = 'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.33.0/dist/tabler-icons.min.css';
+
+  /* ── Theme (light / dark) ────────────────────────────
+     Persisted per-browser in localStorage; first-time
+     visitors follow the OS preference. The header toggle
+     (built in enhanceHeader) flips it. Applied immediately
+     below — this script is the last element before </body>,
+     so it runs before first paint in most browsers,
+     minimising any flash of the wrong theme. */
+  function currentTheme() {
+    return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  }
+  function syncThemeIcon(theme) {
+    var el = document.getElementById('mbThemeIcon');
+    if (el) el.className = 'ti ' + (theme === 'dark' ? 'ti-sun' : 'ti-moon');
+  }
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('mb-theme', theme); } catch (e) {}
+    syncThemeIcon(theme);
+  }
+  function toggleTheme() {
+    setTheme(currentTheme() === 'dark' ? 'light' : 'dark');
+  }
+  (function applyInitialTheme() {
+    var t = null;
+    try { t = localStorage.getItem('mb-theme'); } catch (e) {}
+    if (t !== 'dark' && t !== 'light') {
+      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  })();
+
+  /* ── Tabler icons — self-hosted, with CDN fallback ──
+     Load the vendored copy first so intranet / offline installs never
+     depend on an external CDN. If the local file is missing (e.g. an
+     older deploy without assets/tabler/), fall back to the CDN. Either
+     way the rest of the JS runs after load / error / 3 s timeout; if
+     both sources fail, icons degrade gracefully to text labels only. */
   function loadTablerIcons(callback) {
     if (document.querySelector('link[href*="tabler-icons"]')) {
       callback(); return;
     }
-    var lnk = document.createElement('link');
-    lnk.rel  = 'stylesheet';
-    lnk.href = 'https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.33.0/dist/tabler-icons.min.css';
 
     var done = false;
     function finish() { if (!done) { done = true; callback(); } }
 
-    lnk.onload  = finish;
-    lnk.onerror = finish;                    // CDN failed — continue without icons
-    setTimeout(finish, 3000);                // 3 s timeout — continue either way
-    document.head.appendChild(lnk);
+    function addLink(href, onFail) {
+      var lnk = document.createElement('link');
+      lnk.rel     = 'stylesheet';
+      lnk.href    = href;
+      lnk.onload  = finish;
+      lnk.onerror = onFail || finish;
+      document.head.appendChild(lnk);
+    }
+
+    // Try the local copy first; on error, swap to the CDN.
+    addLink(TABLER_LOCAL, function () {
+      if (done) return;                      // already proceeded (e.g. timeout) — don't add CDN
+      addLink(TABLER_CDN, finish);           // local missing — CDN as last resort
+    });
+
+    setTimeout(finish, 3000);                // continue regardless after 3 s
   }
 
   /* ── Custom mice SVG for Strains nav item ────────── */
@@ -150,6 +206,9 @@
       '    </div>',
       '  </div>',
       '  <div class="mb-header-right">',
+      '    <button type="button" class="mb-theme-toggle" id="mbThemeToggle" aria-label="Toggle light / dark theme" title="Toggle theme">',
+      '      <i class="ti ti-moon" id="mbThemeIcon" aria-hidden="true"></i>',
+      '    </button>',
       '    <button type="button" class="mb-user-btn" id="mbUserBtn">',
       '      <span class="mb-status-dot" style="background-color:' + statusColor + '"></span>',
       '      <i class="ti ti-user" aria-hidden="true"></i>',
@@ -179,6 +238,11 @@
 
     /* Wire up header toggle */
     document.getElementById('mbHeaderToggle').addEventListener('click', toggleSidebar);
+
+    /* Wire up theme toggle + reflect current theme in its icon */
+    var themeBtn = document.getElementById('mbThemeToggle');
+    if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+    syncThemeIcon(currentTheme());
 
     /* Wire up dropdown */
     var userBtn  = document.getElementById('mbUserBtn');

@@ -414,7 +414,7 @@ function showLine(newValue)
 				
 				<tr>
 				<th>Del Line:</th>
-				<td colspan=3><input type=text style="width:100%;" id="textdelline" name="textdelline"</td>
+				<td colspan=3><input type=text style="width:100%;" id="textdelline" name="textdelline"></td>
 				<td><input type=submit name="button_deleteline" style="width:90%;"></td>
 				</tr>
 				

@@ -197,14 +197,14 @@ $conn->close();
 				<table>
 				<tr>
 				<td class="label">Add Strain:</td>
-				<td><input type=text id="textaddstrain" name="textaddstrain"</td>
+				<td><input type=text id="textaddstrain" name="textaddstrain"></td>
 				<td><input type=submit name="button_addstrain"></td>
 				</table>
 		
 				<table>
 				<tr>
 				<td class="label">Del Strain:</td>
-				<td><input type=text id="textdelstrain" name="textdelstrain"</td>
+				<td><input type=text id="textdelstrain" name="textdelstrain"></td>
 				<td><input type=submit name="button_deletestrain"></td>
 				</table>
 			
@@ -221,7 +221,7 @@ function showStrain(newValue)
 </script>
 		
 				<td>&rarr;</td>
-				<td><input type=text id="texteditstrain" name="texteditstrain"</td>
+				<td><input type=text id="texteditstrain" name="texteditstrain"></td>
 				<td><input type=submit name="button_editstrain"></td>
 				</table>
 			</form>

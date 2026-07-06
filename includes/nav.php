@@ -44,7 +44,7 @@ if (!function_exists('mb_render_nav')) {
         'query_animals.php'            => 'View animals',
         // Intentionally NOT in the global menu (see BACKUP/HANDOFF notes):
         //   cagecard_gen5rs.php / cagecard_gen5rs-blindgeno.php  (reached from Card Printer)
-        //   autoclipsheet.php / shuffle_cages.php                (orphans, pending Phase E)
+        //   autoclipsheet.php                                    (orphan; feeds Phase E clipping-logs PDF)
     ];
 
     /**
