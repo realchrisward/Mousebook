@@ -194,85 +194,8 @@ if (!empty($rowdata)) {
 		</form>
 	</div>
 
-	<div id="left_navmenu">
-
-		<form action="../index.php" method=post>
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				style="background-color:#217190; color:lightgrey;"
-				value="Home" />
-			<br>
-		</form>
-		<form action="../php/manage_alleles.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Manage Alleles" />
-		</form>
-		<form action="../php/manage_strains.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Manage Strains" />
-		</form>
-		<form action="../php/manage_lines.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Manage Lines" />
-		</form>
-		<form action="../php/manage_animals.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Manage Animals" />
-		</form>
-		<form action="../php/manage_cages.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Manage Cages" />
-		</form>
-		<form action="../php/query_genotodo.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Plan Genotyping" />
-		</form>
-		<form action="../php/query_animals.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="View Animals" />
-		</form>
-		<form action="../php/cagecard_printer.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name=""
-				value="Card Printer" />
-		</form>
-
-
-	</div>
+		<?php require_once __DIR__ . '/../includes/nav.php';
+	      mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
 
 	<!--CONTENT SECTION-->
 	<div id="right_content" class="centertext">

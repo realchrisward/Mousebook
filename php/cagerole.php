@@ -302,45 +302,8 @@ if (isset($_POST['addcage_single'])) {
 		</form>
 	</div>
 
-	<div id="left_navmenu">
-		<form action="../index.php" method=post>
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name="" style="background-color:#217190; color:lightgrey;" value="Home" />
-			<br>
-		</form>
-		<form action="../php/manage_roles.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name="" value="Manage Roles" />
-		</form>
-		<form action="../php/manage_cages.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name="" value="Manage Cages" />
-		</form>
-		<form action="../php/cage_location.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name="" value="Cage Location Manager" />
-		</form>
-		<form action="../php/query_animals.php" method=post target="_blank">
-			<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-			<input type=hidden name="button_login" value="connect" />
-			<input type=submit class="button" name="" value="View animals" />
-		</form>
-
-	</div>
+	<?php require_once __DIR__ . '/../includes/nav.php';
+	      mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
 
 	<div id="right_content" class="centertext">
 		<!--CONTENT SECTION-->
