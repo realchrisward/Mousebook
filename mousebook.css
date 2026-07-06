@@ -16,7 +16,7 @@
   --mb-grey: #474747;
   --mb-bg: #f4f6f8;
   --mb-nav-w: 158px;
-  --mb-nav-min: 40px;
+  --mb-nav-min: 60px;
   --mb-head-h: 46px;
   --mb-r: 4px;
   --mb-t: 0.2s ease;
@@ -28,12 +28,18 @@
      header / sidebar / table-headers (--mb-dark, --mb-med)
      are intentionally NOT re-themed — they read well in
      both modes and keep the two schemes cohesive. */
-  --mb-text: #034262;          /* main foreground text (was --mb-dark) */
-  --mb-text-muted: #474747;   /* secondary text (was --mb-grey) */
-  --mb-surface: #ffffff;       /* content panels, inputs */
-  --mb-border: #9bbdd0;        /* input borders */
-  --mb-border-soft: #e0eaf0;   /* table row borders */
-  --mb-zebra: #eef5f9;         /* table row hover */
+  --mb-text: #034262;
+  /* main foreground text (was --mb-dark) */
+  --mb-text-muted: #474747;
+  /* secondary text (was --mb-grey) */
+  --mb-surface: #ffffff;
+  /* content panels, inputs */
+  --mb-border: #9bbdd0;
+  /* input borders */
+  --mb-border-soft: #e0eaf0;
+  /* table row borders */
+  --mb-zebra: #eef5f9;
+  /* table row hover */
   --mb-footer-bg: #f0f0f0;
   --mb-footer-text: #888888;
   --mb-footer-border: #dddddd;
@@ -44,7 +50,8 @@
    from localStorage / prefers-color-scheme). These hex
    values are a sensible first pass — tune to taste. */
 :root[data-theme="dark"] {
-  --mb-bg: #0e1620;            /* page background */
+  --mb-bg: #0e1620;
+  /* page background */
   --mb-text: #e6eef5;
   --mb-text-muted: #c2cfda;
   --mb-surface: #17222d;
