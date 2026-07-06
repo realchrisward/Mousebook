@@ -6,9 +6,13 @@
  * copy-pasted <div id="left_navmenu"> blocks, which had drifted to between
  * 4 and 13 links per page (and carried stray/mis-nested </form> tags).
  *
- * Usage (inside each page, where $xusername / $xpassword are already set):
+ * Usage from a page in php/ (where $xusername / $xpassword are already set):
  *     <?php require_once __DIR__ . '/../includes/nav.php';
  *           mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
+ *
+ * Usage from index.php at the repo root (note the './' base path):
+ *     <?php require_once __DIR__ . '/includes/nav.php';
+ *           mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? '', null, './'); ?>
  *
  * The active page is auto-detected from the running script name, so pages
  * don't need to pass anything extra. Each destination still opens in a new
@@ -55,12 +59,19 @@ if (!function_exists('mb_render_nav')) {
      * @param string $dbname     current db name
      * @param string|null $active  script basename to mark active;
      *                              null = auto-detect from SCRIPT_NAME
+     * @param string $base   URL prefix pointing at the repo root from the
+     *                        calling page. Pages in php/ are one level deep,
+     *                        so the default '../' is correct for them and
+     *                        they need pass nothing. index.php sits AT the
+     *                        repo root, so it passes './'.
      */
-    function mb_render_nav($xusername, $xpassword, $dbname, $active = null)
+    function mb_render_nav($xusername, $xpassword, $dbname, $active = null, $base = '../')
     {
         if ($active === null) {
             $active = basename($_SERVER['SCRIPT_NAME'] ?? '');
         }
+        // Normalise: guarantee exactly one trailing slash.
+        $base = rtrim($base, '/') . '/';
         $u  = htmlspecialchars($xusername, ENT_QUOTES);
         $p  = htmlspecialchars($xpassword, ENT_QUOTES);
         $db = htmlspecialchars($dbname, ENT_QUOTES);
@@ -68,7 +79,7 @@ if (!function_exists('mb_render_nav')) {
         echo '<div id="left_navmenu">' . "\n";
         foreach ($GLOBALS['MB_NAV_ITEMS'] as $script => $label) {
             $is_home   = ($script === 'index.php');
-            $action    = $is_home ? '../index.php' : '../php/' . $script;
+            $action    = $is_home ? $base . 'index.php' : $base . 'php/' . $script;
             $is_active = ($script === $active);
 
             // Home navigates in place; other destinations open in a new tab (today's behavior).
