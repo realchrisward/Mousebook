@@ -6,8 +6,14 @@
 <?php
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
-$lf = null; $gf = null; $mf = null; $sf = null; $locf = null; $rolef = null;
-$cf = null; $sqlstatusclear = null;
+$lf = null;
+$gf = null;
+$mf = null;
+$sf = null;
+$locf = null;
+$rolef = null;
+$cf = null;
+$sqlstatusclear = null;
 //setup sql variables
 $xusername = $_POST['xusername'];
 $xpassword = $_POST['xpassword'];
@@ -292,10 +298,18 @@ if (isset($_POST['submit_cages'])) {
 	$xcage2role = $_POST['cage2role'] ?? '';
 	$xcage3role = $_POST['cage3role'] ?? '';
 	$xcage4role = $_POST['cage4role'] ?? '';
-	if ($xcage1location === '') { $xcage1location = 'Limbo'; }
-	if ($xcage2location === '') { $xcage2location = 'Limbo'; }
-	if ($xcage3location === '') { $xcage3location = 'Limbo'; }
-	if ($xcage4location === '') { $xcage4location = 'Limbo'; }
+	if ($xcage1location === '') {
+		$xcage1location = 'Limbo';
+	}
+	if ($xcage2location === '') {
+		$xcage2location = 'Limbo';
+	}
+	if ($xcage3location === '') {
+		$xcage3location = 'Limbo';
+	}
+	if ($xcage4location === '') {
+		$xcage4location = 'Limbo';
+	}
 	$xline_assignment = $_POST['line_assignment'];
 	$xmove_selection = $_POST['move_selection'];
 	$xcategory_selection = $_POST['category_selection'];
@@ -402,18 +416,30 @@ DELETE FROM `" . $dbname . "`.`temp_cage3`;DELETE FROM `" . $dbname . "`.`temp_c
 	//exact "this cage already exists" test.
 	$cageCollision = '';
 	$targetCageNames = array();
-	if ($xcage1size > 0) { $targetCageNames[] = $xcage1name; }
-	if ($xcage2size > 0) { $targetCageNames[] = $xcage2name; }
-	if ($xcage3size > 0) { $targetCageNames[] = $xcage3name; }
-	if ($xcage4size > 0) { $targetCageNames[] = $xcage4name; }
+	if ($xcage1size > 0) {
+		$targetCageNames[] = $xcage1name;
+	}
+	if ($xcage2size > 0) {
+		$targetCageNames[] = $xcage2name;
+	}
+	if ($xcage3size > 0) {
+		$targetCageNames[] = $xcage3name;
+	}
+	if ($xcage4size > 0) {
+		$targetCageNames[] = $xcage4name;
+	}
 	if (!empty($targetCageNames)) {
 		$escTargets = array();
-		foreach ($targetCageNames as $tname) { $escTargets[] = "'" . $conn->real_escape_string($tname) . "'"; }
+		foreach ($targetCageNames as $tname) {
+			$escTargets[] = "'" . $conn->real_escape_string($tname) . "'";
+		}
 		$checkSql = "SELECT `cageid` FROM `" . $dbname . "`.`table_cages` WHERE `cageid` IN (" . implode(',', $escTargets) . ");";
 		$checkRes = $conn->query($checkSql);
 		if ($checkRes && $checkRes->num_rows > 0) {
 			$takenCages = array();
-			while ($crow = $checkRes->fetch_assoc()) { $takenCages[] = $crow['cageid']; }
+			while ($crow = $checkRes->fetch_assoc()) {
+				$takenCages[] = $crow['cageid'];
+			}
 			$cageCollision = implode(', ', $takenCages);
 		}
 	}
@@ -648,26 +674,38 @@ $cage_role_listbox     = array();
 $cage_locsync          = array();
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $loc_assign_values = location_assign_options($conn);
-if (!in_array('Limbo', $loc_assign_values, true)) { array_unshift($loc_assign_values, 'Limbo'); }
+if (!in_array('Limbo', $loc_assign_values, true)) {
+	array_unshift($loc_assign_values, 'Limbo');
+}
 $role_assign_values = role_assign_options($conn);
 foreach (array(1, 2, 3, 4) as $cn) {
 	$firstcur = '';
 	$fr = $conn->query("SELECT currentcage FROM table_animals JOIN temp_cage$cn ON table_animals.animalautono=temp_cage$cn.animalautono ORDER BY gender desc, line, idno LIMIT 1;");
-	if ($fr && ($frow = mysqli_fetch_array($fr))) { $firstcur = $frow['currentcage']; }
+	if ($fr && ($frow = mysqli_fetch_array($fr))) {
+		$firstcur = $frow['currentcage'];
+	}
 	$deflorm = 'Limbo';
 	if ($firstcur !== '' && $firstcur !== null) {
 		$lr = $conn->query("SELECT cagelocation_room FROM table_cages WHERE cageid='" . $conn->real_escape_string($firstcur) . "' LIMIT 1;");
 		if ($lr && ($lrow = mysqli_fetch_array($lr))) {
-			if ($lrow['cagelocation_room'] !== null && $lrow['cagelocation_room'] !== '') { $deflorm = $lrow['cagelocation_room']; }
+			if ($lrow['cagelocation_room'] !== null && $lrow['cagelocation_room'] !== '') {
+				$deflorm = $lrow['cagelocation_room'];
+			}
 		}
 	}
 	$val  = $_POST["cage{$cn}location"] ?? '';
 	$sync = $_POST["cage{$cn}locsync"] ?? chr(1);
-	if ((string)$firstcur !== (string)$sync) { $val = $deflorm; }
-	if ($val === '') { $val = $deflorm; }
+	if ((string)$firstcur !== (string)$sync) {
+		$val = $deflorm;
+	}
+	if ($val === '') {
+		$val = $deflorm;
+	}
 	$cage_locsync[$cn] = (string)$firstcur;
 	$locvals = $loc_assign_values;
-	if ($val !== '' && !in_array($val, $locvals, true)) { array_unshift($locvals, $val); }
+	if ($val !== '' && !in_array($val, $locvals, true)) {
+		array_unshift($locvals, $val);
+	}
 	$cage_location_listbox[$cn] = filter_selectbox($locvals, $val, "cage{$cn}location", 'submitForm()', false);
 	$rval = $_POST["cage{$cn}role"] ?? '';
 	$rl = '<select id="cage' . $cn . 'role" name="cage' . $cn . 'role" size=1 class="mediumlistbox" onchange="submitForm()">';
@@ -730,7 +768,7 @@ left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left 
 left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and
 temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null" . $sql_where_text . " GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
-echo $sqltext;
+//echo $sqltext;
 $sourcecage_listbox = '<select id="sourcecage_selection" name="sourcecage_selection" size=14 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['currentcage'] === $sourcecage_selection) {
@@ -910,8 +948,8 @@ $conn->close();
 		</form>
 	</div>
 
-		<?php require_once __DIR__ . '/../includes/nav.php';
-	      mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
+	<?php require_once __DIR__ . '/../includes/nav.php';
+	mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
 	<div id="right_content" class="centertext">
 		<!--CONTENT SECTION-->
 		<form id="cage_management_form" name="cage_management_form" method=post>
@@ -996,9 +1034,11 @@ $conn->close();
 				</tr>
 				<tr>
 					<td colspan=2>Location: <?php echo $cage_location_listbox[1]; ?> Role: <?php echo $cage_role_listbox[1]; ?>
-						<input type=hidden name="cage1locsync" value="<?php echo htmlspecialchars($cage_locsync[1] ?? ''); ?>"></td>
+						<input type=hidden name="cage1locsync" value="<?php echo htmlspecialchars($cage_locsync[1] ?? ''); ?>">
+					</td>
 					<td colspan=2>Location: <?php echo $cage_location_listbox[2]; ?> Role: <?php echo $cage_role_listbox[2]; ?>
-						<input type=hidden name="cage2locsync" value="<?php echo htmlspecialchars($cage_locsync[2] ?? ''); ?>"></td>
+						<input type=hidden name="cage2locsync" value="<?php echo htmlspecialchars($cage_locsync[2] ?? ''); ?>">
+					</td>
 				</tr>
 				<tr>
 					<th><input type=text id="cage3name" name="cage3name" value="<?php echo $cage3name; ?>" readonly="readonly">
@@ -1024,9 +1064,11 @@ $conn->close();
 				</tr>
 				<tr>
 					<td colspan=2>Location: <?php echo $cage_location_listbox[3]; ?> Role: <?php echo $cage_role_listbox[3]; ?>
-						<input type=hidden name="cage3locsync" value="<?php echo htmlspecialchars($cage_locsync[3] ?? ''); ?>"></td>
+						<input type=hidden name="cage3locsync" value="<?php echo htmlspecialchars($cage_locsync[3] ?? ''); ?>">
+					</td>
 					<td colspan=2>Location: <?php echo $cage_location_listbox[4]; ?> Role: <?php echo $cage_role_listbox[4]; ?>
-						<input type=hidden name="cage4locsync" value="<?php echo htmlspecialchars($cage_locsync[4] ?? ''); ?>"></td>
+						<input type=hidden name="cage4locsync" value="<?php echo htmlspecialchars($cage_locsync[4] ?? ''); ?>">
+					</td>
 				</tr>
 			</table>
 
