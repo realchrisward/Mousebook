@@ -5,13 +5,13 @@
 <!--php code: login-->
 <?php
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -19,7 +19,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -239,7 +239,7 @@ if (isset($_POST['remcage_single'])) {
 
 //Bulk add to cage list
 if (isset($_POST['addcage_batch'])) {
-	$cage_batch = $_POST['cage_batchlist'];
+	$cage_batch = ($_POST['cage_batchlist'] ?? '');
 	$sqlaction = 'add cage:' . $cage_batch;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`CagesForPrinting` (`cageid`) VALUES " . $cage_batchlist . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -449,9 +449,9 @@ $colorfilt_listbox .= '</select>';
 		<!--CONTENT SECTION-->
 		<form id="cage_selection_form" name="cage_selection_form" method=post>
 
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 			<!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->
 			<script type="text/javascript">

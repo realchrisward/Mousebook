@@ -8,13 +8,13 @@
 $host = $accessun = $accesspw = null;
 $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = null;
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
+	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xpassword=($_POST['xpassword'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
@@ -22,7 +22,7 @@ $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = nu
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -67,11 +67,11 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 if (isset($_POST['generate_animals'])){
 //get deadpup info
-$xdob=$_POST['dob'];
-$xdod=$_POST['dod'];
-$xbulkcomments=$_POST['bulkcomments'];
-$xsource_selection=$_POST['source_selection'];
-$xdeath_type=$_POST['death_type'];
+$xdob=($_POST['dob'] ?? '');
+$xdod=($_POST['dod'] ?? '');
+$xbulkcomments=($_POST['bulkcomments'] ?? '');
+$xsource_selection=($_POST['source_selection'] ?? '');
+$xdeath_type=($_POST['death_type'] ?? '');
 
 //populate table
 
@@ -109,12 +109,12 @@ if (isset($_POST['confirm_animals'])){
 
 $sqltext='';
 
-$dob=$_POST['sqldob'];
-$dod=$_POST['sqldod'];
-$comments=$_POST['sqlcomments'];
+$dob=($_POST['sqldob'] ?? '');
+$dod=($_POST['sqldod'] ?? '');
+$comments=($_POST['sqlcomments'] ?? '');
 
-$death_type=$_POST['sqldeath_type'];
-$cageid=$_POST['sqlcage'];
+$death_type=($_POST['sqldeath_type'] ?? '');
+$cageid=($_POST['sqlcage'] ?? '');
 
 $sqltext='INSERT INTO `'.$dbname.'`.`table_deadpups` 
 (`cageid`,`dob`,`dod`,`comments`,`death_type`)
@@ -139,13 +139,13 @@ $conn->close();
 <?php
 //posted variables
 
-$line_selection=$_POST['line_selection'];
+$line_selection=($_POST['line_selection'] ?? '');
 $location_selection=$_POST['location_selection'] ?? 'all';
-$source_selection=$_POST['source_selection'];
-$bulkcomments=$_POST['bulkcomments'];
-$dob=$_POST['dob'];
-$dod=$_POST['dod'];
-$death_type=$_POST['death_type'];
+$source_selection=($_POST['source_selection'] ?? '');
+$bulkcomments=($_POST['bulkcomments'] ?? '');
+$dob=($_POST['dob'] ?? '');
+$dod=($_POST['dod'] ?? '');
+$death_type=($_POST['death_type'] ?? '');
 
 
 //line list
@@ -295,9 +295,9 @@ $conn->close();
 			<form id="add_animals_form" name="add_animals_form" method=post>
 
 
-					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 <!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->

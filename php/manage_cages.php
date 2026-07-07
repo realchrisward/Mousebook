@@ -15,13 +15,13 @@ $rolef = null;
 $cf = null;
 $sqlstatusclear = null;
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -29,7 +29,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -88,7 +88,7 @@ if (!isset($_POST['submit_cages'])) {
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //Add animals individually to cage1|2|3|4
 if (isset($_POST['addcage1_single'])) {
-	$animals_selection = $_POST['animals_selection'];
+	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage1` (`animalautono`) VALUES (" . $animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
@@ -99,7 +99,7 @@ if (isset($_POST['addcage1_single'])) {
 }
 //cage2
 if (isset($_POST['addcage2_single'])) {
-	$animals_selection = $_POST['animals_selection'];
+	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage2` (`animalautono`) VALUES (" . $animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
@@ -110,7 +110,7 @@ if (isset($_POST['addcage2_single'])) {
 }
 //cage3
 if (isset($_POST['addcage3_single'])) {
-	$animals_selection = $_POST['animals_selection'];
+	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage3` (`animalautono`) VALUES (" . $animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
@@ -121,7 +121,7 @@ if (isset($_POST['addcage3_single'])) {
 }
 //cage4
 if (isset($_POST['addcage4_single'])) {
-	$animals_selection = $_POST['animals_selection'];
+	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage4` (`animalautono`) VALUES (" . $animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
@@ -132,7 +132,7 @@ if (isset($_POST['addcage4_single'])) {
 }
 //Remove animals individually to cage1|2|3|4
 if (isset($_POST['remcage1_single'])) {
-	$animals_selection = $_POST['cage1_selection'];
+	$animals_selection = ($_POST['cage1_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
 	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage1` WHERE `animalautono`=" . $animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -143,7 +143,7 @@ if (isset($_POST['remcage1_single'])) {
 }
 //cage2
 if (isset($_POST['remcage2_single'])) {
-	$animals_selection = $_POST['cage2_selection'];
+	$animals_selection = ($_POST['cage2_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
 	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage2` WHERE `animalautono`=" . $animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -154,7 +154,7 @@ if (isset($_POST['remcage2_single'])) {
 }
 //cage3
 if (isset($_POST['remcage3_single'])) {
-	$animals_selection = $_POST['cage3_selection'];
+	$animals_selection = ($_POST['cage3_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
 	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage3` WHERE `animalautono`=" . $animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -165,7 +165,7 @@ if (isset($_POST['remcage3_single'])) {
 }
 //cage4
 if (isset($_POST['remcage4_single'])) {
-	$animals_selection = $_POST['cage4_selection'];
+	$animals_selection = ($_POST['cage4_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
 	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage4` WHERE `animalautono`=" . $animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -176,7 +176,7 @@ if (isset($_POST['remcage4_single'])) {
 }
 //Bulk add to cage 1|2|3|4
 if (isset($_POST['addcage1_batch'])) {
-	$animals_batch = $_POST['animals_batchlist'];
+	$animals_batch = ($_POST['animals_batchlist'] ?? '');
 	$sqlaction = 'add animal:' . $animals_batch;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage1` (`animalautono`) VALUES " . $animals_batch . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -187,7 +187,7 @@ if (isset($_POST['addcage1_batch'])) {
 }
 //cage2
 if (isset($_POST['addcage2_batch'])) {
-	$animals_batch = $_POST['animals_batchlist'];
+	$animals_batch = ($_POST['animals_batchlist'] ?? '');
 	$sqlaction = 'add animal:' . $animals_batch;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage2` (`animalautono`) VALUES " . $animals_batch . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -198,7 +198,7 @@ if (isset($_POST['addcage2_batch'])) {
 }
 //cage3
 if (isset($_POST['addcage3_batch'])) {
-	$animals_batch = $_POST['animals_batchlist'];
+	$animals_batch = ($_POST['animals_batchlist'] ?? '');
 	$sqlaction = 'add animal:' . $animals_batch;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage3` (`animalautono`) VALUES " . $animals_batch . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -209,7 +209,7 @@ if (isset($_POST['addcage3_batch'])) {
 }
 //cage4
 if (isset($_POST['addcage4_batch'])) {
-	$animals_batch = $_POST['animals_batchlist'];
+	$animals_batch = ($_POST['animals_batchlist'] ?? '');
 	$sqlaction = 'add animal:' . $animals_batch;
 	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage4` (`animalautono`) VALUES " . $animals_batch . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -274,22 +274,22 @@ DELETE FROM `" . $dbname . "`.`temp_cage3`;DELETE FROM `" . $dbname . "`.`temp_c
 
 //submit cages
 if (isset($_POST['submit_cages'])) {
-	$xcage1no = $_POST['cage1no'];
-	$xcage2no = $_POST['cage2no'];
-	$xcage3no = $_POST['cage3no'];
-	$xcage4no = $_POST['cage4no'];
-	$xcage1name = $_POST['cage1name'];
-	$xcage2name = $_POST['cage2name'];
-	$xcage3name = $_POST['cage3name'];
-	$xcage4name = $_POST['cage4name'];
-	$xcage1size = $_POST['cage1size'];
-	$xcage2size = $_POST['cage2size'];
-	$xcage3size = $_POST['cage3size'];
-	$xcage4size = $_POST['cage4size'];
-	$xcage1contents = $_POST['cage1contents'];
-	$xcage2contents = $_POST['cage2contents'];
-	$xcage3contents = $_POST['cage3contents'];
-	$xcage4contents = $_POST['cage4contents'];
+	$xcage1no = ($_POST['cage1no'] ?? '');
+	$xcage2no = ($_POST['cage2no'] ?? '');
+	$xcage3no = ($_POST['cage3no'] ?? '');
+	$xcage4no = ($_POST['cage4no'] ?? '');
+	$xcage1name = ($_POST['cage1name'] ?? '');
+	$xcage2name = ($_POST['cage2name'] ?? '');
+	$xcage3name = ($_POST['cage3name'] ?? '');
+	$xcage4name = ($_POST['cage4name'] ?? '');
+	$xcage1size = ($_POST['cage1size'] ?? '');
+	$xcage2size = ($_POST['cage2size'] ?? '');
+	$xcage3size = ($_POST['cage3size'] ?? '');
+	$xcage4size = ($_POST['cage4size'] ?? '');
+	$xcage1contents = ($_POST['cage1contents'] ?? '');
+	$xcage2contents = ($_POST['cage2contents'] ?? '');
+	$xcage3contents = ($_POST['cage3contents'] ?? '');
+	$xcage4contents = ($_POST['cage4contents'] ?? '');
 	$xcage1location = $_POST['cage1location'] ?? 'Limbo';
 	$xcage2location = $_POST['cage2location'] ?? 'Limbo';
 	$xcage3location = $_POST['cage3location'] ?? 'Limbo';
@@ -310,11 +310,11 @@ if (isset($_POST['submit_cages'])) {
 	if ($xcage4location === '') {
 		$xcage4location = 'Limbo';
 	}
-	$xline_assignment = $_POST['line_assignment'];
-	$xmove_selection = $_POST['move_selection'];
-	$xcategory_selection = $_POST['category_selection'];
+	$xline_assignment = ($_POST['line_assignment'] ?? '');
+	$xmove_selection = ($_POST['move_selection'] ?? '');
+	$xcategory_selection = ($_POST['category_selection'] ?? '');
 	$xcageactive = 1;
-	$xsetupdate = $_POST['setupdate'];
+	$xsetupdate = ($_POST['setupdate'] ?? '');
 
 	$sqlaction = 'submit cage changes';
 
@@ -482,20 +482,20 @@ $conn->close();
 <?php
 
 // posted variables
-$line_filter = $_POST['line_filter'];
-$line_sync = $_POST['line_sync'];
-$line_assignment = $_POST['line_assignment'];
-$gender_filter = $_POST['gender_filter'];
-$move_selection = $_POST['move_selection'];
-$source_category_selection = $_POST['source_category_selection'];
-$category_selection = $_POST['category_selection'];
-$setupdate = $_POST['setupdate'];
-$sourcecage_selection = $_POST['sourcecage_selection'];
-$animals_selection = $_POST['animals_selection'];
-$cage1_selection = $_POST['cage1_selection'];
-$cage2_selection = $_POST['cage2_selection'];
-$cage3_selection = $_POST['cage3_selection'];
-$cage4_selection = $_POST['cage4_selection'];
+$line_filter = ($_POST['line_filter'] ?? '');
+$line_sync = ($_POST['line_sync'] ?? '');
+$line_assignment = ($_POST['line_assignment'] ?? '');
+$gender_filter = ($_POST['gender_filter'] ?? '');
+$move_selection = ($_POST['move_selection'] ?? '');
+$source_category_selection = ($_POST['source_category_selection'] ?? '');
+$category_selection = ($_POST['category_selection'] ?? '');
+$setupdate = ($_POST['setupdate'] ?? '');
+$sourcecage_selection = ($_POST['sourcecage_selection'] ?? '');
+$animals_selection = ($_POST['animals_selection'] ?? '');
+$cage1_selection = ($_POST['cage1_selection'] ?? '');
+$cage2_selection = ($_POST['cage2_selection'] ?? '');
+$cage3_selection = ($_POST['cage3_selection'] ?? '');
+$cage4_selection = ($_POST['cage4_selection'] ?? '');
 $location_filter = $_POST['location_filter'] ?? 'all';
 $role_filter     = $_POST['role_filter']     ?? 'all';
 
@@ -954,9 +954,9 @@ $conn->close();
 		<!--CONTENT SECTION-->
 		<form id="cage_management_form" name="cage_management_form" method=post>
 
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 			<!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->
 			<script type="text/javascript">

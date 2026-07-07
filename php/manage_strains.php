@@ -8,13 +8,13 @@
 $host = $accessun = $accesspw = null;
 $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
+	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xpassword=($_POST['xpassword'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
@@ -22,7 +22,7 @@ $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -64,7 +64,7 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //get posted variables
 //add strain
 if (isset($_POST['button_addstrain'])){
-$strain=$_POST['textaddstrain'];
+$strain=($_POST['textaddstrain'] ?? '');
 $sqlaction='add strain:';
 if (trim($strain)===''){
 $sqlstatus='failed - strain name cannot be blank';
@@ -79,7 +79,7 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 
 //delete strain
 if (isset($_POST['button_deletestrain'])){
-$strain=$_POST['textdelstrain'];
+$strain=($_POST['textdelstrain'] ?? '');
 $sqlaction='delete strain:';
 if (trim($strain)===''){
 $sqlstatus='failed - no strain selected to delete';
@@ -93,8 +93,8 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 		}
 //edit strain
 if (isset($_POST['button_editstrain'])){
-$strain=$_POST['textselectedstrain'];
-$strainnewtext=$_POST['texteditstrain'];
+$strain=($_POST['textselectedstrain'] ?? '');
+$strainnewtext=($_POST['texteditstrain'] ?? '');
 $sqlaction='edit strain:';
 if (trim($strain)===''){
 $sqlstatus='failed - no strain selected to edit';
@@ -206,9 +206,9 @@ $conn->close();
 			<form method=post>
 
 
-					<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 				<table>

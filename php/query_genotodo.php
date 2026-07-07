@@ -7,13 +7,13 @@
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
+	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xpassword=($_POST['xpassword'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
@@ -21,7 +21,7 @@ $host = $accessun = $accesspw = null;
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -178,9 +178,9 @@ $temptable.='</table>';
 			<h2 class="centertext">animal Management</h2>
 			<form id="query_genotodo" name="query_genotodo" method=post>
 
-					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 <!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->

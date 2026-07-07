@@ -8,13 +8,13 @@
 $host = $accessun = $accesspw = null;
 $animals_string_display = null; $line_tip = null; $sqlreport = null;
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -22,7 +22,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -72,13 +72,13 @@ $testtable = "";
 
 if (isset($_POST['generate_litter'])) {
 	//get line,dob,comments,source,parents
-	$xline_selection = $_POST['line_selection'];
-	$xdob = $_POST['dob'];
-	$xbulkcomments = $_POST['bulkcomments'];
-	$xsource_selection = $_POST['source_selection'];
+	$xline_selection = ($_POST['line_selection'] ?? '');
+	$xdob = ($_POST['dob'] ?? '');
+	$xbulkcomments = ($_POST['bulkcomments'] ?? '');
+	$xsource_selection = ($_POST['source_selection'] ?? '');
 	//get obs date and observer
 	$xobs_date = date('Y-m-d');
-	$xobs_by = $_POST['xusername'];
+	$xobs_by = ($_POST['xusername'] ?? '');
 	//get number of animals
 	$xnumbermale = (int)($_POST['numbermale'] ?? 0);
 	$xnumberfemale = (int)($_POST['numberfemale'] ?? 0);
@@ -126,16 +126,16 @@ if (isset($_POST['generate_litter'])) {
 
 if (isset($_POST['confirm_litter'])) {
 	//capture values
-	$zdob = $_POST['xdob'];
-	$zline_assign = $_POST['xline_selection'];
-	$zcagename = $_POST['xsource_selection'];
-	$zactualobs = $_POST['xobs_date'];
-	$zobsby = $_POST['xobs_by'];
-	$zcurrcage = $_POST['xcurrcage'];
-	$zestmale = $_POST['xnumbermale'];
-	$zestfemale = $_POST['xnumberfemale'];
-	$zestunknown = $_POST['xnumberunknown'];
-	$zcomments = $_POST['xbulkcomments'];
+	$zdob = ($_POST['xdob'] ?? '');
+	$zline_assign = ($_POST['xline_selection'] ?? '');
+	$zcagename = ($_POST['xsource_selection'] ?? '');
+	$zactualobs = ($_POST['xobs_date'] ?? '');
+	$zobsby = ($_POST['xobs_by'] ?? '');
+	$zcurrcage = ($_POST['xcurrcage'] ?? '');
+	$zestmale = ($_POST['xnumbermale'] ?? '');
+	$zestfemale = ($_POST['xnumberfemale'] ?? '');
+	$zestunknown = ($_POST['xnumberunknown'] ?? '');
+	$zcomments = ($_POST['xbulkcomments'] ?? '');
 
 	$sqltext = "INSERT INTO `" . $dbname . "`.`table_litterlog` (`dob`, `line_assign`, `cagename`, `actual_obs`, `obs_by`, `litter name`, `estimate_male`, `estimate_female`, `estimate_unknown`, `litter_comments`)"
 		. " VALUES ('" . $zdob . "', '" . $zline_assign . "', '" . $zcagename . "', '" . $zactualobs . "', '" . $zobsby . "', '" . $zcurrcage . "', '" . $zestmale . "', '" . $zestfemale . "', '" . $zestunknown . "', '" . $zcomments . "');";
@@ -451,9 +451,9 @@ $conn->close();
 	<!--CONTENT SECTION-->
 	<div id="right_content" class="centertext">
 		<form id="add_animals_form" name="add_animals_form" method=post>
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 			<!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->
 			<script type="text/javascript">

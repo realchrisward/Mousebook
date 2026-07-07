@@ -9,13 +9,13 @@ $host = $accessun = $accesspw = null;
 $lf = null; $gf = null; $doaf = null; $sf = null; $bbf = null; $baf = null;
 $locf = null; $rolef = null; $cf = null;
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -23,7 +23,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -75,7 +75,7 @@ if (isset($_POST['get_tempanimals'])) {
 
 
 
-	$sql_where_text = $_POST['animals_sql_where_text'];
+	$sql_where_text = ($_POST['animals_sql_where_text'] ?? '');
 
 	$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents FROM `table_animals` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	//echo $sqltext;
@@ -285,23 +285,23 @@ if (isset($_POST['get_tempanimals'])) {
 //confirm animals and update to db
 if (isset($_POST['confirm_changes'])) {
 	//get posted variables
-	$arrayman = explode(',', $_POST['mankey']);
-	$genecount = $_POST['genecount'];
+	$arrayman = explode(',', ($_POST['mankey'] ?? ''));
+	$genecount = ($_POST['genecount'] ?? '');
 	foreach (range(0, $genecount - 1, 1) as $i) {
-		$genearray[$i] = array($_POST['geno' . $i]);
-		$genelist[$i] = $_POST['geno' . $i];
+		$genearray[$i] = array(($_POST['geno' . $i] ?? ''));
+		$genelist[$i] = ($_POST['geno' . $i] ?? '');
 	}
 	foreach ($arrayman as $man) {
-		$line[$man] = $_POST['line' . $man];
-		$idno[$man] = $_POST['idno' . $man];
-		$gender[$man] = $_POST['gender' . $man];
-		$eartag[$man] = $_POST['eartag' . $man];
-		$dob[$man] = $_POST['dob' . $man];
-		$dow[$man] = $_POST['dow' . $man];
-		$dod[$man] = $_POST['dod' . $man];
-		$comments[$man] = $_POST['newcomments' . $man];
+		$line[$man] = ($_POST['line' . $man] ?? '');
+		$idno[$man] = ($_POST['idno' . $man] ?? '');
+		$gender[$man] = ($_POST['gender' . $man] ?? '');
+		$eartag[$man] = ($_POST['eartag' . $man] ?? '');
+		$dob[$man] = ($_POST['dob' . $man] ?? '');
+		$dow[$man] = ($_POST['dow' . $man] ?? '');
+		$dod[$man] = ($_POST['dod' . $man] ?? '');
+		$comments[$man] = ($_POST['newcomments' . $man] ?? '');
 		foreach (range(0, $genecount - 1, 1) as $i) {
-			$genearray[$i][$man] = $_POST['geno' . $i . '-' . $man];
+			$genearray[$i][$man] = ($_POST['geno' . $i . '-' . $man] ?? '');
 		}
 	}
 
@@ -371,16 +371,16 @@ if (isset($_POST['confirm_changes'])) {
 //autogen table for animals editing
 
 // posted variables
-$line_filter = $_POST['line_filter'];
-$gender_filter = $_POST['gender_filter'];
-$source_category_selection = $_POST['source_category_selection'];
-$sourcecage_selection = $_POST['sourcecage_selection'];
-$animals_selection = $_POST['animals_selection'];
-$deadoralive_filter = $_POST['deadoralive_filter'];
+$line_filter = ($_POST['line_filter'] ?? '');
+$gender_filter = ($_POST['gender_filter'] ?? '');
+$source_category_selection = ($_POST['source_category_selection'] ?? '');
+$sourcecage_selection = ($_POST['sourcecage_selection'] ?? '');
+$animals_selection = ($_POST['animals_selection'] ?? '');
+$deadoralive_filter = ($_POST['deadoralive_filter'] ?? '');
 $location_filter = $_POST['location_filter'] ?? 'all';
 $role_filter     = $_POST['role_filter']     ?? 'all';
-$bornbefore = $_POST['bornbefore'];
-$bornafter = $_POST['bornafter'];
+$bornbefore = ($_POST['bornbefore'] ?? '');
+$bornafter = ($_POST['bornafter'] ?? '');
 
 //gender filter
 $gender_options = array('all', 'M', 'F', 'unk');
@@ -658,9 +658,9 @@ $conn->close();
 	<div id="right_content" class="centertext">
 		<h2 class="centertext">animal Management</h2>
 		<form id="animals_management_form" name="allele_management_form" method=post>
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 
 			<!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->

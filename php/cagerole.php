@@ -21,20 +21,20 @@ $gf = null; $sf = null; $locf = null;
 
 //setup sql variables
 if (isset($_POST['xusername'])) {
-	$xusername = $_POST['xusername'];
+	$xusername = ($_POST['xusername'] ?? '');
 }
 if (isset($_POST['xpassword'])) {
-	$xpassword = $_POST['xpassword'];
+	$xpassword = ($_POST['xpassword'] ?? '');
 }
 if (isset($_POST['loginstatus'])) {
-	$xloginstatus = $_POST['loginstatus'];
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
 	if (isset($_POST['loginstatus'])) {
-		$xloginstatus = $_POST['loginstatus'];
+		$xloginstatus = ($_POST['loginstatus'] ?? '');
 	}
 }
 if (isset($_POST['button_disco'])) {
@@ -43,7 +43,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
@@ -73,53 +73,53 @@ if ($conn->connect_error) {
 
 // posted variables
 if (isset($_POST['line_filter'])) {
-	$line_filter = $_POST['line_filter'];
+	$line_filter = ($_POST['line_filter'] ?? '');
 } else {
 	$line_filter = 'all';
 }
 
 if (isset($_POST['gender_filter'])) {
-	$gender_filter = $_POST['gender_filter'];
+	$gender_filter = ($_POST['gender_filter'] ?? '');
 } else {
 	$gender_filter = 'all';
 }
 
 if (isset($_POST['source_category_selection'])) {
-	$source_category_selection = $_POST['source_category_selection'];
+	$source_category_selection = ($_POST['source_category_selection'] ?? '');
 } else {
 	$source_category_selection = 'all';
 }
 
 if (isset($_POST['category_selection'])) {
-	$category_selection = $_POST['category_selection'];
+	$category_selection = ($_POST['category_selection'] ?? '');
 } else {
 	$category_selection = '';
 }
 
 if (isset($_POST['cage_selection'])) {
-	if (is_array($_POST['cage_selection'])) {
-		$cage_selection = $_POST['cage_selection'];
+	if (is_array(($_POST['cage_selection'] ?? ''))) {
+		$cage_selection = ($_POST['cage_selection'] ?? '');
 	} else {
-		$cage_selection = array($_POST['cage_selection']);
+		$cage_selection = array(($_POST['cage_selection'] ?? ''));
 	}
 } else {
 	$cage_selection = array('');
 }
 
 if (isset($_POST['cagelist_selection'])) {
-	$cagelist_selection = $_POST['cagelist_selection'];
+	$cagelist_selection = ($_POST['cagelist_selection'] ?? '');
 } else {
 	$cagelist_selection = '';
 }
 
 if (isset($_POST['roleA_selection'])) {
-	$roleA_selection = $_POST['roleA_selection'];
+	$roleA_selection = ($_POST['roleA_selection'] ?? '');
 } else {
 	$roleA_selection = 'all';
 }
 
 if (isset($_POST['roleB_selection'])) {
-	$roleB_selection = $_POST['roleB_selection'];
+	$roleB_selection = ($_POST['roleB_selection'] ?? '');
 } else {
 	$roleB_selection = 'Limbo';
 }
@@ -257,7 +257,7 @@ $cage_batchlist = '("' . implode('"),("', $cage_batchlist) . '")';
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 // PATCHED: replaced hardcoded `animalbook`.`table_cages` with `$dbname`.`table_cages`
 if (isset($_POST['addcage_single'])) {
-	$cage_selection = $_POST['cage_selection'];
+	$cage_selection = ($_POST['cage_selection'] ?? '');
 	$cageselection = '("' . implode('","', $cage_selection) . '")';
 	$sqltext = "UPDATE `" . $dbname . "`.`table_cages` SET `cagerole_assignment`='" . $roleB_selection . "' WHERE `cageid` in " . $cageselection . ";";
 	if ($conn->query($sqltext) === TRUE) {
@@ -313,9 +313,9 @@ if (isset($_POST['addcage_single'])) {
 	<div id="right_content" class="centertext">
 		<!--CONTENT SECTION-->
 		<form id="cage_selection_form" name="cage_selection_form" method=post>
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 			<script type="text/javascript">
 				function submitForm() {

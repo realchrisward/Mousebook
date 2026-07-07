@@ -5,13 +5,13 @@
 <?php
 
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -19,7 +19,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -311,7 +311,7 @@ ORDER BY age DESC, a.currentcage ASC;
 					<form action="./php/litterlogger.php" method=post>
 						<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
 						<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-						<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+						<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 						<input type=hidden name="button_login" value="connect" />
 						<input type=submit class="button" name=""
 							style="background-color:#217190; color:lightgrey;"

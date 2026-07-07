@@ -10,13 +10,13 @@ $lf = null; $gf = null; $doaf = null; $sf = null; $bbf = null; $baf = null;
 $dbf = null; $daf = null; $ltf = null; $itf = null; $stf = null; $ptf = null;
 $locf = null; $rolef = null; $cf = null; $commenttextfilter = null; $testtable = null; $genepost = null;
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -24,7 +24,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -69,8 +69,8 @@ if (isset($_POST['get_genofilt'])) {
 	$gfcount = (int)($_POST['genecount'] ?? 0);
 
 	foreach (range(0, $gfcount - 1, 1) as $i) {
-		$agarray[$i] = $_POST['geno' . $i];
-		$gfarray[$i] = $_POST['genofilt' . $i];
+		$agarray[$i] = ($_POST['geno' . $i] ?? '');
+		$gfarray[$i] = ($_POST['genofilt' . $i] ?? '');
 		if (count($gfarray[$i]) > 0) {
 			$gtct += 1;
 		}
@@ -646,9 +646,9 @@ $conn->close();
 		<h2 class="centertext">Query animals</h2>
 		<form id="animals_management_form" name="animals_management_form" method=post>
 
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 
 			<!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->

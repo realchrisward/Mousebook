@@ -9,13 +9,13 @@ $host = $accessun = $accesspw = null;
 $sqlaction = null; $line = null; $sqlstatus = null; $currcardcolor = null; $currstripecolor = null; $currstrain = null;
 $currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null; $buttonmessage = null;
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
+	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xpassword=($_POST['xpassword'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
@@ -23,7 +23,7 @@ $currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null;
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -63,13 +63,13 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 //add line
 if (isset($_POST['button_addline'])){
-$line=$_POST['textaddline'];
-$ldesc=$_POST['textaddldesc'];
-$strain=$_POST['strain_selection'];
-$ucsd_number=$_POST['textadducsdnumber'];
-$addcard_color=$_POST['cardcolor_list'];
-$addstripe_color=$_POST['stripecolor_list'];
-$deactiv=$_POST['textadddeactiv'];
+$line=($_POST['textaddline'] ?? '');
+$ldesc=($_POST['textaddldesc'] ?? '');
+$strain=($_POST['strain_selection'] ?? '');
+$ucsd_number=($_POST['textadducsdnumber'] ?? '');
+$addcard_color=($_POST['cardcolor_list'] ?? '');
+$addstripe_color=($_POST['stripecolor_list'] ?? '');
+$deactiv=($_POST['textadddeactiv'] ?? '');
 $sqlaction='add line:';
 if (trim($line)===''){
 $sqlstatus='failed - line name cannot be blank';
@@ -84,7 +84,7 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 
 //delete line
 if (isset($_POST['button_deleteline'])){
-$line=$_POST['textdelline'];
+$line=($_POST['textdelline'] ?? '');
 $sqlaction='delete line:';
 if (trim($line)===''){
 $sqlstatus='failed - no line selected to delete';
@@ -99,14 +99,14 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 		}
 //edit line
 if (isset($_POST['button_editline'])){
-$line=$_POST['textselectedline'];
-$nline=$_POST['texteditline'];
-$nldesc=$_POST['texteditldesc'];
-$nstrain=$_POST['curr_strain_selection'];
-$nucsd_number=$_POST['texteditucsdnumber'];
-$ncard_color=$_POST['currcardcolor_list'];
-$nstripe_color=$_POST['currstripecolor_list'];
-$ndeactivated=$_POST['texteditdeactiv'];
+$line=($_POST['textselectedline'] ?? '');
+$nline=($_POST['texteditline'] ?? '');
+$nldesc=($_POST['texteditldesc'] ?? '');
+$nstrain=($_POST['curr_strain_selection'] ?? '');
+$nucsd_number=($_POST['texteditucsdnumber'] ?? '');
+$ncard_color=($_POST['currcardcolor_list'] ?? '');
+$nstripe_color=($_POST['currstripecolor_list'] ?? '');
+$ndeactivated=($_POST['texteditdeactiv'] ?? '');
 $sqlaction='edit line:';
 if (trim($line)===''){
 $sqlstatus='failed - no line selected to edit';
@@ -123,9 +123,9 @@ $sqlstatus= 'failed '.$conn->error.'...'.$sqltext;
 		}
 //add allele<-need check for selected line
 if (isset($_POST['button_addallele'])){
-$line=$_POST['textselectedline'];
-$currline=$_POST['textselectedline'];
-$addallele=$_POST['allele_selection'];
+$line=($_POST['textselectedline'] ?? '');
+$currline=($_POST['textselectedline'] ?? '');
+$addallele=($_POST['allele_selection'] ?? '');
 $sqlaction='add allele:';
 if (trim($line)===''){
 $sqlstatus='failed - no line selected';
@@ -142,9 +142,9 @@ $sqlstatus='failed '.$conn->error.'...'.$sqltext;
 
 //del allele 
 if (isset($_POST['button_delallele'])){
-$line=$_POST['textselectedline'];
-$currline=$_POST['textselectedline'];
-$delallele=$_POST['allelebyline_selection'];
+$line=($_POST['textselectedline'] ?? '');
+$currline=($_POST['textselectedline'] ?? '');
+$delallele=($_POST['allelebyline_selection'] ?? '');
 $sqlaction='remove allele:';
 if (trim($line)===''){
 $sqlstatus='failed - no line selected';
@@ -191,7 +191,7 @@ $allele_table .= '</select>';
 $conn->close();
 
 //line table
-$currline=$_POST['line_selection'];
+$currline=($_POST['line_selection'] ?? '');
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query("call get_lines()");
 //set up static portion of table
@@ -372,9 +372,9 @@ $currstripecolor_list= '<select id="currstripecolor_list" name="currstripecolor_
 			<br>
 			<form id="line_selection_form" method=post class="centertext">
 
-					<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 			<table>

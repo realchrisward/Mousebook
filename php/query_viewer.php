@@ -7,13 +7,13 @@
 $host = $accessun = $accesspw = null;
 $xquerytorun = null; $temptable = null;
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -21,7 +21,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 //test login
 
@@ -64,7 +64,7 @@ $querylist = array(
 );
 
 if (isset($_POST['querytorun'])) {
-	$xquerytorun = $_POST['querytorun'];
+	$xquerytorun = ($_POST['querytorun'] ?? '');
 } else {
 	$xquerytorun = array_keys($querylist)[0];
 }
@@ -81,7 +81,7 @@ $sqltext = "SELECT * FROM " . ($xquerytorun ?? 'view_activeanimals') . ";";
 
 // Handle CSV download before any HTML output
 if (isset($_POST['Download'])) {
-	$xquerytorun = $_POST['querytorun'];
+	$xquerytorun = ($_POST['querytorun'] ?? '');
 	$sqltext = "SELECT * FROM " . $xquerytorun . ";";
 
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
@@ -205,9 +205,9 @@ if (!empty($rowdata)) {
 		<h2 class="centertext">Query Viewer: <?php echo $curquery; ?></h2>
 		<form id="query_viewer" name="query_viewer" method=post>
 
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 
 			<select id="querytorun" name="querytorun" onchange="submitForm()">

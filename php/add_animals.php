@@ -10,13 +10,13 @@ $sqlstatus = null; $maxanimalautono1 = null; $maxanimalautono2 = null; $maxanima
 $animals_string = null; $testtable = null; $line_tip = null; $minauto = null; $maxauto = null; $genecount = null;
 $genepost = null;
 //setup sql variables
-$xusername = $_POST['xusername'];
-$xpassword = $_POST['xpassword'];
+$xusername = ($_POST['xusername'] ?? '');
+$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
-	$xloginstatus = $_POST['loginstatus'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
@@ -24,7 +24,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 
 //test login
@@ -86,17 +86,17 @@ if (isset($_POST['generate_animals'])) {
 	//release last reservation
 
 	//get line
-	$line_selection = $_POST['line_selection'];
+	$line_selection = ($_POST['line_selection'] ?? '');
 	//get max animalautono
 	////$xmaxanimalautono=$_POST['maxanimalautono'];
 	//get max animalinline
 	////$xmaxanimalinline=$_POST['maxanimalinline'];
 	//get line,dob,comments,source,parents
-	$xline_selection = $_POST['line_selection'];
-	$xdob = $_POST['dob'];
-	$xbulkcomments = $_POST['bulkcomments'];
-	$xsource_selection = $_POST['source_selection'];
-	$xanimals_string = $_POST['animals_string'];
+	$xline_selection = ($_POST['line_selection'] ?? '');
+	$xdob = ($_POST['dob'] ?? '');
+	$xbulkcomments = ($_POST['bulkcomments'] ?? '');
+	$xsource_selection = ($_POST['source_selection'] ?? '');
+	$xanimals_string = ($_POST['animals_string'] ?? '');
 	//get number of animals
 	$xnumbermale    = (int)($_POST['numbermale']    ?? 0);
 	$xnumberfemale  = (int)($_POST['numberfemale']  ?? 0);
@@ -409,15 +409,15 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 
 if (isset($_POST['confirm_animals'])) {
 
-	$xminauto = $_POST['minauto'];
-	$xmaxauto = $_POST['maxauto'];
-	$xgenecount = $_POST['genecount'];
+	$xminauto = ($_POST['minauto'] ?? '');
+	$xmaxauto = ($_POST['maxauto'] ?? '');
+	$xgenecount = ($_POST['genecount'] ?? '');
 
 	foreach (range(0, $xgenecount - 1, 1) as $i) {
-		$xgenelist[] = $_POST['geno' . $i];
+		$xgenelist[] = ($_POST['geno' . $i] ?? '');
 		$genotypes[$xgenelist[$i]] = [];
 		foreach (range($xminauto, $xmaxauto, 1) as $j) {
-			$genotypes[$xgenelist[$i]][$j] = $_POST['geno' . $i . '-' . $j];
+			$genotypes[$xgenelist[$i]][$j] = ($_POST['geno' . $i . '-' . $j] ?? '');
 			//echo 'geno'.$i.'-'.$j.'<br>';
 		}
 	}
@@ -427,16 +427,16 @@ if (isset($_POST['confirm_animals'])) {
 	$xassign_role     = $_POST['gen_assign_role'] ?? '';
 	if ($xassign_location === '') { $xassign_location = 'Limbo'; }
 	foreach (range($xminauto, $xmaxauto, 1) as $i) {
-		$man[$i] = $_POST['animalautono' . $i];
-		$line[$i] = $_POST['line' . $i];
-		$idno[$i] = $_POST['idno' . $i];
-		$gender[$i] = $_POST['gender' . $i];
-		$eartag[$i] = $_POST['eartag' . $i];
-		$dob[$i] = $_POST['dob' . $i];
-		$currentcage[$i] = $_POST['currentcage' . $i];
-		$sourcecage[$i] = $_POST['sourcecage' . $i];
-		$parents[$i] = $_POST['parents' . $i];
-		$bulkcomments[$i] = $_POST['bulkcomments' . $i];
+		$man[$i] = ($_POST['animalautono' . $i] ?? '');
+		$line[$i] = ($_POST['line' . $i] ?? '');
+		$idno[$i] = ($_POST['idno' . $i] ?? '');
+		$gender[$i] = ($_POST['gender' . $i] ?? '');
+		$eartag[$i] = ($_POST['eartag' . $i] ?? '');
+		$dob[$i] = ($_POST['dob' . $i] ?? '');
+		$currentcage[$i] = ($_POST['currentcage' . $i] ?? '');
+		$sourcecage[$i] = ($_POST['sourcecage' . $i] ?? '');
+		$parents[$i] = ($_POST['parents' . $i] ?? '');
+		$bulkcomments[$i] = ($_POST['bulkcomments' . $i] ?? '');
 		/*
 echo '<br>'.$man[$i].'|'.$line[$i].'|'.$idno[$i].'|'.$gender[$i].'|'.
 $dob[$i].'|'.$currentcage[$i].'|'.$sourcecage[$i].'|'.
@@ -495,14 +495,14 @@ ON DUPLICATE KEY UPDATE `cageno`=`cageno`;';
 <!--php script for display controls-->
 <?php
 //posted variables
-$line_selection = $_POST['line_selection'];
-$source_selection = $_POST['source_selection'];
+$line_selection = ($_POST['line_selection'] ?? '');
+$source_selection = ($_POST['source_selection'] ?? '');
 $include_stopped = !empty($_POST['include_stopped']); //§2e: show stopped matings (drop `dod is null`) when checked
-$bulkcomments = $_POST['bulkcomments'];
-$dob = $_POST['dob'];
-$numbermale = $_POST['numbermale'];
-$numberfemale = $_POST['numberfemale'];
-$numberunknown = $_POST['numberunknown'];
+$bulkcomments = ($_POST['bulkcomments'] ?? '');
+$dob = ($_POST['dob'] ?? '');
+$numbermale = ($_POST['numbermale'] ?? '');
+$numberfemale = ($_POST['numberfemale'] ?? '');
+$numberunknown = ($_POST['numberunknown'] ?? '');
 
 
 
@@ -775,9 +775,9 @@ $conn->close();
 	<!--CONTENT SECTION-->
 	<div id="right_content" class="centertext">
 		<form id="add_animals_form" name="add_animals_form" method=post>
-			<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-			<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-			<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 			<!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->
 			<script type="text/javascript">

@@ -9,20 +9,20 @@ $host = $accessun = $accesspw = null;
 // Initial userbook connection now uses $config['server_host'].
 
 if (isset($_POST['xusername'])) {
-	$xusername = $_POST['xusername'];
+	$xusername = ($_POST['xusername'] ?? '');
 }
 if (isset($_POST['xpassword'])) {
-	$xpassword = $_POST['xpassword'];
+	$xpassword = ($_POST['xpassword'] ?? '');
 }
 if (isset($_POST['loginstatus'])) {
-	$xloginstatus = $_POST['loginstatus'];
+	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 
 if (isset($_POST['button_login'])) {
-	$xusername = $_POST['xusername'];
-	$xpassword = $_POST['xpassword'];
+	$xusername = ($_POST['xusername'] ?? '');
+	$xpassword = ($_POST['xpassword'] ?? '');
 	if (isset($_POST['loginstatus'])) {
-		$xloginstatus = $_POST['loginstatus'];
+		$xloginstatus = ($_POST['loginstatus'] ?? '');
 	}
 }
 if (isset($_POST['button_disco'])) {
@@ -31,7 +31,7 @@ if (isset($_POST['button_disco'])) {
 	$xloginstatus = 'red';
 }
 
-$dbname = $_POST['dbname'];
+$dbname = ($_POST['dbname'] ?? '');
 
 $config = require '../config.php';
 if ($config['debug_mode'] == 'True') {
@@ -62,10 +62,10 @@ if ($conn->connect_error) {
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
 if (isset($_POST['button_addrole'])) {
-	$role = $_POST['textaddrole'];
-	$status = $_POST['textaddstatus'];
-	$contact = $_POST['textaddcontact'];
-	$notes = $_POST['textaddnotes'];
+	$role = ($_POST['textaddrole'] ?? '');
+	$status = ($_POST['textaddstatus'] ?? '');
+	$contact = ($_POST['textaddcontact'] ?? '');
+	$notes = ($_POST['textaddnotes'] ?? '');
 	$sqltext = "INSERT INTO `" . $dbname . "`.`list_cage_role_assignments` (`roleassignment_option`, `roleassignment_statuslist`, `maincontact`, `notes`) VALUES ('" . $role . "', '" . $status . "', '" . $contact . "', '" . $notes . "')";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
@@ -75,7 +75,7 @@ if (isset($_POST['button_addrole'])) {
 }
 
 if (isset($_POST['button_deleterole'])) {
-	$role = $_POST['textdelrole'];
+	$role = ($_POST['textdelrole'] ?? '');
 	$sqltext = "DELETE FROM `" . $dbname . "`.`list_cage_role_assignments` WHERE `roleassignment_option`='" . $role . "';";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
@@ -85,10 +85,10 @@ if (isset($_POST['button_deleterole'])) {
 }
 
 if (isset($_POST['button_editrole'])) {
-	$role = $_POST['textnewrole'];
-	$status = $_POST['textnewstatus'];
-	$contact = $_POST['textnewcontact'];
-	$notes = $_POST['textnewnotes'];
+	$role = ($_POST['textnewrole'] ?? '');
+	$status = ($_POST['textnewstatus'] ?? '');
+	$contact = ($_POST['textnewcontact'] ?? '');
+	$notes = ($_POST['textnewnotes'] ?? '');
 	$sqltext = "UPDATE `" . $dbname . "`.`list_cage_role_assignments` SET `roleassignment_statuslist`='" . $status . "', `maincontact`='" . $contact . "', `notes`='" . $notes . "' WHERE `roleassignment_option`='" . $role . "';";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
@@ -109,7 +109,7 @@ if ($conn->connect_error) {
 $sqltext = "Select * from `" . $dbname . "`.`list_cage_role_assignments`;";
 $results = $conn->query($sqltext);
 
-$currrole = isset($_POST['role_selection']) ? $_POST['role_selection'] : "";
+$currrole = isset($_POST['role_selection']) ? ($_POST['role_selection'] ?? '') : "";
 $currstatus = '';
 $curractive = '';
 $currcontact = '';
@@ -168,9 +168,9 @@ $conn->close();
 			<form id="role_selection_form" method=post>
 				<p>Current Roles:</p>
 				<?php echo $s_table; ?>
-				<input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-				<input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-				<input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+				<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+				<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+				<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 				<input type=hidden name="button_login" value="connect" />
 
 				<h3>Add Role:</h3>

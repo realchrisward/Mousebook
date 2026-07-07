@@ -11,13 +11,13 @@ $currprimerseq = null; $currprimercom = null;
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
+	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xpassword=($_POST['xpassword'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
@@ -25,7 +25,7 @@ $currprimerseq = null; $currprimercom = null;
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -64,7 +64,7 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //add gene
 
 if (isset($_POST['addgenebutton'])){
-$textgene=$_POST['textgene'];
+$textgene=($_POST['textgene'] ?? '');
 $sqlaction='add gene:'.$textgene;
 if (trim($textgene)===''){
 $sqlstatus='-failed - gene name cannot be blank';
@@ -80,7 +80,7 @@ $sqlstatus= '-failed '.$conn->error.'...'.$sqltext;
 
 //remove gene - need checks/abort for deletion of genes already in use
 if (isset($_POST['remgenebutton'])){
-$textgene=$_POST['textgene'];
+$textgene=($_POST['textgene'] ?? '');
 $sqlaction='delete gene:'.$textgene;
 if (trim($textgene)===''){
 $sqlstatus='-failed - no gene specified to delete';
@@ -99,9 +99,9 @@ $sqlstatus= '-failed '.$conn->error.'...'.$sqltext;
 
 //add allelegroup
 if (isset($_POST['addallelegroupbutton'])){
-$gene_selection=$_POST['gene_selection'];
-$textallelegroup=$_POST['textallelegroup'];
-$textallelegroupref=$_POST['textallelegroupref'];
+$gene_selection=($_POST['gene_selection'] ?? '');
+$textallelegroup=($_POST['textallelegroup'] ?? '');
+$textallelegroupref=($_POST['textallelegroupref'] ?? '');
 $sqlaction='add allelegroup:'.$textallelegroup;
 if (trim($textallelegroup)===''){
 $sqlstatus='-failed - allele group name cannot be blank';
@@ -119,7 +119,7 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //remove allelegroup
 if (isset($_POST['remallelegroupbutton'])){
-$textallelegroup=$_POST['textallelegroup'];
+$textallelegroup=($_POST['textallelegroup'] ?? '');
 $sqlaction='delete allelegroup:'.$textallelegroup;
 if (trim($textallelegroup)===''){
 $sqlstatus='-failed - no allele group specified to delete';
@@ -135,8 +135,8 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //edit allelegroup
 if (isset($_POST['editallelegroupbutton'])){
-$texteditallelegroup=$_POST['texteditallelegroup'];
-$texteditallelegroupref=$_POST['texteditallelegroupref'];
+$texteditallelegroup=($_POST['texteditallelegroup'] ?? '');
+$texteditallelegroupref=($_POST['texteditallelegroupref'] ?? '');
 $sqlaction='edit allelegroup:'.$texteditallelegroup;
 if (trim($texteditallelegroup)===''){
 $sqlstatus='-failed - no allele group selected to edit';
@@ -152,9 +152,9 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //add allele
 if (isset($_POST['addallelebutton'])){
-$alleleXgendspec=$_POST['allelegendspec'];
-$textallele=$_POST['textallele'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$alleleXgendspec=($_POST['allelegendspec'] ?? '');
+$textallele=($_POST['textallele'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='add allele:'.$textallele.' to '.$allelegrp_selection;
 if (trim($textallele)===''){
 $sqlstatus='-failed - allele name cannot be blank';
@@ -172,8 +172,8 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //remove allele
 if (isset($_POST['remallelebutton'])){
-$textallele=$_POST['textallele'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$textallele=($_POST['textallele'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='delete allele:'.$textallele.' from '.$allelegrp_selection;
 if (trim($textallele)===''){
 $sqlstatus='-failed - allele name cannot be blank';
@@ -192,9 +192,9 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //add genotyping rxn
 if (isset($_POST['addgenorxnbutton'])){
-$textgenorxn=$_POST['textgenorxn'];
-$textgenorxncom=$_POST['textgenorxncom'];
-$textgenorxncyc=$_POST['textgenorxncyc'];
+$textgenorxn=($_POST['textgenorxn'] ?? '');
+$textgenorxncom=($_POST['textgenorxncom'] ?? '');
+$textgenorxncyc=($_POST['textgenorxncyc'] ?? '');
 $sqlaction='add genorxn:'.$textgenorxn;
 if (trim($textgenorxn)===''){
 $sqlstatus='-failed - genotyping reaction name cannot be blank';
@@ -211,7 +211,7 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //remove genotyping rxn
 if (isset($_POST['remgenorxnbutton'])){
-$textgenorxn=$_POST['textgenorxn'];
+$textgenorxn=($_POST['textgenorxn'] ?? '');
 $sqlaction='delete genorxn:'.$textgenorxn;
 if (trim($textgenorxn)===''){
 $sqlstatus='-failed - no genotyping reaction specified to delete';
@@ -227,9 +227,9 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //edit genotyping rxn
 if (isset($_POST['editgenorxnbutton'])){
-$texteditgenorxn=$_POST['texteditgenorxn'];
-$texteditgenorxncom=$_POST['texteditgenorxncom'];
-$texteditgenorxncyc=$_POST['texteditgenorxncyc'];
+$texteditgenorxn=($_POST['texteditgenorxn'] ?? '');
+$texteditgenorxncom=($_POST['texteditgenorxncom'] ?? '');
+$texteditgenorxncyc=($_POST['texteditgenorxncyc'] ?? '');
 $sqlaction='edit:'.$texteditgenorxn;
 if (trim($texteditgenorxn)===''){
 $sqlstatus='-failed - no genotyping reaction selected to edit';
@@ -246,10 +246,10 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //add primer
 if(isset($_POST['addprimerbutton'])){
-$textprimer=$_POST['textprimer'];
-$textprimerseq=$_POST['textprimerseq'];
-$textprimercom=$_POST['textprimercom'];
-$genorxn_selection=$_POST['genorxn_selection'];
+$textprimer=($_POST['textprimer'] ?? '');
+$textprimerseq=($_POST['textprimerseq'] ?? '');
+$textprimercom=($_POST['textprimercom'] ?? '');
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
 $sqlaction='add primer:'.$textprimer;
 if (trim($textprimer)===''){
 $sqlstatus='-failed - primer name cannot be blank';
@@ -267,8 +267,8 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 //remove primer
 if(isset($_POST['remprimerbutton'])){
-$textprimer=$_POST['textprimer'];
-$genorxn_selection=$_POST['genorxn_selection'];
+$textprimer=($_POST['textprimer'] ?? '');
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
 $sqlaction='delete primer:'.$textprimer;
 if (trim($textprimer)===''){
 $sqlstatus='-failed - primer name cannot be blank';
@@ -286,10 +286,10 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //edit primer
 if(isset($_POST['editprimerbutton'])){
-$texteditprimer=$_POST['texteditprimer'];
-$texteditprimerseq=$_POST['texteditprimerseq'];
-$texteditprimercom=$_POST['texteditprimercom'];
-$genorxn_selection=$_POST['genorxn_selection'];
+$texteditprimer=($_POST['texteditprimer'] ?? '');
+$texteditprimerseq=($_POST['texteditprimerseq'] ?? '');
+$texteditprimercom=($_POST['texteditprimercom'] ?? '');
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
 $sqlaction='edit primer:'.$texteditprimer;
 if (trim($texteditprimer)===''){
 $sqlstatus='-failed - no primer selected to edit';
@@ -309,8 +309,8 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //add genorxn by allelegroup pair
 if(isset($_POST['assigngenorxnbutton'])){
-$genorxn_selection=$_POST['genorxn_selection'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='add rxn:'.$genorxn_selection.' to allele group:'.$allelegrp_selection;
 if (trim($genorxn_selection)===''){
 $sqlstatus='-failed - no genotyping reaction selected';
@@ -329,8 +329,8 @@ $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 
 //remove genorxn by allelegroup pair
 if(isset($_POST['deassigngenorxnbutton'])){
-$genorxnbyallelegrp_selection=$_POST['genorxnbyallelegrp_selection'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$genorxnbyallelegrp_selection=($_POST['genorxnbyallelegrp_selection'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='remove rxn:'.$genorxn_selection.' from allele group:'.$allelegrp_selection;
 if (trim($genorxnbyallelegrp_selection)===''){
 $sqlstatus='-failed - no genotyping reaction selected';
@@ -354,11 +354,11 @@ $sqlreport=$sqlaction.' - '.$sqlstatus
 <?php
 
 //get posted variables
-$currgene=$_POST['gene_selection'];
-$currallelegrp=$_POST['allelegrp_selection'];
-$currgenorxn=$_POST['genorxn_selection'];
-$currgenorxnfromag=$_POST['genorxnbyallelegrp_selection'];
-$currprimer=$_POST['primer_selection'];
+$currgene=($_POST['gene_selection'] ?? '');
+$currallelegrp=($_POST['allelegrp_selection'] ?? '');
+$currgenorxn=($_POST['genorxn_selection'] ?? '');
+$currgenorxnfromag=($_POST['genorxnbyallelegrp_selection'] ?? '');
+$currprimer=($_POST['primer_selection'] ?? '');
 
 //gene table
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
@@ -567,9 +567,9 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 
 			<form id="allele_management_form" name="allele_management_form" method=post>
 
-					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
+					 <input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 			<table id="gene_and_allele_management" name="gene_and_allele_management">
