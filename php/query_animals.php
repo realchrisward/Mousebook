@@ -105,9 +105,9 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 	$commenttextfilter = $_POST['commenttextfilter'] ?? '';
 	if ($commenttextfilter == "") {
 		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
-		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents FROM `table_animals` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
+		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	} else {
-		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono where " . $sql_where_text . " GROUP By table_animals.animalautono ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
+		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " GROUP By table_animals.animalautono, `table_cages`.`cagelocation_room`, `table_cages`.`cagerole_assignment` ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
 
 		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono WHERE " . $sql_where_text . " GROUP BY table_animals.animalautono,allelegroup,allele;";
 	}
@@ -132,6 +132,8 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 		$arraydod[$arrayman[$i]] = $row['dod'];
 		$arraymat[$arrayman[$i]] = $row['matingcage'];
 		$arraycur[$arrayman[$i]] = $row['currentcage'];
+		$arraylocation[$arrayman[$i]] = $row['cagelocation_room'];
+		$arrayrole[$arrayman[$i]] = $row['cagerole_assignment'];
 		$arraypar[$arrayman[$i]] = $row['parents'];
 		$arraycom[$arrayman[$i]] = '';
 		$arraybkc[$arrayman[$i]] = '';
@@ -254,6 +256,8 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 <th>dod</th>
 ' . $genoheader . '
 <th>current cage</th>
+<th>location</th>
+<th>role</th>
 <th>source cage</th>
 <th>parents</th>	
 <th >bulk comments</th>
@@ -288,6 +292,10 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 				$arraygensel[$ck] . '
 <td >' . $arraycur[$ck] . '
 	</td>
+<td >' . $arraylocation[$ck] . '
+	</td>
+<td >' . $arrayrole[$ck] . '
+	</td>
 <td >' . $arraymat[$ck] . '
 	</td>
 <td >' . $arraypar[$ck] . '
@@ -316,7 +324,7 @@ if (isset($_POST['export_csv'])) {
 	$out = fopen('php://output', 'wb');
 	$headerrow = array('animalautono', 'line', 'idno', 'gender', 'ear_tag', 'dob', 'dow', 'dod');
 	foreach ($genelist as $ag) { $headerrow[] = $ag; }
-	array_push($headerrow, 'current cage', 'source cage', 'parents', 'bulk comments');
+	array_push($headerrow, 'current cage', 'location', 'role', 'source cage', 'parents', 'bulk comments');
 	fputcsv($out, $headerrow);
 	foreach ($arrayman as $ck) {
 		if (!in_array($ck, $gtman, true)) { continue; }
@@ -326,6 +334,8 @@ if (isset($_POST['export_csv'])) {
 			$rowout[] = ($cell === '') ? 'NA' : $cell;
 		}
 		$rowout[] = $arraycur[$ck] ?? '';
+		$rowout[] = $arraylocation[$ck] ?? '';
+		$rowout[] = $arrayrole[$ck] ?? '';
 		$rowout[] = $arraymat[$ck] ?? '';
 		$rowout[] = $arraypar[$ck] ?? '';
 		$rowout[] = $arraybkc[$ck] ?? '';

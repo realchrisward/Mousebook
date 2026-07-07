@@ -77,7 +77,7 @@ if (isset($_POST['get_tempanimals'])) {
 
 	$sql_where_text = ($_POST['animals_sql_where_text'] ?? '');
 
-	$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents FROM `table_animals` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
+	$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	//echo $sqltext;
 	$sqldatacomments = "SELECT `data_comments`.`animalautono` as 'man',`commentdate`,`general_comment` FROM `data_comments` JOIN `table_animals` ON `data_comments`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
 	$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
@@ -101,6 +101,8 @@ if (isset($_POST['get_tempanimals'])) {
 		$arraydod[$arrayman[$i]] = $row['dod'];
 		$arraymat[$arrayman[$i]] = $row['matingcage'];
 		$arraycur[$arrayman[$i]] = $row['currentcage'];
+		$arraylocation[$arrayman[$i]] = $row['cagelocation_room'];
+		$arrayrole[$arrayman[$i]] = $row['cagerole_assignment'];
 		$arraypar[$arrayman[$i]] = $row['parents'];
 		$arraycom[$arrayman[$i]] = '';
 		$arraybkc[$arrayman[$i]] = '';
@@ -211,6 +213,8 @@ if (isset($_POST['get_tempanimals'])) {
 <th>dod</th>
 ' . $genoheader . '
 <th>current cage</th>
+<th>location</th>
+<th>role</th>
 <th>source cage</th>
 <th>parents</th>	
 <th>new comments</th>
@@ -263,6 +267,10 @@ if (isset($_POST['get_tempanimals'])) {
 	</td>' .
 			$arraygensel[$ck] . '
 <td ><input class="mediumlistbox" type=text name="currentcage' . $ck . '" id="currentcage' . $ck . '" readonly="readonly" value="' . $arraycur[$ck] . '" >
+	</td>
+<td ><input class="mediumlistbox" type=text name="location' . $ck . '" id="location' . $ck . '" readonly="readonly" value="' . $arraylocation[$ck] . '" >
+	</td>
+<td ><input class="mediumlistbox" type=text name="role' . $ck . '" id="role' . $ck . '" readonly="readonly" value="' . $arrayrole[$ck] . '" >
 	</td>
 <td ><input class="smalllistbox" type=text name="sourcecage' . $ck . '" id="sourcecage' . $ck . '" readonly="readonly" value="' . $arraymat[$ck] . '" >
 	</td>
