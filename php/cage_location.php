@@ -4,6 +4,12 @@
 
 <!--php code: login-->
 <?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$xusername = ''; $xpassword = '';
+$host = $accessun = $accesspw = null;
+$locationA_selection = null; $locationB_selection = null; $line_filter = null; $gender_filter = null; $source_category_selection = null; $lf = null;
+$gf = null; $sf = null; $locf = null; $loc_addstatus = null; $contact1 = null; $contact2 = null;
+$genoconver = null; $cagearray = null; $mdata = null; $sqlerror = null; $buttonmessage = null; $sqlstatusclear = null;
 
 // -------------------------------------------------------
 // PATCHED: removed stale hardcoded $host="{server ip}"

@@ -3,6 +3,9 @@
 <html>
 
 <?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$host = $accessun = $accesspw = null;
+$xquerytorun = null; $temptable = null;
 //setup sql variables
 $xusername = $_POST['xusername'];
 $xpassword = $_POST['xpassword'];

@@ -2,6 +2,9 @@
 <html>
 <!--php code: login-->
 <?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$xusername = ''; $xpassword = '';
+$host = $accessun = $accesspw = null;
 // PATCHED: Removed stale $host="{server ip}".
 // Initial userbook connection now uses $config['server_host'].
 

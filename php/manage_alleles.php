@@ -4,6 +4,10 @@
 
 <!--php code: login-->
 	<?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$host = $accessun = $accesspw = null;
+$sqlaction = null; $sqlstatus = null; $sqlreport = null; $currallelegrpref = null; $currgenorxncomments = null; $currgenorxncycle = null;
+$currprimerseq = null; $currprimercom = null;
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
 	//setup sql variables

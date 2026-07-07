@@ -4,6 +4,10 @@
 
 <!--php code: login-->
 	<?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$host = $accessun = $accesspw = null;
+$sqlaction = null; $line = null; $sqlstatus = null; $currcardcolor = null; $currstripecolor = null; $currstrain = null;
+$currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null; $buttonmessage = null;
 	//setup sql variables
 	$xusername=$_POST['xusername'];
 	$xpassword=$_POST['xpassword'];

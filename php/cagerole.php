@@ -4,6 +4,11 @@
 
 <!--php code: login-->
 <?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$xusername = ''; $xpassword = '';
+$host = $accessun = $accesspw = null;
+$roleB_selection = null; $line_filter = null; $gender_filter = null; $source_category_selection = null; $roleA_selection = null; $lf = null;
+$gf = null; $sf = null; $locf = null;
 
 // -------------------------------------------------------
 // PATCHED:

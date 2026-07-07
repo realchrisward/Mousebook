@@ -4,6 +4,11 @@
 
 <!--php code: login-->
 <?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$host = $accessun = $accesspw = null;
+$sqlstatus = null; $maxanimalautono1 = null; $maxanimalautono2 = null; $maxanimalinline1 = null; $maxanimalinline2 = null; $animals_string_display = null;
+$animals_string = null; $testtable = null; $line_tip = null; $minauto = null; $maxauto = null; $genecount = null;
+$genepost = null;
 //setup sql variables
 $xusername = $_POST['xusername'];
 $xpassword = $_POST['xpassword'];
