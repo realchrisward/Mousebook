@@ -57,7 +57,7 @@ if ($conn->connect_error) {
 $line_filter = $_POST['line_filter'] ?? '';
 $line_sync = $_POST['line_sync'] ?? '';
 $line_assignment = $_POST['line_assignment'] ?? '';
-$gender_filter = $_POST['gender_filter'] ?? '';
+$sex_filter = $_POST['sex_filter'] ?? '';
 $source_category_selection = $_POST['source_category_selection'] ?? '';
 $category_selection = $_POST['category_selection'] ?? '';
 $setupdate = $_POST['setupdate'] ?? '';
@@ -78,17 +78,17 @@ group by table_animals.animalautono order by currentcage;
 
 
 
-//gender filter
-$gender_options = array('all', 'M', 'F', 'unk');
-$gender_listbox = '<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
-foreach ($gender_options as $row) {
-	if ($row === $gender_filter) {
-		$gender_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
+//sex filter
+$sex_options = array('all', 'M', 'F', 'unk');
+$sex_listbox = '<select id="sex_filter" name="sex_filter" onchange="submitForm()">';
+foreach ($sex_options as $row) {
+	if ($row === $sex_filter) {
+		$sex_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
 	} else {
-		$gender_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
+		$sex_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
 	}
 }
-$gender_listbox .= '</select>';
+$sex_listbox .= '</select>';
 
 //source category type filter
 $source_category_options = array('all', 'Holding', 'Mating', 'Experimental', 'Litter', 'Founder', 'Euthanasia');
@@ -163,7 +163,7 @@ $cage_listbox .= '</select>';
 $conn->close();
 
 
-//cage list filtered by line, gender, etc
+//cage list filtered by line, sex, etc
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all" or $line_filter === null) {
@@ -172,10 +172,10 @@ if ($line_filter === "all" or $line_filter === null) {
 	$lf = '`line`="' . $line_filter . '" and ';
 }
 
-if ($gender_filter === "all" or $gender_filter === null) {
+if ($sex_filter === "all" or $sex_filter === null) {
 	$gf = '';
 } else {
-	$gf = '`gender`="' . $gender_filter . '" and ';
+	$gf = '`sex`="' . $sex_filter . '" and ';
 }
 
 if ($source_category_selection === "all" or $source_category_selection === null) {
@@ -300,10 +300,10 @@ while ($row = mysqli_fetch_array($results)) {
 $conn->close();
 
 
-$sqltext = "Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`animalautono`,`x`.`gender`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_animals`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_animals`.`animalautono`,`gender`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_animals` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` join `table_genotypes` on `table_animals`.`animalautono`=`table_genotypes`.`animalautono` group by `table_animals`.`animalautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`animalautono`";
+$sqltext = "Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`animalautono`,`x`.`sex`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_animals`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_animals`.`animalautono`,`sex`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_animals` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` join `table_genotypes` on `table_animals`.`animalautono`=`table_genotypes`.`animalautono` group by `table_animals`.`animalautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`animalautono`";
 
 /* old query
-"Select `table_cages`.`cageid`,`cagetype`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`card_color`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y')  `dob`,`eartag`,`animalautono`,`gender` ";
+"Select `table_cages`.`cageid`,`cagetype`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`card_color`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y')  `dob`,`eartag`,`animalautono`,`sex` ";
 $sqltext.="from `table_animals` ";
 $sqltext.="join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` where `dod` is null;";
 */
@@ -321,7 +321,7 @@ while ($row = mysqli_fetch_array($results)) {
 	$cages[$row['cageid']] = array(
 		'type' => $row['cagetype'],
 		'cageline' => $row['lineassignment'],
-		'cagegender' => $row['gender'],
+		'cagesex' => $row['sex'],
 		'setupdate' => $row['setupdate'],
 		'cagegenos' => $cagegenokey[$row['lineassignment']],
 		'papercolor' => $row['card_color'],
@@ -330,7 +330,7 @@ while ($row = mysqli_fetch_array($results)) {
 		'cardcolorB' => $colorkey[$row['color_assignment']]["B"],
 		'animals' => array()
 	);
-	$animals[$row['animalautono']] = array('cage' => $row['cageid'], 'line' => $row['line'], 'idno' => $row['idno'], 'dob' => $row['dob'], 'ear' => $row['eartag'], 'geno' => '', 'gender' => $row['gender'], 'geno' => $row['genoshort']);
+	$animals[$row['animalautono']] = array('cage' => $row['cageid'], 'line' => $row['line'], 'idno' => $row['idno'], 'dob' => $row['dob'], 'ear' => $row['eartag'], 'geno' => '', 'sex' => $row['sex'], 'geno' => $row['genoshort']);
 }
 $conn->close();
 
@@ -462,13 +462,13 @@ $colorfilt_listbox .= '</select>';
 			<table>
 				<tr>
 					<th>Line Filter:</th>
-					<th>Gender Filter:</th>
+					<th>Sex Filter:</th>
 					<th>Source Cage Category:</th>
 					<th>Card Color Filter:</th>
 				</tr>
 				<tr>
 					<td><?php echo $line_listbox; ?></td>
-					<td><?php echo $gender_listbox; ?></td>
+					<td><?php echo $sex_listbox; ?></td>
 					<td><?php echo $source_category_listbox; ?></td>
 					<td><?php echo $colorfilt_listbox; ?></td>
 				</tr>

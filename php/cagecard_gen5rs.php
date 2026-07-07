@@ -277,11 +277,11 @@ function MatingCard($pdf, $cagearray, $cagename, $contact1, $contact2)
 	foreach (array_keys($cagearray[$cagename]['animals']) as $animalauto) {
 		$animalarray = $cagearray[$cagename]['animals'][$animalauto];
 
-		if (strtolower($animalarray['gender']) == 'f') {
+		if (strtolower($animalarray['sex']) == 'f') {
 			$femaleanimals = $femaleanimals + 1;
 			$motherarray[$femaleanimals] = $animalauto;
 		}
-		if (strtolower($animalarray['gender']) == 'm') {
+		if (strtolower($animalarray['sex']) == 'm') {
 			$maleanimals = $maleanimals + 1;
 			$fatherarray[$maleanimals] = $animalauto;
 		}
@@ -355,14 +355,14 @@ function HoldingCard($pdf, $cagearray, $cagename, $contact1, $contact2, $genocon
 	$pdf->SetFont('Arial', 'B', 20);
 
 
-	//color the gender block
-	if ($cagearray[$cagename]['cagegender'] == "F") {
+	//color the sex block
+	if ($cagearray[$cagename]['cagesex'] == "F") {
 		$pdf->SetFillColor(255, 200, 200);
-	} elseif ($cagearray[$cagename]['cagegender'] == "M") {
+	} elseif ($cagearray[$cagename]['cagesex'] == "M") {
 		$pdf->SetFillColor(100, 255, 255);
 	}
 
-	$pdf->Cell(14, 10, $cagearray[$cagename]['cagegender'], 'L', 0, 'C', 1);
+	$pdf->Cell(14, 10, $cagearray[$cagename]['cagesex'], 'L', 0, 'C', 1);
 
 	$pdf->SetFillColor(255, 255, 255);
 
@@ -375,13 +375,13 @@ function HoldingCard($pdf, $cagearray, $cagename, $contact1, $contact2, $genocon
 	//$pdf->Cell(44,6,$cagearray[$cagename]['type'],'TBR',0,'C',1);
 	//$pdf->Cell(64,6,$cagearray[$cagename]['cageline'],1,0,'C',1);
 	/*
-if ($cagearray[$cagename][cagegender]=="F"){
+if ($cagearray[$cagename][cagesex]=="F"){
 $pdf->SetFillColor(255,200,200);
 }
-elseif ($cagearray[$cagename][cagegender]=="M"){
+elseif ($cagearray[$cagename][cagesex]=="M"){
 $pdf->SetFillColor(100,255,255);
 }
-$pdf->Cell(20,6,$cagearray[$cagename]['cagegender'],'TBL',1,'C',1);
+$pdf->Cell(20,6,$cagearray[$cagename]['cagesex'],'TBL',1,'C',1);
 */
 
 	//$pdf->Cell(108,6,$cagename,'TBL',0,'C',1);

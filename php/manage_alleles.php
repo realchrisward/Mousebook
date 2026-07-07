@@ -161,7 +161,7 @@ $sqlstatus='-failed - allele name cannot be blank';
 } elseif (trim($allelegrp_selection)===''){
 $sqlstatus='-failed - no allele group selected';
 } else {
-$sqltext="INSERT INTO `list_allele` (`allelegroup`,`allele`,`genderspecific`) VALUES ('".$allelegrp_selection."','".$textallele."','".$alleleXgendspec."');";
+$sqltext="INSERT INTO `list_allele` (`allelegroup`,`allele`,`sexspecific`) VALUES ('".$allelegrp_selection."','".$textallele."','".$alleleXgendspec."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
@@ -413,7 +413,7 @@ $allele_table= '<select id="allele_selection" name="allele_selection" size=8 cla
 //loop the result set and prepare table
 while($row=mysqli_fetch_array($results)) {
 //catch results of each row
-$allele_table .= '<option value="'.$row["allele"].'">'.$row["allele"].' | '.$row["genderspecific"].'</option>';
+$allele_table .= '<option value="'.$row["allele"].'">'.$row["allele"].' | '.$row["sexspecific"].'</option>';
 }
 //close the table
 $allele_table .= '</select>';

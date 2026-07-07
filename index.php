@@ -208,7 +208,7 @@ ORDER BY age DESC, a.currentcage ASC;
 			. "<input type=hidden name='line_assignment' value='" . $row['line'] . "' />"
 			. "<input type=hidden name='line_sync' value='" . $row['line'] . "' />"
 
-			. "<input type=hidden name='gender_filter' value='all' />"
+			. "<input type=hidden name='sex_filter' value='all' />"
 			. "<input type=hidden name='source_category_selection' value='all' />"
 			. "<input type=hidden name='sourcecage_selection' value='" . $row['currentcage'] . "' />"
 			. "<input type=hidden name='setupdate' value='" . date('Y-m-d', strtotime($row['dob'] . ' + 21 days')) . "' />"
@@ -232,7 +232,7 @@ ORDER BY age DESC, a.currentcage ASC;
 			. "<input type=submit style='background-color:#217190; color:lightgrey;' value='Geno' />"
 
 			. "<input type=hidden name='line_filter' value='" . $row['line'] . "' />"
-			. "<input type=hidden name='gender_filter' value='all' />"
+			. "<input type=hidden name='sex_filter' value='all' />"
 			. "<input type=hidden name='source_category_selection' value='all' />"
 			. "<input type=hidden name='deadoralive_filter' value='alive' />"
 			. "<input type=hidden name='sourcecage_selection' value='" . $row['currentcage'] . "' />"

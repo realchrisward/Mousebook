@@ -44,8 +44,8 @@ if (!defined('MB_ROLE_OPTION_COL')) {
     define('MB_ROLE_OPTION_COL', 'roleassignment_option');
 }
 
-if (!defined('MB_GENDER_OPTIONS')) {
-    define('MB_GENDER_OPTIONS', serialize(array('M', 'F', 'unk')));
+if (!defined('MB_SEX_OPTIONS')) {
+    define('MB_SEX_OPTIONS', serialize(array('M', 'F', 'unk')));
 }
 
 if (!function_exists('mb_filters_loaded')) {
@@ -239,16 +239,16 @@ if (!function_exists('mb_filters_loaded')) {
         return ' AND `' . $col . '` = "' . $conn->real_escape_string($selected) . '"';
     }
 
-    /* ---- GENDER / CAGE TYPE (static vocab) ------------------------------ */
-    function gender_options()
+    /* ---- SEX / CAGE TYPE (static vocab) ------------------------------ */
+    function sex_options()
     {
-        return unserialize(MB_GENDER_OPTIONS);
+        return unserialize(MB_SEX_OPTIONS);
     }
     function cagetype_options()
     {
         return unserialize(MB_CAGETYPE_OPTIONS);
     }
-    function gender_where(mysqli $conn, $selected, $col = 'gender')
+    function sex_where(mysqli $conn, $selected, $col = 'sex')
     {
         if ($selected === null || $selected === '' || $selected === 'all') return '';
         return ' AND `' . $col . '` = "' . $conn->real_escape_string($selected) . '"';

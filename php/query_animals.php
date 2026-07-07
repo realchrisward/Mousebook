@@ -105,9 +105,9 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 	$commenttextfilter = $_POST['commenttextfilter'] ?? '';
 	if ($commenttextfilter == "") {
 		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
-		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
+		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	} else {
-		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " GROUP By table_animals.animalautono, `table_cages`.`cagelocation_room`, `table_cages`.`cagerole_assignment` ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
+		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " GROUP By table_animals.animalautono, `table_cages`.`cagelocation_room`, `table_cages`.`cagerole_assignment` ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
 
 		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono WHERE " . $sql_where_text . " GROUP BY table_animals.animalautono,allelegroup,allele;";
 	}
@@ -125,7 +125,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 		$arrayman[$i] = $row['man'];
 		$arrayline[$arrayman[$i]] = $row['line'];
 		$arrayidno[$arrayman[$i]] = $row['idno'];
-		$arraygender[$arrayman[$i]] = $row['gender'];
+		$arraysex[$arrayman[$i]] = $row['sex'];
 		$arrayeartag[$arrayman[$i]] = $row['eartag'];
 		$arraydob[$arrayman[$i]] = $row['dob'];
 		$arraydow[$arrayman[$i]] = $row['dow'];
@@ -169,12 +169,12 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 	}
 
 	//get allelegroups
-	$sqltext = "SELECT `allelegroup`,`allele`,`genderspecific` FROM `list_allele` " . $agfilt . ";";
+	$sqltext = "SELECT `allelegroup`,`allele`,`sexspecific` FROM `list_allele` " . $agfilt . ";";
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqltext);
 	$aglist = [];
 	while (($results) && ($row = mysqli_fetch_array($results))) {
-		$aglist[$row["allelegroup"]][$row["genderspecific"]] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
+		$aglist[$row["allelegroup"]][$row["sexspecific"]] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
 	}
 	$conn->close();
 	//echo $sqltext;
@@ -249,7 +249,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 <th>-</th>
 <th>line</th>
 <th>idno</th>
-<th>gender</th>
+<th>sex</th>
 <th>ear_tag</th>
 <th>dob</th>
 <th>dow</th>
@@ -279,7 +279,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 	</td>
 <td >' . $arrayidno[$ck] . '
 	</td>
-<td >' . $arraygender[$ck] . '
+<td >' . $arraysex[$ck] . '
 	</td>
 <td>' . $arrayeartag[$ck] . '
 	</td>
@@ -322,13 +322,13 @@ if (isset($_POST['export_csv'])) {
 	header('Content-Type: text/csv; charset=utf-8');
 	header('Content-Disposition: attachment; filename=DL_query_animals_' . date('Ymd_His') . '.csv');
 	$out = fopen('php://output', 'wb');
-	$headerrow = array('animalautono', 'line', 'idno', 'gender', 'ear_tag', 'dob', 'dow', 'dod');
+	$headerrow = array('animalautono', 'line', 'idno', 'sex', 'ear_tag', 'dob', 'dow', 'dod');
 	foreach ($genelist as $ag) { $headerrow[] = $ag; }
 	array_push($headerrow, 'current cage', 'location', 'role', 'source cage', 'parents', 'bulk comments');
 	fputcsv($out, $headerrow);
 	foreach ($arrayman as $ck) {
 		if (!in_array($ck, $gtman, true)) { continue; }
-		$rowout = array($ck, $arrayline[$ck] ?? '', $arrayidno[$ck] ?? '', $arraygender[$ck] ?? '', $arrayeartag[$ck] ?? '', $arraydob[$ck] ?? '', $arraydow[$ck] ?? '', $arraydod[$ck] ?? '');
+		$rowout = array($ck, $arrayline[$ck] ?? '', $arrayidno[$ck] ?? '', $arraysex[$ck] ?? '', $arrayeartag[$ck] ?? '', $arraydob[$ck] ?? '', $arraydow[$ck] ?? '', $arraydod[$ck] ?? '');
 		foreach ($genelist as $ag) {
 			$cell = isset($arraygeno[$ag][$ck]) ? trim(strip_tags($arraygeno[$ag][$ck])) : '';
 			$rowout[] = ($cell === '') ? 'NA' : $cell;
@@ -349,7 +349,7 @@ if (isset($_POST['export_csv'])) {
 <!--php script for display controls-->
 <?php
 //line list
-//gender list
+//sex list
 //allele group list
 //allele list filtered by selected allelegroups|lines
 //cage list
@@ -357,7 +357,7 @@ if (isset($_POST['export_csv'])) {
 
 // posted variables
 $line_filter = $_POST['line_filter'] ?? '';
-$gender_filter = $_POST['gender_filter'] ?? '';
+$sex_filter = $_POST['sex_filter'] ?? '';
 $source_category_selection = $_POST['source_category_selection'] ?? '';
 $sourcecage_selection = $_POST['sourcecage_selection'] ?? '';
 $animals_selection = $_POST['animals_selection'] ?? '';
@@ -375,8 +375,8 @@ $parenttextfilter = $_POST['parenttextfilter'] ?? '';
 $location_filter = $_POST['location_filter'] ?? 'all';
 $role_filter     = $_POST['role_filter']     ?? 'all';
 
-//gender filter — via shared library
-$gender_listbox = filter_selectbox(gender_options(), $gender_filter, 'gender_filter', 'submitForm()', true, '');
+//sex filter — via shared library
+$sex_listbox = filter_selectbox(sex_options(), $sex_filter, 'sex_filter', 'submitForm()', true, '');
 
 //deadoralive filter
 $deadoralive_options = array('alive', 'dead', 'all');
@@ -404,7 +404,7 @@ $location_listbox = filter_selectbox(location_filter_options($conn), $location_f
 $role_listbox     = filter_selectbox(role_filter_options($conn),     $role_filter,     'role_filter',     'submitForm()', true);
 $conn->close();
 
-//cage list filtered by line, gender, etc
+//cage list filtered by line, sex, etc
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //set filter text
 
@@ -422,10 +422,10 @@ if ($line_filter === "all") {
 	$lf = "`line`='" . $line_filter . "' and ";
 }
 
-if ($gender_filter === "all") {
+if ($sex_filter === "all") {
 	$gf = "";
 } else {
-	$gf = "`gender`='" . $gender_filter . "' and ";
+	$gf = "`sex`='" . $sex_filter . "' and ";
 }
 
 if ($source_category_selection === "all") {
@@ -513,7 +513,7 @@ $sourcecage_listbox .= '</select>';
 $conn->close();
 //echo $sqltext;
 
-//animals list filtered by line|gender|cage
+//animals list filtered by line|sex|cage
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
 /*
@@ -529,9 +529,9 @@ if ($line_filter==="all"){
 $lf='';} else {
 $lf="`line`='".$line_filter."' and ";}
 
-if ($gender_filter==="all"){
+if ($sex_filter==="all"){
 $gf='';} else {
-$gf="`gender`='".$gender_filter."' and ";}
+$gf="`sex`='".$sex_filter."' and ";}
 
 
 
@@ -572,7 +572,7 @@ $animals_sql_where_text = substr($sql_where_untrim . $cf, 0, -4);
 //$animals_sql_where_text=substr("`line`=`line` and ".$lf.$gf.$doaf.$sf.$cf.$bbf.$baf.$dbf.$daf,0,-4);
 //$animals_sql_where_text=$sql_where_text;
 
-$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where " . $animals_sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
+$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where " . $animals_sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 $results = $conn->query($sqltext);
 //echo $sqltext;
 
@@ -581,9 +581,9 @@ $animals_listbox = '<select id="animals_selection" name="animals_selection" size
 //loop and prepare table
 while (($results) && ($row = mysqli_fetch_array($results))) {
 	if ($row['man'] === $animals_selection) {
-		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
-		$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	}
 	$animals_batchlist[] = $row['man'];
 }
@@ -692,8 +692,8 @@ $conn->close();
 											<td><?php echo $deadoralive_listbox; ?></td>
 										</tr>
 										<tr>
-											<th>Gender</th>
-											<td><?php echo $gender_listbox; ?></td>
+											<th>Sex</th>
+											<td><?php echo $sex_listbox; ?></td>
 										</tr>
 										<tr>
 											<th>Line</th>

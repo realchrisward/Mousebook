@@ -485,7 +485,7 @@ $conn->close();
 $line_filter = ($_POST['line_filter'] ?? '');
 $line_sync = ($_POST['line_sync'] ?? '');
 $line_assignment = ($_POST['line_assignment'] ?? '');
-$gender_filter = ($_POST['gender_filter'] ?? '');
+$sex_filter = ($_POST['sex_filter'] ?? '');
 $move_selection = ($_POST['move_selection'] ?? '');
 $source_category_selection = ($_POST['source_category_selection'] ?? '');
 $category_selection = ($_POST['category_selection'] ?? '');
@@ -499,17 +499,17 @@ $cage4_selection = ($_POST['cage4_selection'] ?? '');
 $location_filter = $_POST['location_filter'] ?? 'all';
 $role_filter     = $_POST['role_filter']     ?? 'all';
 
-//gender filter
-$gender_options = array('all', 'M', 'F', 'unk');
-$gender_listbox = '<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
-foreach ($gender_options as $row) {
-	if ($row === $gender_filter) {
-		$gender_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
+//sex filter
+$sex_options = array('all', 'M', 'F', 'unk');
+$sex_listbox = '<select id="sex_filter" name="sex_filter" onchange="submitForm()">';
+foreach ($sex_options as $row) {
+	if ($row === $sex_filter) {
+		$sex_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
 	} else {
-		$gender_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
+		$sex_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
 	}
 }
-$gender_listbox .= '</select>';
+$sex_listbox .= '</select>';
 
 //move type filter
 $move_options = array('Weaning', 'Cage Transfer');
@@ -589,18 +589,18 @@ $conn->close();
 
 //temp_cage1 contents
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage1`.`animalautono` FROM `table_animals` JOIN `temp_cage1` ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono` order by `gender` desc, `line`, `idno`;";
+$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage1`.`animalautono` FROM `table_animals` JOIN `temp_cage1` ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono` order by `sex` desc, `line`, `idno`;";
 $results = $conn->query($sqltext);
 $cage1size = mysqli_num_rows($results);
 $cage1_listbox = '<select id="cage1_selection" name="cage1_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['animalautono'] === $cage1_selection) {
-		$cage1_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage1_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
-		$cage1_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage1_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	}
-	$animalc1[] = $row['line'] . '-' . $row['idno'] . '(' . $row['gender'] . ')';
+	$animalc1[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
 $cage1contents = implode(', ', $animalc1 ?? []);
 //close the table
@@ -609,18 +609,18 @@ $conn->close();
 
 //temp_cage2 contents
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage2`.`animalautono` FROM `table_animals` JOIN `temp_cage2` ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono` order by `gender` desc, `line`, `idno`;";
+$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage2`.`animalautono` FROM `table_animals` JOIN `temp_cage2` ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono` order by `sex` desc, `line`, `idno`;";
 $results = $conn->query($sqltext);
 $cage2size = mysqli_num_rows($results);
 $cage2_listbox = '<select id="cage2_selection" name="cage2_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['animalautono'] === $cage2_selection) {
-		$cage2_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage2_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
-		$cage2_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage2_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	}
-	$animalc2[] = $row['line'] . '-' . $row['idno'] . '(' . $row['gender'] . ')';
+	$animalc2[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
 $cage2contents = implode(', ', $animalc2 ?? []);
 //close the table
@@ -629,18 +629,18 @@ $conn->close();
 
 //temp_cage3 contents
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage3`.`animalautono` FROM `table_animals` JOIN `temp_cage3` ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono` order by `gender` desc, `line`, `idno`;";
+$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage3`.`animalautono` FROM `table_animals` JOIN `temp_cage3` ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono` order by `sex` desc, `line`, `idno`;";
 $results = $conn->query($sqltext);
 $cage3size = mysqli_num_rows($results);
 $cage3_listbox = '<select id="cage3_selection" name="cage3_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['animalautono'] === $cage3_selection) {
-		$cage3_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage3_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
-		$cage3_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage3_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	}
-	$animalc3[] = $row['line'] . '-' . $row['idno'] . '(' . $row['gender'] . ')';
+	$animalc3[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
 $cage3contents = implode(', ', $animalc3 ?? []);
 //close the table
@@ -649,18 +649,18 @@ $conn->close();
 
 //temp_cage4 contents
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`gender`,`dob`,`currentcage`,`temp_cage4`.`animalautono` FROM `table_animals` JOIN `temp_cage4` ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono` order by `gender` desc, `line`, `idno`;";
+$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage4`.`animalautono` FROM `table_animals` JOIN `temp_cage4` ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono` order by `sex` desc, `line`, `idno`;";
 $results = $conn->query($sqltext);
 $cage4size = mysqli_num_rows($results);
 $cage4_listbox = '<select id="cage4_selection" name="cage4_selection" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['animalautono'] === $cage4_selection) {
-		$cage4_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage4_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
-		$cage4_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$cage4_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	}
-	$animalc4[] = $row['line'] . '-' . $row['idno'] . '(' . $row['gender'] . ')';
+	$animalc4[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
 $cage4contents = implode(', ', $animalc4 ?? []);
 //close the table
@@ -680,7 +680,7 @@ if (!in_array('Limbo', $loc_assign_values, true)) {
 $role_assign_values = role_assign_options($conn);
 foreach (array(1, 2, 3, 4) as $cn) {
 	$firstcur = '';
-	$fr = $conn->query("SELECT currentcage FROM table_animals JOIN temp_cage$cn ON table_animals.animalautono=temp_cage$cn.animalautono ORDER BY gender desc, line, idno LIMIT 1;");
+	$fr = $conn->query("SELECT currentcage FROM table_animals JOIN temp_cage$cn ON table_animals.animalautono=temp_cage$cn.animalautono ORDER BY sex desc, line, idno LIMIT 1;");
 	if ($fr && ($frow = mysqli_fetch_array($fr))) {
 		$firstcur = $frow['currentcage'];
 	}
@@ -719,7 +719,7 @@ foreach (array(1, 2, 3, 4) as $cn) {
 $conn->close();
 
 
-//cage list filtered by line, gender, etc
+//cage list filtered by line, sex, etc
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all") {
@@ -728,10 +728,10 @@ if ($line_filter === "all") {
 	$lf = '`line`="' . $line_filter . '" and ';
 }
 
-if ($gender_filter === "all") {
+if ($sex_filter === "all") {
 	$gf = '';
 } else {
-	$gf = '`gender`="' . $gender_filter . '" and ';
+	$gf = '`sex`="' . $sex_filter . '" and ';
 }
 
 if ($move_selection === "Weaning") {
@@ -782,7 +782,7 @@ $sourcecage_listbox .= '</select>';
 $conn->close();
 //echo $sqltext;
 
-//animals list filtered by line|gender|cage
+//animals list filtered by line|sex|cage
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all") {
@@ -791,10 +791,10 @@ if ($line_filter === "all") {
 	$lf = '`line`="' . $line_filter . '" and ';
 }
 
-if ($gender_filter === "all") {
+if ($sex_filter === "all") {
 	$gf = '';
 } else {
-	$gf = '`gender`="' . $gender_filter . '" and ';
+	$gf = '`sex`="' . $sex_filter . '" and ';
 }
 
 if ($move_selection === "Weaning") {
@@ -819,7 +819,7 @@ $sql_where_text = substr($lf . $gf . $mf . $sf . $cf . $locf . $rolef, 0, -4);  
 if (strlen($sql_where_text) > 0) {
 	$sql_where_text = ' and ' . $sql_where_text;
 }
-$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` left join temp_cage1 on table_animals.animalautono=temp_cage1.animalautono 
+$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` left join temp_cage1 on table_animals.animalautono=temp_cage1.animalautono 
 left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left join temp_cage3 on table_animals.animalautono=temp_cage3.animalautono 
 left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and 
 temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null" . $sql_where_text . " ;";
@@ -829,9 +829,9 @@ $animals_listbox = '<select id="animals_selection" name="animals_selection" size
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
 	if ($row['man'] === $animals_selection) {
-		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
-		$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+		$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	}
 	$animals_batchlist[] = $row['man'];
 }
@@ -967,7 +967,7 @@ $conn->close();
 			<table>
 				<tr>
 					<th>Line Filter:</th>
-					<th>Gender Filter:</th>
+					<th>Sex Filter:</th>
 					<th>Source Cage Category:</th>
 					<th>Move Type:</th>
 					<th>Location Filter:</th>
@@ -975,7 +975,7 @@ $conn->close();
 				</tr>
 				<tr>
 					<td><?php echo $line_listbox; ?></td>
-					<td><?php echo $gender_listbox; ?></td>
+					<td><?php echo $sex_listbox; ?></td>
 					<td><?php echo $source_category_listbox; ?></td>
 					<td><?php echo $move_listbox; ?></td>
 					<td><?php echo $location_listbox; ?></td>

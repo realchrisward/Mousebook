@@ -204,13 +204,13 @@ $conn->close();
 //mating cage contents current
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
-$sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
+$sqltext="SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
 $results=$conn->query($sqltext);
 $animals_results=$results;
 $animals_listbox='<select id="animals_selection" name="animals_selection" size=6 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
 while($row=mysqli_fetch_array($results)){
-$animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].'</option>';
+$animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['sex'].'</option>';
 }
 //close the table
 $animals_listbox.='</select>';

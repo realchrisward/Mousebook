@@ -7,7 +7,7 @@
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $xusername = ''; $xpassword = '';
 $host = $accessun = $accesspw = null;
-$locationA_selection = null; $locationB_selection = null; $line_filter = null; $gender_filter = null; $source_category_selection = null; $lf = null;
+$locationA_selection = null; $locationB_selection = null; $line_filter = null; $sex_filter = null; $source_category_selection = null; $lf = null;
 $gf = null; $sf = null; $locf = null; $loc_addstatus = null; $contact1 = null; $contact2 = null;
 $genoconver = null; $cagearray = null; $mdata = null; $sqlerror = null; $buttonmessage = null; $sqlstatusclear = null;
 
@@ -81,10 +81,10 @@ if (isset($_POST['line_filter'])) {
 	$line_filter = 'all';
 }
 
-if (isset($_POST['gender_filter'])) {
-	$gender_filter = ($_POST['gender_filter'] ?? '');
+if (isset($_POST['sex_filter'])) {
+	$sex_filter = ($_POST['sex_filter'] ?? '');
 } else {
-	$gender_filter = 'all';
+	$sex_filter = 'all';
 }
 
 if (isset($_POST['source_category_selection'])) {
@@ -127,17 +127,17 @@ if (isset($_POST['locationB_selection'])) {
 }
 
 
-//gender filter
-$gender_options = array('all', 'M', 'F', 'unk');
-$gender_listbox = '<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
-foreach ($gender_options as $row) {
-	if ($row === $gender_filter) {
-		$gender_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
+//sex filter
+$sex_options = array('all', 'M', 'F', 'unk');
+$sex_listbox = '<select id="sex_filter" name="sex_filter" onchange="submitForm()">';
+foreach ($sex_options as $row) {
+	if ($row === $sex_filter) {
+		$sex_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
 	} else {
-		$gender_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
+		$sex_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
 	}
 }
-$gender_listbox .= '</select>';
+$sex_listbox .= '</select>';
 
 //source category type filter
 $source_category_options = array('all', 'Holding', 'Mating', 'Experimental', 'Litter', 'Founder', 'Rearrange', 'Sac');
@@ -233,7 +233,7 @@ $cage_listbox .= '</select>';
 $conn->close();
 
 
-//locationA contents - cage list filtered by line, gender, etc
+//locationA contents - cage list filtered by line, sex, etc
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all" or $line_filter === null) {
@@ -242,10 +242,10 @@ if ($line_filter === "all" or $line_filter === null) {
 	$lf = '`line`="' . $line_filter . '" and ';
 }
 
-if ($gender_filter === "all" or $gender_filter === null) {
+if ($sex_filter === "all" or $sex_filter === null) {
 	$gf = '';
 } else {
-	$gf = '`gender`="' . $gender_filter . '" and ';
+	$gf = '`sex`="' . $sex_filter . '" and ';
 }
 
 if ($source_category_selection === "all" or $source_category_selection === null) {
@@ -382,13 +382,13 @@ if (isset($_POST['addcage_single'])) {
 			<table>
 				<tr>
 					<th>Line Filter:</th>
-					<th>Gender Filter:</th>
+					<th>Sex Filter:</th>
 					<th>Source Cage Category:</th>
 					<th>Current Location:</th>
 				</tr>
 				<tr>
 					<td><?php echo $line_listbox; ?></td>
-					<td><?php echo $gender_listbox; ?></td>
+					<td><?php echo $sex_listbox; ?></td>
 					<td><?php echo $source_category_listbox; ?></td>
 					<td><?php echo $locA_listbox; ?></td>
 				</tr>

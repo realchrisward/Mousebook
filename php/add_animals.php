@@ -282,14 +282,14 @@ if (isset($_POST['generate_animals'])) {
 
 	//get genotype dialogs prepared
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-	$sqltext = "SELECT `line`,`list_allele`.`allelegroup`,`allele`,`genderspecific` FROM `" . $dbname . "`.`key_allelebyline` 
+	$sqltext = "SELECT `line`,`list_allele`.`allelegroup`,`allele`,`sexspecific` FROM `" . $dbname . "`.`key_allelebyline` 
 JOIN `" . $dbname . "`.`list_allele` ON `key_allelebyline`.`allelegroup`=`list_allele`.`allelegroup` 
 WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 	$results = $conn->query($sqltext);
 
 
 	while ($row = mysqli_fetch_array($results)) {
-		$aglist[$row['allelegroup']][$row['genderspecific']] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
+		$aglist[$row['allelegroup']][$row['sexspecific']] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
 	}
 	//echo var_dump($aglist);
 	//close the table
@@ -336,7 +336,7 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 <th></th>
 <th>line</th>
 <th>idno</th>
-<th>gender</th>
+<th>sex</th>
 <th>ear tag</th>
 <th>dob</th>
 ' . $genoheader . '
@@ -359,7 +359,7 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 	</td>
 <td ><input class="smalllistbox" type=text name="idno' . $ck . '" id="idno' . $ck . '" readonly="readonly" value=' . $xidnos[$ck] . ' >
 	</td>
-<td ><select class="smalllistbox" name="gender' . $ck . '" id="gender' . $ck . '"><option value=' . $xgendarray[$ck] . ' selected> ' . $xgendarray[$ck] . '
+<td ><select class="smalllistbox" name="sex' . $ck . '" id="sex' . $ck . '"><option value=' . $xgendarray[$ck] . ' selected> ' . $xgendarray[$ck] . '
 	</option><option value="M">M</option><option value="F">F</option><option value="unk">unk</option></select>
 	</td>
 <td><select id="eartag' . $ck . '" name="eartag' . $ck . '">
@@ -430,7 +430,7 @@ if (isset($_POST['confirm_animals'])) {
 		$man[$i] = ($_POST['animalautono' . $i] ?? '');
 		$line[$i] = ($_POST['line' . $i] ?? '');
 		$idno[$i] = ($_POST['idno' . $i] ?? '');
-		$gender[$i] = ($_POST['gender' . $i] ?? '');
+		$sex[$i] = ($_POST['sex' . $i] ?? '');
 		$eartag[$i] = ($_POST['eartag' . $i] ?? '');
 		$dob[$i] = ($_POST['dob' . $i] ?? '');
 		$currentcage[$i] = ($_POST['currentcage' . $i] ?? '');
@@ -438,7 +438,7 @@ if (isset($_POST['confirm_animals'])) {
 		$parents[$i] = ($_POST['parents' . $i] ?? '');
 		$bulkcomments[$i] = ($_POST['bulkcomments' . $i] ?? '');
 		/*
-echo '<br>'.$man[$i].'|'.$line[$i].'|'.$idno[$i].'|'.$gender[$i].'|'.
+echo '<br>'.$man[$i].'|'.$line[$i].'|'.$idno[$i].'|'.$sex[$i].'|'.
 $dob[$i].'|'.$currentcage[$i].'|'.$sourcecage[$i].'|'.
 $parents[$i].'|'.$bulkcomments[$i].'|';
 foreach ($xgenelist as $gene){
@@ -461,8 +461,8 @@ ON DUPLICATE KEY UPDATE `cageno`=`cageno`;';
 
 
 
-		$sqltext_table_animals = 'INSERT INTO `' . $dbname . '`.`table_animals` (`animalautono`,`line`,`idno`,`gender`,`eartag`,`dob`,`matingcage`,`currentcage`,
-`parents`) VALUES (' . $man[$i] . ',"' . $line[$i] . '",' . $idno[$i] . ',"' . $gender[$i] .
+		$sqltext_table_animals = 'INSERT INTO `' . $dbname . '`.`table_animals` (`animalautono`,`line`,`idno`,`sex`,`eartag`,`dob`,`matingcage`,`currentcage`,
+`parents`) VALUES (' . $man[$i] . ',"' . $line[$i] . '",' . $idno[$i] . ',"' . $sex[$i] .
 			'","' . $eartag[$i] . '",' . $dob[$i] . ',"' . $sourcecage[$i] . '","' . $currentcage[$i] .
 			'","' . $parents[$i] . '");';
 
@@ -610,17 +610,17 @@ if ($maxanimalinline2 == "") {
 
 $maxanimalinline = max($maxanimalinline1, $maxanimalinline2);
 
-//gender_listbox
-$gender_options = array('M', 'F', 'unk');
-$gender_listbox = '<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
-foreach ($gender_options as $row) {
-	if ($row === $gender_selection) {
-		$gender_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
+//sex_listbox
+$sex_options = array('M', 'F', 'unk');
+$sex_listbox = '<select id="sex_filter" name="sex_filter" onchange="submitForm()">';
+foreach ($sex_options as $row) {
+	if ($row === $sex_selection) {
+		$sex_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
 	} else {
-		$gender_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
+		$sex_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
 	}
 }
-$gender_listbox .= '</select>';
+$sex_listbox .= '</select>';
 
 
 //mating list filtered by line
@@ -654,15 +654,15 @@ $conn->close();
 //mating cage contents current
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
-$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='" . $source_selection . "' order by gender desc, line, idno ;";
+$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='" . $source_selection . "' order by sex desc, line, idno ;";
 $results = $conn->query($sqltext);
 $animals_results = $results;
 $curparents = "";
 $animals_listbox = '<select id="animals_selection" name="animals_selection" size=5 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
-	$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . '</option>';
-	$curparents .= $row['line'] . "-" . $row['idno'] . " (" . $row['gender'] . "),";
+	$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . '</option>';
+	$curparents .= $row['line'] . "-" . $row['idno'] . " (" . $row['sex'] . "),";
 }
 //close the table
 $animals_listbox .= '</select>';

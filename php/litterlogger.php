@@ -218,7 +218,7 @@ while ($results && ($row = mysqli_fetch_array($results))) {
 		. "<input type=hidden name='line_filter' value='" . $row['line_assign'] . "' />"
 		. "<input type=hidden name='line_assignment' value='" . $row['line_assign'] . "' />"
 		. "<input type=hidden name='line_sync' value='" . $row['line_assign'] . "' />"
-		. "<input type=hidden name='gender_filter' value='all' />"
+		. "<input type=hidden name='sex_filter' value='all' />"
 		. "<input type=hidden name='source_category_selection' value='all' />"
 		. "<input type=hidden name='sourcecage_selection' value='" . $row['litter name'] . "' />"
 		. "<input type=hidden name='setupdate' value='" . date('Y-m-d', strtotime($row['dob'] . ' + 21 days')) . "' />"
@@ -242,7 +242,7 @@ while ($results && ($row = mysqli_fetch_array($results))) {
 		. "<input type=submit style='background-color:#217190; color:lightgrey;' value='Manage' />"
 
 		. "<input type=hidden name='line_filter' value='" . $row['line_assign'] . "' />"
-		. "<input type=hidden name='gender_filter' value='all' />"
+		. "<input type=hidden name='sex_filter' value='all' />"
 		. "<input type=hidden name='source_category_selection' value='all' />"
 		. "<input type=hidden name='deadoralive_filter' value='alive' />"
 		. "<input type=hidden name='sourcecage_selection' value='" . $row['litter name'] . "' />"
@@ -311,17 +311,17 @@ while ($results && ($row = mysqli_fetch_array($results))) {
 $line_listbox .= '</select>';
 $conn->close();
 
-//gender_listbox
-$gender_options = array('M', 'F', 'unk');
-$gender_listbox = '<select id="gender_filter" name="gender_filter" onchange="submitForm()">';
-foreach ($gender_options as $row) {
-	if ($row === $gender_selection) {
-		$gender_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
+//sex_listbox
+$sex_options = array('M', 'F', 'unk');
+$sex_listbox = '<select id="sex_filter" name="sex_filter" onchange="submitForm()">';
+foreach ($sex_options as $row) {
+	if ($row === $sex_selection) {
+		$sex_listbox .= '<option value="' . $row . '" selected>' . $row . '</option>';
 	} else {
-		$gender_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
+		$sex_listbox .= '<option value="' . $row . '" >' . $row . '</option>';
 	}
 }
-$gender_listbox .= '</select>';
+$sex_listbox .= '</select>';
 
 
 //location filter dropdown (filter mode)
@@ -360,13 +360,13 @@ $conn->close();
 //mating cage contents current
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
-$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='" . $source_selection . "' ;";
+$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='" . $source_selection . "' ;";
 $results = $conn->query($sqltext);
 $animals_results = $results;
 $animals_listbox = '<select id="animals_selection" name="animals_selection" size=5 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
 while ($results && ($row = mysqli_fetch_array($results))) {
-	$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['gender'] . '</option>';
+	$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . '</option>';
 }
 //close the table
 $animals_listbox .= '</select>';
