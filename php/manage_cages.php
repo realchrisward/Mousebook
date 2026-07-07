@@ -57,6 +57,24 @@ if ($conn->connect_error) {
 
 
 
+//*****purge this user's stale cageno reservations (mirrors add_animals); degrade gracefully if table absent*****
+//skipped on the submit request so this user's reservation stays in place right up to the commit,
+//closing the purge-then-insert micro-window; a successful submit releases it explicitly (see below).
+if (!isset($_POST['submit_cages'])) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	try {
+		$esc_user_purge = $conn->real_escape_string($xusername ?? '');
+		$sqlpurge = "LOCK TABLES `" . $dbname . "`.`reservations_cages` WRITE; DELETE FROM `" . $dbname . "`.`reservations_cages` WHERE `user`='" . $esc_user_purge . "'; UNLOCK TABLES;";
+		if ($conn->multi_query($sqlpurge) === TRUE) {
+			while (mysqli_next_result($conn));
+		}
+	} catch (\Throwable $e) {
+		//reservations_cages not present yet — nothing to purge
+	}
+	$conn->close();
+}
+
+
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //Add animals individually to cage1|2|3|4
 if (isset($_POST['addcage1_single'])) {
@@ -372,12 +390,53 @@ DELETE FROM `" . $dbname . "`.`temp_cage3`;DELETE FROM `" . $dbname . "`.`temp_c
 
 	$sqltext = $insertTableCages . $c1updates . $c2updates . $c3updates . $c4updates . $sqltextclear . $printlist;
 
+	//commit-time collision guard: since this page was rendered, a concurrent transfer — or another of
+	//this user's own open manage-cages windows (the top-of-request purge is keyed by user, so a newer
+	//window can clear an older window's reservation) — may have already created these cage numbers.
+	//Verify none of the target cage names already exist before moving anything, so a stale page can
+	//never write a duplicate cage. Cage names encode line + category + number, so a name match is an
+	//exact "this cage already exists" test.
+	$cageCollision = '';
+	$targetCageNames = array();
+	if ($xcage1size > 0) { $targetCageNames[] = $xcage1name; }
+	if ($xcage2size > 0) { $targetCageNames[] = $xcage2name; }
+	if ($xcage3size > 0) { $targetCageNames[] = $xcage3name; }
+	if ($xcage4size > 0) { $targetCageNames[] = $xcage4name; }
+	if (!empty($targetCageNames)) {
+		$escTargets = array();
+		foreach ($targetCageNames as $tname) { $escTargets[] = "'" . $conn->real_escape_string($tname) . "'"; }
+		$checkSql = "SELECT `cageid` FROM `" . $dbname . "`.`table_cages` WHERE `cageid` IN (" . implode(',', $escTargets) . ");";
+		$checkRes = $conn->query($checkSql);
+		if ($checkRes && $checkRes->num_rows > 0) {
+			$takenCages = array();
+			while ($crow = $checkRes->fetch_assoc()) { $takenCages[] = $crow['cageid']; }
+			$cageCollision = implode(', ', $takenCages);
+		}
+	}
+
 	if ($xsetupdate == "") {
 		$sqlstatus = 'FAILED - a setup date is required. Please enter a date (or click the "Today" button) and resubmit. No cages were changed.';
+	} else if ($cageCollision !== '') {
+		$sqlstatus = 'FAILED - the cage(s) [' . $cageCollision . '] were already created by another transfer since this page loaded, so no animals were moved. Your staged animals are still in place and fresh cage numbers have been generated below - please review the numbers and resubmit.';
 	} else if ($conn->multi_query($sqltext) === TRUE) {
 		//flush the mysql submission
 		while (mysqli_next_result($conn));
 		$sqlstatus = 'successful - ' . $sqltext;
+		//micro-window hardening: the cages now exist in table_cages, so release this user's reservation
+		//for the committed line+category. Scoped to line+category so other open windows keep theirs.
+		$conn2 = new mysqli($host, $accessun, $accesspw, $dbname);
+		try {
+			$rel_user = $conn2->real_escape_string($xusername ?? '');
+			$rel_line = $conn2->real_escape_string($xline_assignment ?? '');
+			$rel_type = $conn2->real_escape_string($xcategory_selection ?? '');
+			$sqlrelease = "LOCK TABLES `" . $dbname . "`.`reservations_cages` WRITE; DELETE FROM `" . $dbname . "`.`reservations_cages` WHERE `user`='" . $rel_user . "' AND `lineassignment`='" . $rel_line . "' AND `cagetype`='" . $rel_type . "'; UNLOCK TABLES;";
+			if ($conn2->multi_query($sqlrelease) === TRUE) {
+				while (mysqli_next_result($conn2));
+			}
+		} catch (\Throwable $e) {
+			//reservations_cages absent — nothing to release
+		}
+		$conn2->close();
 	} else {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
 	}
@@ -741,37 +800,51 @@ $animals_batchlist = '(' . implode('),(', $animals_batchlist ?? []) . ')';
 $conn->close();
 //echo $sqltext;
 
-//cage 1 tentative name
+//cage tentative names + cageno reservation (concurrency-safe; mirrors add_animals reservation pattern)
+//one read of the committed MAX(cageno) and one of the reserved MAX, so two users staging the
+//same line+category at once cannot mint duplicate cage numbers/names.
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT MAX(`cageno`) as maxcageno from `table_cages` where `lineassignment`='" . $line_assignment . "' and `cagetype`='" . $category_selection . "';";
+$esc_line = $conn->real_escape_string($line_assignment ?? '');
+$esc_type = $conn->real_escape_string($category_selection ?? '');
+//highest committed cageno for this line+category
+$sqltext = "SELECT MAX(`cageno`) as maxcageno from `" . $dbname . "`.`table_cages` where `lineassignment`='" . $esc_line . "' and `cagetype`='" . $esc_type . "';";
 $results = $conn->query($sqltext);
 $row = mysqli_fetch_array($results);
-$cage1no = $row[0] + 1;
-$cage1name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($row[0] + 1);
-$conn->close();
-//cage 2 tentative name
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT MAX(`cageno`) as maxcageno from `table_cages` where `lineassignment`='" . $line_assignment . "' and `cagetype`='" . $category_selection . "';";
-$results = $conn->query($sqltext);
-$row = mysqli_fetch_array($results);
-$cage2no = $row[0] + 2;
-$cage2name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($row[0] + 2);
-$conn->close();
-//cage 3 tentative name
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT MAX(`cageno`) as maxcageno from `table_cages` where `lineassignment`='" . $line_assignment . "' and `cagetype`='" . $category_selection . "';";
-$results = $conn->query($sqltext);
-$row = mysqli_fetch_array($results);
-$cage3no = $row[0] + 3;
-$cage3name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($row[0] + 3);
-$conn->close();
-//cage 4 tentative name
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT MAX(`cageno`) as maxcageno from `table_cages` where `lineassignment`='" . $line_assignment . "' and `cagetype`='" . $category_selection . "';";
-$results = $conn->query($sqltext);
-$row = mysqli_fetch_array($results);
-$cage4no = $row[0] + 4;
-$cage4name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($row[0] + 4);
+$realmaxcageno = ($row && $row[0] !== null) ? (int)$row[0] : 0;
+//highest reserved cageno for this line+category (other users' in-flight transfers); degrade gracefully if table absent
+$resmaxcageno = 0;
+try {
+	$sqltext = "SELECT MAX(`maxcageno`) as maxcageno from `" . $dbname . "`.`reservations_cages` where `lineassignment`='" . $esc_line . "' and `cagetype`='" . $esc_type . "';";
+	$results = $conn->query($sqltext);
+	$row = mysqli_fetch_array($results);
+	$resmaxcageno = ($row && $row[0] !== null) ? (int)$row[0] : 0;
+} catch (\Throwable $e) {
+	$resmaxcageno = 0;
+}
+$basecageno = max($realmaxcageno, $resmaxcageno);
+$cage1no = $basecageno + 1;
+$cage2no = $basecageno + 2;
+$cage3no = $basecageno + 3;
+$cage4no = $basecageno + 4;
+$cage1name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($cage1no);
+$cage2name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($cage2no);
+$cage3name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($cage3no);
+$cage4name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($cage4no);
+//reserve this block of cagenos so a concurrent transfer on the same line+category cannot reuse them
+if (($line_assignment ?? '') !== '' && ($category_selection ?? '') !== '') {
+	try {
+		$esc_user = $conn->real_escape_string($xusername ?? '');
+		$sqlreserve = "LOCK TABLES `" . $dbname . "`.`reservations_cages` WRITE; "
+			. "INSERT INTO `" . $dbname . "`.`reservations_cages` (`user`,`lineassignment`,`cagetype`,`maxcageno`,`timestamp`) "
+			. "VALUES ('" . $esc_user . "','" . $esc_line . "','" . $esc_type . "'," . $cage4no . ",now()); "
+			. "UNLOCK TABLES;";
+		if ($conn->multi_query($sqlreserve) === TRUE) {
+			while (mysqli_next_result($conn));
+		}
+	} catch (\Throwable $e) {
+		//reservation unavailable (e.g. table not yet migrated) — fall back to committed-MAX behavior
+	}
+}
 $sqlerror = $conn->error;
 $conn->close();
 

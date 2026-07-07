@@ -469,6 +469,25 @@ CREATE TABLE `reservations_animals` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `reservations_cages`
+--
+
+DROP TABLE IF EXISTS `reservations_cages`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `reservations_cages` (
+  `reservationno` bigint NOT NULL AUTO_INCREMENT,
+  `user` varchar(255) DEFAULT NULL,
+  `lineassignment` varchar(255) DEFAULT NULL,
+  `cagetype` varchar(255) DEFAULT NULL,
+  `maxcageno` bigint DEFAULT NULL,
+  `timestamp` datetime DEFAULT NULL,
+  PRIMARY KEY (`reservationno`),
+  UNIQUE KEY `reservationno_UNIQUE` (`reservationno`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- Table structure for table `table_animals`
 --
 
