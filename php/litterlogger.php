@@ -160,7 +160,22 @@ if (isset($_POST['confirm_litter'])) {
 }
 //litter log
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "select * from `" . $dbname . "`.`table_litterlog` where  `dob` > date_sub(curdate(), interval 2 month) order by `dob`;";
+// issue #9: show only litters that still need addressing. A litter is dropped
+// once it has been weaned, marked just_sac, or has no surviving pups. Pups are
+// linked back to a litter by matingcage = litterlog.cagename and dob (add_animals
+// stores the litter's source cage as the pup matingcage; manage_cages sets dow on
+// weaning). The 2-month age window is kept as a backstop.
+$sqltext = "select l.* from `" . $dbname . "`.`table_litterlog` l "
+	. "left join ("
+	. "select `matingcage`, date(`dob`) as `ldob`, count(*) as `n_pups`, "
+	. "sum(`dow` is not null) as `n_weaned`, sum(`dod` is null) as `n_alive` "
+	. "from `" . $dbname . "`.`table_animals` group by `matingcage`, date(`dob`)"
+	. ") p on p.`matingcage` = l.`cagename` and p.`ldob` = l.`dob` "
+	. "where l.`dob` > date_sub(curdate(), interval 2 month) "
+	. "and coalesce(p.`n_weaned`, 0) = 0 "
+	. "and lower(trim(coalesce(l.`just_sac`, ''))) not in ('y', 'yes', 'true', '1') "
+	. "and not (coalesce(p.`n_pups`, 0) > 0 and coalesce(p.`n_alive`, 0) = 0) "
+	. "order by l.`dob`;";
 $results = $conn->query($sqltext);
 
 //set up static portion of table
