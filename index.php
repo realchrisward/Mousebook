@@ -1,3 +1,21 @@
+<?php
+// ── Phase F: single login origin (Issue #23) ────────────────
+// index.php is NOT a login origin. If someone is trying to enter a
+// colony from here — typing credentials into the header login box, or
+// arriving via a colony button after the session has died — without a
+// live session for the requested colony, send them to the canonical
+// login page (pages/databases.php) to (re)authenticate there. This
+// must run before ANY output so the redirect header is still valid.
+require_once __DIR__ . '/includes/session.php';
+mb_session_start();
+if (isset($_POST['button_login'])) {
+	$mb_posted_db = (string)($_POST['dbname'] ?? $_GET['dbname'] ?? '');
+	if (!mb_logged_in($mb_posted_db)) {
+		header('Location: pages/databases.php');
+		exit;
+	}
+}
+?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
@@ -105,33 +123,42 @@ $guide1url     = $mb['guide1_url'];
 	//run stored proc for colony stats
 	$result = $conn->query("call get_colonystats()");
 	$conn->close();
-	//loop the result set
-	$row = $result->fetch_array();
-	$totalanimalsindb = $row['totalanimalsindb'];
-	$aliveanimals = $row['aliveanimals'];
-	$deadanimals = $row['deadanimals'];
-	$animalswithnodob = $row['animalswithnodob'];
-	$currentmonthyr = $row['currentmonthyr'];
-	$x1monthprev = $row['1monthprev'];
-	$x2monthprev = $row['2monthprev'];
-	$x3monthprev = $row['3monthprev'];
-	$x4monthprev = $row['4monthprev'];
-	$x5monthprev = $row['5monthprev'];
-	$x6monthprev = $row['6monthprev'];
-	$births_currmonth = $row['births_currmonth'];
-	$births_1monthprev = $row['births_1monthprev'];
-	$births_2monthprev = $row['births_2monthprev'];
-	$births_3monthprev = $row['births_3monthprev'];
-	$births_4monthprev = $row['births_4monthprev'];
-	$births_5monthprev = $row['births_5monthprev'];
-	$births_6monthprev = $row['births_6monthprev'];
-	$deaths_currmonth = $row['deaths_currmonth'];
-	$deaths_1monthprev = $row['deaths_1monthprev'];
-	$deaths_2monthprev = $row['deaths_2monthprev'];
-	$deaths_3monthprev = $row['deaths_3monthprev'];
-	$deaths_4monthprev = $row['deaths_4monthprev'];
-	$deaths_5monthprev = $row['deaths_5monthprev'];
-	$deaths_6monthprev = $row['deaths_6monthprev'];
+	// Guard (Issue #23): a failed query — missing get_colonystats proc,
+	// or an access user lacking EXECUTE — returns false. Dereferencing
+	// false with ->fetch_array() fatals and blanks the entire page from
+	// here down (colony stats, wean table, and the sidebar-toggle script
+	// all live below this point). Fall back to a zeroed row so the page
+	// still renders, and flag stats as unavailable for a graceful notice.
+	$row = ($result instanceof mysqli_result) ? $result->fetch_array(MYSQLI_ASSOC) : null;
+	$statsavailable = is_array($row);
+	if (!$statsavailable) {
+		$row = [];
+	}
+	$totalanimalsindb = $row['totalanimalsindb'] ?? 0;
+	$aliveanimals = $row['aliveanimals'] ?? 0;
+	$deadanimals = $row['deadanimals'] ?? 0;
+	$animalswithnodob = $row['animalswithnodob'] ?? 0;
+	$currentmonthyr = $row['currentmonthyr'] ?? '';
+	$x1monthprev = $row['1monthprev'] ?? '';
+	$x2monthprev = $row['2monthprev'] ?? '';
+	$x3monthprev = $row['3monthprev'] ?? '';
+	$x4monthprev = $row['4monthprev'] ?? '';
+	$x5monthprev = $row['5monthprev'] ?? '';
+	$x6monthprev = $row['6monthprev'] ?? '';
+	$births_currmonth = $row['births_currmonth'] ?? 0;
+	$births_1monthprev = $row['births_1monthprev'] ?? 0;
+	$births_2monthprev = $row['births_2monthprev'] ?? 0;
+	$births_3monthprev = $row['births_3monthprev'] ?? 0;
+	$births_4monthprev = $row['births_4monthprev'] ?? 0;
+	$births_5monthprev = $row['births_5monthprev'] ?? 0;
+	$births_6monthprev = $row['births_6monthprev'] ?? 0;
+	$deaths_currmonth = $row['deaths_currmonth'] ?? 0;
+	$deaths_1monthprev = $row['deaths_1monthprev'] ?? 0;
+	$deaths_2monthprev = $row['deaths_2monthprev'] ?? 0;
+	$deaths_3monthprev = $row['deaths_3monthprev'] ?? 0;
+	$deaths_4monthprev = $row['deaths_4monthprev'] ?? 0;
+	$deaths_5monthprev = $row['deaths_5monthprev'] ?? 0;
+	$deaths_6monthprev = $row['deaths_6monthprev'] ?? 0;
 
 
 
@@ -163,6 +190,10 @@ ORDER BY age DESC, a.currentcage ASC;
 	/**/
 	$conn->close();
 	$weantable = "<table><tr><th>Cages to be weaned</th><th>DOB</th><th>AGE</th><th>---</th><th>---</th></tr>";
+	// Guard (Issue #23): a failed/empty query returns false;
+	// mysqli_fetch_array(false) is a TypeError fatal under PHP 8. Only
+	// iterate a real result set — otherwise render the header-only table.
+	if ($results instanceof mysqli_result) {
 	while ($row = mysqli_fetch_array($results)) {
 
 		$ManageWean = ""
@@ -206,11 +237,17 @@ ORDER BY age DESC, a.currentcage ASC;
 
 		$weantable .= "<tr><td>" . $row['currentcage'] . "</td><td>" . date('Y-m-d', strtotime($row['dob'])) . "</td><td>" . $row['age'] . "</td><td>" . $ManageWean . "</td><td>" . $ManageGeno . "</td></tr>";
 	}
+	}
 	$weantable .= "</table>";
 
 	?>
 	<div id="right_content">
 		<h2 class="centertext">Current Colony Stats</h2>
+		<?php if (!$statsavailable): ?>
+		<p class="centertext" style="color:#a00;">Colony statistics are
+			currently unavailable. If this is a new install, confirm the
+			database account has EXECUTE on the colony stored procedures.</p>
+		<?php endif; ?>
 		<table style="width:400px;">
 			<tr>
 				<th>Total animals</th>
