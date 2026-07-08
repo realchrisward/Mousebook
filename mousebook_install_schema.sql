@@ -213,7 +213,7 @@ CREATE TABLE `data_comments` (
   PRIMARY KEY (`commentid`),
   UNIQUE KEY `commentid_UNIQUE` (`commentid`),
   KEY `fk_data_comments_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM AUTO_INCREMENT=9628 DEFAULT CHARSET=utf8mb3;
+) ENGINE=MyISAM AUTO_INCREMENT=9652 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -301,7 +301,7 @@ DROP TABLE IF EXISTS `list_allele`;
 CREATE TABLE `list_allele` (
   `allelegroup` varchar(255) DEFAULT NULL,
   `allele` varchar(255) DEFAULT NULL,
-  `genderspecific` varchar(45) DEFAULT NULL,
+  `sexspecific` varchar(45) DEFAULT NULL,
   `indexkey` int NOT NULL AUTO_INCREMENT,
   `notes` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`indexkey`),
@@ -465,7 +465,7 @@ CREATE TABLE `reservations_animals` (
   `timestamp` datetime DEFAULT NULL,
   PRIMARY KEY (`maxautono`),
   UNIQUE KEY `maxautono_UNIQUE` (`maxautono`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3098 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -484,7 +484,7 @@ CREATE TABLE `reservations_cages` (
   `timestamp` datetime DEFAULT NULL,
   PRIMARY KEY (`reservationno`),
   UNIQUE KEY `reservationno_UNIQUE` (`reservationno`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -498,7 +498,7 @@ CREATE TABLE `table_animals` (
   `animalautono` bigint NOT NULL AUTO_INCREMENT,
   `line` varchar(255) DEFAULT NULL,
   `idno` varchar(255) DEFAULT NULL,
-  `gender` varchar(45) DEFAULT NULL,
+  `sex` varchar(45) DEFAULT NULL,
   `eartag` varchar(45) DEFAULT NULL,
   `dob` datetime DEFAULT NULL,
   `dow` datetime DEFAULT NULL,
@@ -510,7 +510,7 @@ CREATE TABLE `table_animals` (
   UNIQUE KEY `animalautono_UNIQUE` (`animalautono`),
   KEY `fk_table_animals_table_lines1_idx` (`line`),
   KEY `fk_table_animals_table_cages1_idx` (`currentcage`)
-) ENGINE=MyISAM AUTO_INCREMENT=3094 DEFAULT CHARSET=utf8mb3;
+) ENGINE=MyISAM AUTO_INCREMENT=3098 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -572,7 +572,7 @@ CREATE TABLE `table_genotypes` (
   PRIMARY KEY (`genoid`),
   UNIQUE KEY `genoid_UNIQUE` (`genoid`),
   KEY `fk_table_genotypes_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM AUTO_INCREMENT=4762 DEFAULT CHARSET=utf8mb3;
+) ENGINE=MyISAM AUTO_INCREMENT=4766 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -617,7 +617,7 @@ CREATE TABLE `table_litterlog` (
   `litterlog_autono` bigint NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`litterlog_autono`),
   UNIQUE KEY `litterlog_autono_UNIQUE` (`litterlog_autono`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3;
+) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -705,7 +705,7 @@ CREATE TABLE `temp_createanimals` (
   `animalautono` bigint NOT NULL,
   `line` varchar(255) DEFAULT NULL,
   `idno` varchar(255) DEFAULT NULL,
-  `gender` varchar(45) DEFAULT NULL,
+  `sex` varchar(45) DEFAULT NULL,
   `dob` datetime DEFAULT NULL,
   `dow` datetime DEFAULT NULL,
   `dod` datetime DEFAULT NULL,
@@ -764,7 +764,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `lineassignment`,
  1 AS `line`,
  1 AS `idno`,
- 1 AS `gender`,
+ 1 AS `sex`,
  1 AS `eartag`,
  1 AS `dob`,
  1 AS `genorxn`,
@@ -788,7 +788,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `idno`,
  1 AS `dob`,
  1 AS `dod`,
- 1 AS `gender`,
+ 1 AS `sex`,
  1 AS `eartag`,
  1 AS `matingcage`,
  1 AS `currentcage`,
@@ -812,7 +812,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `cageid`,
  1 AS `line`,
  1 AS `idno`,
- 1 AS `gender`,
+ 1 AS `sex`,
  1 AS `eartag`,
  1 AS `dob`,
  1 AS `genorxn`,
@@ -873,7 +873,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `animalautono`,
  1 AS `dob`,
  1 AS `dod`,
- 1 AS `gender`,
+ 1 AS `sex`,
  1 AS `cagetype`,
  1 AS `goodgeno`,
  1 AS `numalleles`,
@@ -898,7 +898,7 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `animalautono`,
  1 AS `dob`,
  1 AS `dod`,
- 1 AS `gender`,
+ 1 AS `sex`,
  1 AS `cagetype`,
  1 AS `goodgeno`,
  1 AS `numalleles`,
@@ -1011,6 +1011,10 @@ SET @saved_cs_client     = @@character_set_client;
  1 AS `dob`,
  1 AS `dod`*/;
 SET character_set_client = @saved_cs_client;
+
+--
+-- Dumping events for database 'animalbook'
+--
 
 --
 -- Dumping routines for database 'animalbook'
@@ -1471,7 +1475,7 @@ DELIMITER ;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY INVOKER */
-/*!50001 VIEW `view_activeanimals` AS select `y`.`cageno` AS `cageno`,`y`.`cagetype` AS `cagetype`,`y`.`lineassignment` AS `lineassignment`,`y`.`line` AS `line`,`y`.`idno` AS `idno`,`y`.`gender` AS `gender`,`y`.`eartag` AS `eartag`,`y`.`dob` AS `dob`,`y`.`genorxn` AS `genorxn`,`y`.`genotype` AS `genotype`,`conversion_geno`.`genoshort` AS `genoshort`,`y`.`matingcage` AS `matingcage`,`y`.`cagelocation` AS `location` from (`view_activeanimals_sub2` `y` left join `conversion_geno` on(((`y`.`genorxn` = convert(`conversion_geno`.`allelegroupscombo` using utf8mb3)) and (`y`.`genotype` = convert(`conversion_geno`.`genotype` using utf8mb3))))) order by `y`.`lineassignment`,field(`y`.`cagetype`,'holding','rearrange','experimental','mating','litter','sac'),`y`.`cageno`,`y`.`line`,`y`.`idno` */;
+/*!50001 VIEW `view_activeanimals` AS select `y`.`cageno` AS `cageno`,`y`.`cagetype` AS `cagetype`,`y`.`lineassignment` AS `lineassignment`,`y`.`line` AS `line`,`y`.`idno` AS `idno`,`y`.`sex` AS `sex`,`y`.`eartag` AS `eartag`,`y`.`dob` AS `dob`,`y`.`genorxn` AS `genorxn`,`y`.`genotype` AS `genotype`,`conversion_geno`.`genoshort` AS `genoshort`,`y`.`matingcage` AS `matingcage`,`y`.`cagelocation` AS `location` from (`view_activeanimals_sub2` `y` left join `conversion_geno` on(((`y`.`genorxn` = convert(`conversion_geno`.`allelegroupscombo` using utf8mb3)) and (`y`.`genotype` = convert(`conversion_geno`.`genotype` using utf8mb3))))) order by `y`.`lineassignment`,field(`y`.`cagetype`,'holding','rearrange','experimental','mating','litter','sac'),`y`.`cageno`,`y`.`line`,`y`.`idno` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1489,7 +1493,7 @@ DELIMITER ;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY INVOKER */
-/*!50001 VIEW `view_activeanimals_sub1` AS select `table_animals`.`animalautono` AS `animalautono`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,`table_animals`.`eartag` AS `eartag`,`table_animals`.`matingcage` AS `matingcage`,`table_animals`.`currentcage` AS `currentcage`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_genotypes`.`allele` AS `allele` from (`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) order by `table_animals`.`animalautono`,`table_genotypes`.`allelegroup` */;
+/*!50001 VIEW `view_activeanimals_sub1` AS select `table_animals`.`animalautono` AS `animalautono`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`sex` AS `sex`,`table_animals`.`eartag` AS `eartag`,`table_animals`.`matingcage` AS `matingcage`,`table_animals`.`currentcage` AS `currentcage`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_genotypes`.`allele` AS `allele` from (`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) order by `table_animals`.`animalautono`,`table_genotypes`.`allelegroup` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1507,7 +1511,7 @@ DELIMITER ;
 /*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY INVOKER */
-/*!50001 VIEW `view_activeanimals_sub2` AS select `table_cages`.`cageno` AS `cageno`,`table_cages`.`cagetype` AS `cagetype`,`table_cages`.`cagelocation_room` AS `cagelocation`,`table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,`x`.`line` AS `line`,`x`.`idno` AS `idno`,`x`.`gender` AS `gender`,`x`.`eartag` AS `eartag`,`x`.`dob` AS `dob`,group_concat(`x`.`allelegroup` order by `x`.`allelegroup` ASC separator '; ') AS `genorxn`,group_concat(`x`.`allele` order by `x`.`allelegroup` ASC separator '; ') AS `genotype`,`x`.`matingcage` AS `matingcage` from (`view_activeanimals_sub1` `x` join `table_cages` on((`x`.`currentcage` = `table_cages`.`cageid`))) where ((`x`.`dod` is null) and (`x`.`dob` is not null)) group by `x`.`line`,`x`.`idno`,`x`.`gender`,`x`.`eartag`,`x`.`dob`,`x`.`matingcage`,`table_cages`.`cageno`,`table_cages`.`cagetype`,`table_cages`.`cagelocation_room`,`table_cages`.`lineassignment`,`table_cages`.`cageid` */;
+/*!50001 VIEW `view_activeanimals_sub2` AS select `table_cages`.`cageno` AS `cageno`,`table_cages`.`cagetype` AS `cagetype`,`table_cages`.`cagelocation_room` AS `cagelocation`,`table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,`x`.`line` AS `line`,`x`.`idno` AS `idno`,`x`.`sex` AS `sex`,`x`.`eartag` AS `eartag`,`x`.`dob` AS `dob`,group_concat(`x`.`allelegroup` order by `x`.`allelegroup` ASC separator '; ') AS `genorxn`,group_concat(`x`.`allele` order by `x`.`allelegroup` ASC separator '; ') AS `genotype`,`x`.`matingcage` AS `matingcage` from (`view_activeanimals_sub1` `x` join `table_cages` on((`x`.`currentcage` = `table_cages`.`cageid`))) where ((`x`.`dod` is null) and (`x`.`dob` is not null)) group by `x`.`line`,`x`.`idno`,`x`.`sex`,`x`.`eartag`,`x`.`dob`,`x`.`matingcage`,`table_cages`.`cageno`,`table_cages`.`cagetype`,`table_cages`.`cagelocation_room`,`table_cages`.`lineassignment`,`table_cages`.`cageid` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1556,12 +1560,12 @@ DELIMITER ;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb3 */;
-/*!50001 SET character_set_results     = utf8mb3 */;
-/*!50001 SET collation_connection      = utf8mb3_general_ci */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY INVOKER */
-/*!50001 VIEW `view_goodanimals` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) where (`table_animals`.`dod` is null) having ((`goodgeno` = `table_genotypes`.`allele`) and ((`cagetype` = 'H') or (`cagetype` = 'L'))) */;
+/*!50001 VIEW `view_goodanimals` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`sex` AS `sex`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) where (`table_animals`.`dod` is null) having ((`goodgeno` = `table_genotypes`.`allele`) and ((`cagetype` = 'H') or (`cagetype` = 'L'))) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1574,12 +1578,12 @@ DELIMITER ;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb3 */;
-/*!50001 SET character_set_results     = utf8mb3 */;
-/*!50001 SET collation_connection      = utf8mb3_general_ci */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY INVOKER */
-/*!50001 VIEW `view_goodanimals_all` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`gender` AS `gender`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) having (`goodgeno` = `table_genotypes`.`allele`) */;
+/*!50001 VIEW `view_goodanimals_all` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`sex` AS `sex`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) having (`goodgeno` = `table_genotypes`.`allele`) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1664,12 +1668,12 @@ DELIMITER ;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8mb3 */;
-/*!50001 SET character_set_results     = utf8mb3 */;
-/*!50001 SET collation_connection      = utf8mb3_general_ci */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
 /*!50013 SQL SECURITY INVOKER */
-/*!50001 VIEW `view_matingstatus` AS select `table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,(to_days(curdate()) - to_days(`table_cages`.`setupdate`)) AS `MatingAgeDays`,floor(((to_days(curdate()) - to_days(`table_cages`.`setupdate`)) / 30)) AS `MatingAgeMos`,count(distinct `table_pups`.`idno`) AS `pupsmade`,count(distinct `view_goodanimals_filtered_all`.`idno`) AS `goodpupsmade`,count(distinct `table_pups`.`dob`) AS `Litters`,count(distinct `table_deadpups`.`dob`) AS `Dead Litters`,max(`table_pups`.`dob`) AS `LastLitterDOB`,max(`table_deadpups`.`dob`) AS `LastDeadLitterDOB` from (((`table_cages` left join `table_animals` on((`table_cages`.`cageid` = `table_animals`.`currentcage`))) left join (`table_animals` `table_pups` left join `view_goodanimals_filtered_all` on((`table_pups`.`animalautono` = `view_goodanimals_filtered_all`.`animalautono`))) on((`table_cages`.`cageid` = `table_pups`.`matingcage`))) left join `table_deadpups` on((`table_cages`.`cageid` = `table_deadpups`.`cageid`))) where ((`table_cages`.`cagetype` = 'Mating') and (`table_animals`.`gender` = 'F') and (`table_animals`.`dod` is null)) group by `table_cages`.`cageid` order by `table_cages`.`lineassignment`,`table_cages`.`cageno` */;
+/*!50001 VIEW `view_matingstatus` AS select `table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,(to_days(curdate()) - to_days(`table_cages`.`setupdate`)) AS `MatingAgeDays`,floor(((to_days(curdate()) - to_days(`table_cages`.`setupdate`)) / 30)) AS `MatingAgeMos`,count(distinct `table_pups`.`idno`) AS `pupsmade`,count(distinct `view_goodanimals_filtered_all`.`idno`) AS `goodpupsmade`,count(distinct `table_pups`.`dob`) AS `Litters`,count(distinct `table_deadpups`.`dob`) AS `Dead Litters`,max(`table_pups`.`dob`) AS `LastLitterDOB`,max(`table_deadpups`.`dob`) AS `LastDeadLitterDOB` from (((`table_cages` left join `table_animals` on((`table_cages`.`cageid` = `table_animals`.`currentcage`))) left join (`table_animals` `table_pups` left join `view_goodanimals_filtered_all` on((`table_pups`.`animalautono` = `view_goodanimals_filtered_all`.`animalautono`))) on((`table_cages`.`cageid` = `table_pups`.`matingcage`))) left join `table_deadpups` on((`table_cages`.`cageid` = `table_deadpups`.`cageid`))) where ((`table_cages`.`cagetype` = 'Mating') and (`table_animals`.`sex` = 'F') and (`table_animals`.`dod` is null)) group by `table_cages`.`cageid` order by `table_cages`.`lineassignment`,`table_cages`.`cageno` */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1691,19 +1695,6 @@ DELIMITER ;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
---
--- ---------------------------------------------------------------------
--- SEED DATA  (minimal - required for a functioning fresh install)
--- ---------------------------------------------------------------------
---
--- "Limbo" default cage location. Assign-mode in add_animals.php and
--- manage_cages.php stamps founder / unplaced cages with the location
--- string 'Limbo'; this row makes it a real, active, selectable option
--- in list_cage_locations so those cages don't reference a missing value.
---
-INSERT INTO `list_cage_locations` (`Location_Option`, `active`)
-  VALUES ('Limbo', 1)
-  ON DUPLICATE KEY UPDATE `active` = VALUES(`active`);
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -1714,5 +1705,4 @@ INSERT INTO `list_cage_locations` (`Location_Option`, `active`)
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-07-05 17:20:34
-
+-- Dump completed on 2026-07-07 19:37:47
