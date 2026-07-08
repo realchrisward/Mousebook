@@ -77,7 +77,7 @@ function mb_authenticate(array $config, string $username, string $password, stri
     $stmt = $conn->prepare(
         "SELECT dbaccess.db_name, db_host, db_accessun, db_accesspw,
                 db_formurl, db_subject_plural, db_subject_single,
-                db_guide1_title, db_guide1_url
+                db_guide1_title, db_guide1_url, userdbaccess.db_accesstier
          FROM (userpass
                JOIN userdbaccess ON userpass.user_idno = userdbaccess.user_idno)
                JOIN dbaccess ON userdbaccess.db_name = dbaccess.db_name
@@ -166,9 +166,9 @@ function mb_get_user_databases(array $config, string $username, string $password
 
     // Fetch all accessible databases
     $stmt = $conn->prepare(
-        "SELECT dbaccess.db_name, db_accessun, db_accesspw, db_formurl,
+        "SELECT dbaccess.db_name, db_host, db_accessun, db_accesspw, db_formurl,
                 db_subject_plural, db_subject_single,
-                db_guide1_title, db_guide1_url
+                db_guide1_title, db_guide1_url, userdbaccess.db_accesstier
          FROM (userpass
                JOIN userdbaccess ON userpass.user_idno = userdbaccess.user_idno)
                JOIN dbaccess ON userdbaccess.db_name = dbaccess.db_name

@@ -6,18 +6,18 @@
  * copy-pasted <div id="left_navmenu"> blocks, which had drifted to between
  * 4 and 13 links per page (and carried stray/mis-nested </form> tags).
  *
- * Usage from a page in php/ (where $xusername / $xpassword are already set):
+ * Usage from a page in php/ (where $dbname is already resolved):
  *     <?php require_once __DIR__ . '/../includes/nav.php';
- *           mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
+ *           mb_render_nav($dbname); ?>
  *
  * Usage from index.php at the repo root (note the './' base path):
  *     <?php require_once __DIR__ . '/includes/nav.php';
- *           mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? '', null, './'); ?>
+ *           mb_render_nav($dbname, null, './'); ?>
  *
  * The active page is auto-detected from the running script name, so pages
- * don't need to pass anything extra. Each destination still opens in a new
- * tab and still POSTs credentials, preserving today's login mechanism until
- * session-based auth lands (Phase F).
+ * don't need to pass anything extra. Each destination opens in a new tab and
+ * carries only the (non-sensitive) db name; authentication travels in the
+ * session cookie (Phase F). No credentials are emitted into the page.
  *
  * To change the menu, edit the $MB_NAV_ITEMS array below — nothing else.
  */
@@ -54,9 +54,7 @@ if (!function_exists('mb_render_nav')) {
     /**
      * Render the sidebar.
      *
-     * @param string $xusername  current username (from page scope)
-     * @param string $xpassword  current password (from page scope)
-     * @param string $dbname     current db name
+     * @param string $dbname     current db name (non-sensitive)
      * @param string|null $active  script basename to mark active;
      *                              null = auto-detect from SCRIPT_NAME
      * @param string $base   URL prefix pointing at the repo root from the
@@ -65,15 +63,13 @@ if (!function_exists('mb_render_nav')) {
      *                        they need pass nothing. index.php sits AT the
      *                        repo root, so it passes './'.
      */
-    function mb_render_nav($xusername, $xpassword, $dbname, $active = null, $base = '../')
+    function mb_render_nav($dbname, $active = null, $base = '../')
     {
         if ($active === null) {
             $active = basename($_SERVER['SCRIPT_NAME'] ?? '');
         }
         // Normalise: guarantee exactly one trailing slash.
         $base = rtrim($base, '/') . '/';
-        $u  = htmlspecialchars($xusername, ENT_QUOTES);
-        $p  = htmlspecialchars($xpassword, ENT_QUOTES);
         $db = htmlspecialchars($dbname, ENT_QUOTES);
 
         echo '<div id="left_navmenu">' . "\n";
@@ -95,8 +91,6 @@ if (!function_exists('mb_render_nav')) {
             }
 
             echo '  <form action="' . $action . '" method=post' . $target . '>' . "\n";
-            echo '    <input type=hidden name="xusername" value="' . $u . '" />' . "\n";
-            echo '    <input type=hidden name="xpassword" value="' . $p . '" />' . "\n";
             echo '    <input type=hidden name="dbname" value="' . $db . '" />' . "\n";
             echo '    <input type=hidden name="button_login" value="connect" />' . "\n";
             echo '    <input type=submit class="button" name=""' . $style . ' value="' . htmlspecialchars($label, ENT_QUOTES) . '" />' . "\n";

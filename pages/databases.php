@@ -20,6 +20,8 @@
 	// Uses password_verify() against bcrypt hashes —
 	// replaces the old plain-text WHERE user_pass=... SQL.
 	require_once __DIR__ . '/../includes/auth.php';
+	require_once __DIR__ . '/../includes/session.php';
+	mb_session_start();
 
 	// ── Test server connection (status dot only) ───────
 	$host   = $config['server_ip'];
@@ -28,33 +30,64 @@
 
 	$conn = new mysqli($host, $ubname, $ubpass, 'userbook');
 	$xloginstatus = $conn->connect_error ? 'red' : 'green';
-	$conn->close();
+	if (!$conn->connect_error) {
+		$conn->close();
+	}
+
+	// ── Logout: clear the whole session (all colonies) ─
+	if (isset($_POST['button_disco'])) {
+		$_SESSION = [];
+		if (ini_get('session.use_cookies')) {
+			$cp = session_get_cookie_params();
+			setcookie(session_name(), '', time() - 42000,
+				$cp['path'], $cp['domain'], $cp['secure'], $cp['httponly']);
+		}
+		session_destroy();
+		mb_session_start(); // fresh empty session for this render
+	}
 
 	// ── Collect posted credentials ─────────────────────
 	$xusername = isset($_POST['xusername']) ? $_POST['xusername'] : '';
 	$xpassword = isset($_POST['xpassword']) ? $_POST['xpassword'] : '';
 
-	if (isset($_POST['button_disco'])) {
-		$xusername = '';
-		$xpassword = '';
-	}
-
 	// ── Look up accessible databases ───────────────────
-	// mb_get_user_databases() verifies the password hash
-	// and returns all colony DBs this user can access.
+	// mb_get_user_databases() verifies the password hash and returns
+	// every colony DB this user can access. On success we authenticate
+	// ONCE here and stash each colony's db-access credentials + tier in
+	// the session, keyed by db name. The colony buttons below then carry
+	// only the (non-sensitive) db name — no password, no db credentials
+	// are emitted into the page. The colony pages read their connection
+	// details from the session (same-origin) or, if login and colony are
+	// ever hosted separately, re-establish the session from a one-time
+	// credential post via the shared bootstrap fallback.
 	$dbaccesstext = '';
-	if ($xusername !== '' && $xpassword !== '') {
+	if ($xusername !== '' && $xpassword !== '' && !isset($_POST['button_disco'])) {
 		$databases = mb_get_user_databases($config, $xusername, $xpassword);
-		foreach ($databases as $row) {
-			$dbaccesstext .=
-				"<form id='dbaccessform' action='" . htmlspecialchars($row['db_formurl']) . "' method='post' target='_blank'>"
-				. "<input type='hidden' name='xusername' value='" . htmlspecialchars($xusername) . "'>"
-				. "<input type='hidden' name='xpassword' value='" . htmlspecialchars($xpassword) . "'>"
-				. "<input type='hidden' name='accessun'  value='" . htmlspecialchars($row['db_accessun']) . "'>"
-				. "<input type='hidden' name='accesspw'  value='" . htmlspecialchars($row['db_accesspw']) . "'>"
-				. "<input type='hidden' name='dbname'    value='" . htmlspecialchars($row['db_name']) . "'>"
-				. "<input type='submit' class='dbbutton' name='" . htmlspecialchars($row['db_name']) . "' value='" . htmlspecialchars($row['db_name']) . "'>"
-				. "</form>";
+		if (!empty($databases)) {
+			session_regenerate_id(true);          // anti-fixation on login
+			$_SESSION['mb_user'] = $xusername;
+			foreach ($databases as $row) {
+				$db = $row['db_name'];
+				$_SESSION['mb_dbaccess'][$db] = [
+					'host'           => $row['db_host']
+						?? ($config['server_host'] ?? $config['server_ip']),
+					'accessun'       => $row['db_accessun'],
+					'accesspw'       => $row['db_accesspw'],
+					'tier'           => mb_normalize_tier($row['db_accesstier'] ?? ''),
+					'subject_plural' => $row['db_subject_plural'] ?? '',
+					'subject_single' => $row['db_subject_single'] ?? '',
+					'guide1_title'   => $row['db_guide1_title'] ?? '',
+					'guide1_url'     => $row['db_guide1_url'] ?? '',
+				];
+				$formurl  = htmlspecialchars($row['db_formurl']);
+				$dbname_h = htmlspecialchars($db);
+				$dbaccesstext .=
+					"<form id='dbaccessform' action='" . $formurl . "' method='post' target='_blank'>"
+					. "<input type='hidden' name='dbname' value='" . $dbname_h . "'>"
+					. "<input type='hidden' name='button_login' value='connect'>"
+					. "<input type='submit' class='dbbutton' name='" . $dbname_h . "' value='" . $dbname_h . "'>"
+					. "</form>";
+			}
 		}
 	}
 	?>
@@ -89,7 +122,7 @@
 				<tr>
 					<th>PASSWORD</th>
 					<td>
-						<input type="password" name="xpassword" value="<?php echo htmlspecialchars($xpassword); ?>" />
+						<input type="password" name="xpassword" value="" />
 					</td>
 				</tr>
 

@@ -4,28 +4,11 @@
 <!--php code: login-->
 <?php
 
-//setup sql variables
-$xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
-
-if (isset($_POST['button_login'])) {
-	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
-	$xloginstatus = ($_POST['loginstatus'] ?? '');
-}
-if (isset($_POST['button_disco'])) {
-	$xusername = '';
-	$xpassword = '';
-	$xloginstatus = 'red';
-}
-
-$dbname = ($_POST['dbname'] ?? '');
-
-
-//test login
-
-// use userbook to check credentials
-// collect config values
+// ── Session bootstrap (Phase F) ─────────────────────────────
+// Authenticate ONCE when credentials are first posted, then read the
+// resolved db-access credentials + access tier from the server-side
+// session on every later request. The user's plaintext password is
+// never read per-request nor emitted into the page.
 $config = require './config.php';
 
 if ($config['debug_mode'] == 'True') {
@@ -34,34 +17,20 @@ if ($config['debug_mode'] == 'True') {
 	ini_set('display_errors', 1);
 }
 
-// [mb_auth_patched]
-// Uses mb_authenticate() with password_verify() — replaces
-// the plain-text WHERE user_pass=... SQL block.
 require_once __DIR__ . '/includes/auth.php';
-$ubname = $config['server_user'];
-$ubpass = $config['server_pass'];
-$_mb_auth = mb_authenticate($config, $xusername ?? '', $xpassword ?? '', $dbname ?? '');
-if ($_mb_auth['authenticated']) {
-	$accessun      = $_mb_auth['db_accessun'];
-	$accesspw      = $_mb_auth['db_accesspw'];
-	$host          = $_mb_auth['db_host'];
-	$subjectPlural = $_mb_auth['db_subject_plural'];
-	$subjectSingle = $_mb_auth['db_subject_single'];
-	$guide1title   = $_mb_auth['db_guide1_title'];
-	$guide1url     = $_mb_auth['db_guide1_url'];
-} else {
-	$host = $accessun = $accesspw = null;
-	$subjectPlural = $subjectSingle = $guide1title = $guide1url = '';
-}
+require_once __DIR__ . '/includes/session.php';
+$mb = mb_session_bootstrap($config);
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-//check connection
-if ($conn->connect_error) {
-	$xloginstatus = 'red';
-} else {
-	$xloginstatus = 'green';
-	$conn->close();
-}
+$xusername     = $mb['username'];
+$dbname        = $mb['dbname'];
+$host          = $mb['host'];
+$accessun      = $mb['accessun'];
+$accesspw      = $mb['accesspw'];
+$xloginstatus  = $mb['loginstatus'];
+$subjectPlural = $mb['subject_plural'];
+$subjectSingle = $mb['subject_single'];
+$guide1title   = $mb['guide1_title'];
+$guide1url     = $mb['guide1_url'];
 
 ?>
 
@@ -101,7 +70,7 @@ if ($conn->connect_error) {
 				<tr>
 					<td>pass:</td>
 					<td><input type="password" name="xpassword"
-							value="<?php echo $xpassword; ?>" style="width:100px;font-size:10px;" /></td>
+							value="" style="width:100px;font-size:10px;" /></td>
 				</tr>
 			</table>
 			<input type=submit id="loginbutton" name="button_login"
@@ -117,7 +86,7 @@ if ($conn->connect_error) {
 	</div>
 
 	<?php require_once __DIR__ . '/includes/nav.php';
-	      mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? '', null, './'); ?>
+	      mb_render_nav($dbname, null, './'); ?>
 
 
 	<!-- php script for page-->
@@ -198,8 +167,6 @@ ORDER BY age DESC, a.currentcage ASC;
 
 		$ManageWean = ""
 			. "<form action='../php/manage_cages.php' method=post target='_blank'>"
-			. "<input type=hidden name='xusername' value='" . $xusername . "' />"
-			. "<input type=hidden name='xpassword' value='" . $xpassword . "' />"
 			. "<input type=hidden name='dbname' value='" . $dbname . "' />"
 			. "<input type=hidden name='button_login' value='connect' />"
 			. "<input type=submit style='background-color:#217190; color:lightgrey;' value='WEAN' />"
@@ -225,8 +192,6 @@ ORDER BY age DESC, a.currentcage ASC;
 
 		$ManageGeno = ""
 			. "<form action='../php/manage_animals.php' method=post target='_blank'>"
-			. "<input type=hidden name='xusername' value='" . $xusername . "' />"
-			. "<input type=hidden name='xpassword' value='" . $xpassword . "' />"
 			. "<input type=hidden name='dbname' value='" . $dbname . "' />"
 			. "<input type=hidden name='button_login' value='connect' />"
 			. "<input type=submit style='background-color:#217190; color:lightgrey;' value='Geno' />"
@@ -309,8 +274,6 @@ ORDER BY age DESC, a.currentcage ASC;
 			<tr>
 				<td>
 					<form action="./php/litterlogger.php" method=post>
-						<input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-						<input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
 						<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 						<input type=hidden name="button_login" value="connect" />
 						<input type=submit class="button" name=""

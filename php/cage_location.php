@@ -57,10 +57,16 @@ $ubpass = $config['server_pass'];
 //query userbook for accessible databases
 // [mb_auth_patched]
 require_once __DIR__ . '/../includes/auth.php';
-$_mb_conn = mb_get_connection($config, $xusername, $xpassword, $dbname);
-if ($_mb_conn) {
-	[$host, $accessun, $accesspw] = $_mb_conn;
-}
+require_once __DIR__ . '/../includes/session.php';
+$mb           = mb_session_bootstrap($config);
+$xusername    = $mb['username'];
+$dbname       = $mb['dbname'];
+$host         = $mb['host'];
+$accessun     = $mb['accessun'];
+$accesspw     = $mb['accesspw'];
+$xloginstatus = $mb['loginstatus'];
+// Phase F tier gate: neutralise mutating actions for insufficient access.
+mb_guard_write();
 require_once __DIR__ . '/../includes/filters.php';
 
 
@@ -348,7 +354,7 @@ if (isset($_POST['addcage_single'])) {
 				<tr>
 					<td>pass:</td>
 					<td><input type="password" name="xpassword"
-							value="<?php echo $xpassword; ?>" style="width:100px;font-size:10px;" /></td>
+							value="" style="width:100px;font-size:10px;" /></td>
 				</tr>
 			</table>
 			<input type=submit id="loginbutton" name="button_login"
@@ -364,13 +370,11 @@ if (isset($_POST['addcage_single'])) {
 	</div>
 
 		<?php require_once __DIR__ . '/../includes/nav.php';
-	      mb_render_nav($xusername, $xpassword, $_POST['dbname'] ?? ''); ?>
+	      mb_render_nav($dbname); ?>
 	<div id="right_content" class="centertext">
 		<!--CONTENT SECTION-->
 		<form id="cage_selection_form" name="cage_selection_form" method=post>
 
-			<input type=hidden name="xusername" value="<?php echo ($_POST['xusername'] ?? ''); ?>" />
-			<input type=hidden name="xpassword" value="<?php echo ($_POST['xpassword'] ?? ''); ?>" />
 			<input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 			<input type=hidden name="button_login" value="connect" />
 			<!--javascript to autoupdate form based on select option choices -->
