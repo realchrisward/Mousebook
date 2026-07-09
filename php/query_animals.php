@@ -69,32 +69,32 @@ if ($conn->connect_error) {
 if (isset($_POST['get_genofilt'])) {
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
-	$gtct = 0;
 	$gfcount = (int)($_POST['genecount'] ?? 0);
-
-	foreach (range(0, $gfcount - 1, 1) as $i) {
-		$agarray[$i] = ($_POST['geno' . $i] ?? '');
-		$gfarray[$i] = ($_POST['genofilt' . $i] ?? '');
-		if (count($gfarray[$i]) > 0) {
-			$gtct += 1;
-		}
-		foreach ($gfarray[$i] as $gt) {
-			$gfor[] = '(allelegroup="' . $agarray[$i] . '" and allele="' . $gt . '")';
+	$agarray = array();
+	$gfarray = array();
+	if ($gfcount > 0) {
+		foreach (range(0, $gfcount - 1, 1) as $i) {
+			$agarray[$i] = ($_POST['geno' . $i] ?? '');
+			$sel = ($_POST['genofilt' . $i] ?? array());
+			$gfarray[$i] = is_array($sel) ? $sel : ($sel === '' ? array() : array($sel));
 		}
 	}
-	$genofiltertext = implode('<br>', $gfor ?? []);
-	$genowhere = implode(' or ', $gfor ?? []);
-	$gfsql = 'select animalautono from ' .
-		'(select animalautono, count(animalautono) as gtct from table_genotypes ' .
-		'where ' . $genowhere . ' group by animalautono) as tmp_tab_gt ' .
-		'where gtct=' . $gtct . ';';
-	//echo $genowhere; 
-	//echo $gfsql;
-
-	$gfresults = $conn->query($gfsql);
-
-	while (($gfresults) && ($row = mysqli_fetch_array($gfresults))) {
-		$gtman[] = $row['animalautono'];
+	// P2 (2b): genotype OR-predicate via escaped shared helper (values, not SQL)
+	list($genowhere, $gtct) = genotype_or_where($conn, $agarray, $gfarray);
+	$gfdisp = array();
+	foreach ($agarray as $i => $ag) {
+		foreach ($gfarray[$i] as $al) { $gfdisp[] = htmlspecialchars($ag . ':' . $al); }
+	}
+	$genofiltertext = implode('<br>', $gfdisp);
+	if ($genowhere !== '') {
+		$gfsql = 'select animalautono from ' .
+			'(select animalautono, count(animalautono) as gtct from table_genotypes ' .
+			'where ' . $genowhere . ' group by animalautono) as tmp_tab_gt ' .
+			'where gtct=' . (int)$gtct . ';';
+		$gfresults = $conn->query($gfsql);
+		while (($gfresults instanceof mysqli_result) && ($row = mysqli_fetch_array($gfresults))) {
+			$gtman[] = $row['animalautono'];
+		}
 	}
 	$conn->close();
 }
@@ -105,15 +105,18 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
-	$sql_where_text = $_POST['animals_sql_where_text'] ?? '';
-	$commenttextfilter = $_POST['commenttextfilter'] ?? '';
+	// P2 Option B: rebuild the WHERE from round-tripped filter VALUES (no client SQL)
+	$mbvals = animals_filter_values_from_post($_POST);
+	$sql_where_text = animals_where_build($conn, $mbvals) . cage_eq_where($conn, $_POST['sourcecage_selection'] ?? 'all');
+	$commenttextfilter = $mbvals['commenttextfilter'];
+	$comment_re = comment_regexp_escaped($conn, $commenttextfilter);
 	if ($commenttextfilter == "") {
 		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
 		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	} else {
-		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " GROUP By table_animals.animalautono, `table_cages`.`cagelocation_room`, `table_cages`.`cagerole_assignment` ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
+		$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $comment_re . "') as dc on table_animals.animalautono=dc.animalautono LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " GROUP By table_animals.animalautono, `table_cages`.`cagelocation_room`, `table_cages`.`cagerole_assignment` ORDER BY `line` asc, `table_animals`.`animalautono` asc;";
 
-		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $commenttextfilter . "') as dc on table_animals.animalautono=dc.animalautono WHERE " . $sql_where_text . " GROUP BY table_animals.animalautono,allelegroup,allele;";
+		$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` JOIN (select animalautono, general_comment from data_comments where general_comment REGEXP '" . $comment_re . "') as dc on table_animals.animalautono=dc.animalautono WHERE " . $sql_where_text . " GROUP BY table_animals.animalautono,allelegroup,allele;";
 	}
 	//echo $sqlgenotypes;
 	$sqldatacomments = "SELECT `data_comments`.`animalautono` as 'man',`commentdate`,`general_comment` FROM `data_comments` JOIN `table_animals` ON `data_comments`.`animalautono` = `table_animals`.`animalautono`  where " . $sql_where_text . " ;";
@@ -410,96 +413,10 @@ $conn->close();
 
 //cage list filtered by line, sex, etc
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-//set filter text
+//set filter text — built server-side via includes/filters.php (P2 Option B)
+$mbvals = animals_filter_values_from_post($_POST);
+$sql_where_text = animals_where_build($conn, $mbvals);   // filters only (no cage) — feeds the source-cage dropdown
 
-if ($deadoralive_filter === "dead") {
-	$doaf = "`dod` is not NULL and ";
-} elseif ($deadoralive_filter === "alive") {
-	$doaf = "`dod` is NULL and ";
-} else {
-	$doaf = "";
-}
-
-if ($line_filter === "all") {
-	$lf = "";
-} else {
-	$lf = "`line`='" . $line_filter . "' and ";
-}
-
-if ($sex_filter === "all") {
-	$gf = "";
-} else {
-	$gf = "`sex`='" . $sex_filter . "' and ";
-}
-
-if ($source_category_selection === "all") {
-	$sf = "";
-} else {
-	$sf = "left(`currentcage`,1)=left('" . $source_category_selection . "',1) and ";
-}
-
-if ($bornbefore == "") {
-	$bbf = "";
-} else {
-	$bbf = "`dob`<='" . $bornbefore . "' and ";
-}
-
-if ($bornafter == "") {
-	$baf = "";
-} else {
-	$baf = "`dob`>='" . $bornafter . "' and ";
-}
-
-if ($deadbefore == "") {
-	$dbf = "";
-} else {
-	$dbf = "`dod`<='" . $deadbefore . "' and ";
-}
-
-if ($deadafter == "") {
-	$daf = "";
-} else {
-	$daf = "`dod`>='" . $deadafter . "' and ";
-}
-
-if ($linetextfilter == "") {
-	$ltf = "";
-} else {
-	$ltf = "`line` REGEXP '\\\\b" . $linetextfilter . "\\\\b' and ";
-}
-
-if ($idnotextfilter == "") {
-	$itf = "";
-} else {
-	$itf = "`idno` REGEXP '\\\\b" . $idnotextfilter . "\\\\b' and ";
-}
-
-if ($sourcetextfilter == "") {
-	$stf = "";
-} else {
-	$stf = "`matingcage` REGEXP '\\\\b" . $sourcetextfilter . "\\\\b' and ";
-}
-
-if ($parenttextfilter == "") {
-	$ptf = "";
-} else {
-	$ptf = "`parents` REGEXP '\\\\b" . $parenttextfilter . "\\\\b' and ";
-}
-
-if ($location_filter === "all" || $location_filter === "") {
-	$locf = "";
-} else {
-	$locf = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room="' . $conn->real_escape_string($location_filter) . '") and ';
-}
-
-if ($role_filter === "all" || $role_filter === "") {
-	$rolef = "";
-} else {
-	$rolef = 'currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment="' . $conn->real_escape_string($role_filter) . '") and ';
-}
-
-$sql_where_untrim = '`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $dbf . $daf . $ltf . $itf . $stf . $ptf . $locf . $rolef;
-$sql_where_text = substr('`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $dbf . $daf . $ltf . $itf . $stf . $ptf . $locf . $rolef, 0, -4);
 //echo $sql_where_text;
 $sqltext = "SELECT `currentcage` FROM `table_animals` where " . $sql_where_text . " GROUP BY `currentcage` ORDER BY `currentcage`;";
 //echo $sqltext;
@@ -566,13 +483,8 @@ else {
 	$daf="`dod`>='".$deadafter."' and ";
 }
 */
-if ($sourcecage_selection == "" or $sourcecage_selection === "all") {
-	$cf = '';
-} else {
-	$cf = "`currentcage`='" . $sourcecage_selection . "' and ";
-}
-
-$animals_sql_where_text = substr($sql_where_untrim . $cf, 0, -4);
+// P2 Option B: with-cage WHERE via builder (no raw interpolation, no round-tripped SQL)
+$animals_sql_where_text = animals_where_build($conn, $mbvals) . cage_eq_where($conn, $sourcecage_selection);
 //$animals_sql_where_text=substr("`line`=`line` and ".$lf.$gf.$doaf.$sf.$cf.$bbf.$baf.$dbf.$daf,0,-4);
 //$animals_sql_where_text=$sql_where_text;
 
@@ -777,7 +689,6 @@ $conn->close();
 
 			<input type=submit id="get_tempanimals" name="get_tempanimals" value="Get animals">
 			<input type=submit id="export_csv" name="export_csv" value="Download CSV">
-			<input type=hidden id="animals_sql_where_text" name="animals_sql_where_text" value="<?php echo htmlspecialchars($animals_sql_where_text, ENT_QUOTES); ?>">
 
 
 

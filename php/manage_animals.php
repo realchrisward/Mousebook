@@ -81,7 +81,10 @@ if (isset($_POST['get_tempanimals'])) {
 
 
 
-	$sql_where_text = ($_POST['animals_sql_where_text'] ?? '');
+	// P2 Option B: rebuild WHERE from round-tripped filter VALUES (no client SQL)
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$mbvals = animals_filter_values_from_post($_POST);
+	$sql_where_text = animals_where_build($conn, $mbvals) . cage_eq_where($conn, $_POST['sourcecage_selection'] ?? 'all');
 
 	$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	//echo $sqltext;
@@ -466,59 +469,9 @@ $conn->close();
 
 //cage list filtered by line, sex, etc
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-//set filter text
-
-if ($deadoralive_filter === "dead") {
-	$doaf = '`dod` is not NULL and ';
-} elseif ($deadoralive_filter === "alive") {
-	$doaf = '`dod` is NULL and ';
-} else {
-	$doaf = '';
-}
-
-if ($line_filter === "all") {
-	$lf = '';
-} else {
-	$lf = '`line`="' . $line_filter . '" and ';
-}
-
-if ($sex_filter === "all") {
-	$gf = '';
-} else {
-	$gf = '`sex`="' . $sex_filter . '" and ';
-}
-
-if ($source_category_selection === "all") {
-	$sf = '';
-} else {
-	$sf = 'left(`currentcage`,1)=left("' . $source_category_selection . '",1) and ';
-}
-
-if ($location_filter === "all" || $location_filter === "") {
-	$locf = "";
-} else {
-	$locf = "currentcage IN (SELECT cageid FROM table_cages WHERE cagelocation_room='" . $conn->real_escape_string($location_filter) . "') and ";
-}
-if ($role_filter === "all" || $role_filter === "") {
-	$rolef = "";
-} else {
-	$rolef = "currentcage IN (SELECT cageid FROM table_cages WHERE cagerole_assignment='" . $conn->real_escape_string($role_filter) . "') and ";
-}
-
-if ($bornbefore == "") {
-	$bbf = '';
-} else {
-	$bbf = "`dob`<='" . $bornbefore . "' and ";
-}
-
-if ($bornafter == "") {
-	$baf = '';
-} else {
-	$baf = "`dob`>='" . $bornafter . "' and ";
-}
-
-//$sql_where_textbak = substr('`line`=`line` and ' . $lf . $gf . $doaf . $sf, 0, -4);
-$sql_where_text = substr('`line`=`line` and ' . $lf . $gf . $doaf . $sf . $bbf . $baf . $locf . $rolef, 0, -4);   // 463
+//set filter text — built server-side via includes/filters.php (P2 Option B)
+$mbvals = animals_filter_values_from_post($_POST);
+$sql_where_text = animals_where_build($conn, $mbvals);   // filters only (no cage) — feeds the source-cage dropdown
 //echo $sql_where_text;
 $sqltext = "SELECT `currentcage` FROM `table_animals` where " . $sql_where_text . " GROUP BY `currentcage` ORDER BY `currentcage`;";
 //echo $sqltext;
@@ -539,54 +492,9 @@ $conn->close();
 //animals list filtered by line|sex|cage
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 
-///
-if ($deadoralive_filter === "dead") {
-	$doaf = "`dod` is not NULL and ";
-} elseif ($deadoralive_filter === "alive") {
-	$doaf = "`dod` is NULL and ";
-} else {
-	$doaf = "";
-}
-
-//set filter text
-if ($line_filter === "all") {
-	$lf = '';
-} else {
-	$lf = "`line`='" . $line_filter . "' and ";
-}
-
-if ($sex_filter === "all") {
-	$gf = '';
-} else {
-	$gf = "`sex`='" . $sex_filter . "' and ";
-}
-
-
-if ($source_category_selection === "all") {
-	$sf = '';
-} else {
-	$sf = "left(`currentcage`,1)=left('" . $source_category_selection . "',1) and ";
-}
-
-if ($sourcecage_selection == "" or $sourcecage_selection === "all") {
-	$cf = '';
-} else {
-	$cf = "`currentcage`='" . $sourcecage_selection . "' and ";
-}
-
-if ($bornbefore == "") {
-	$bbf = '';
-} else {
-	$bbf = "`dob`<='" . $bornbefore . "' and ";
-}
-
-if ($bornafter == "") {
-	$baf = '';
-} else {
-	$baf = "`dob`>='" . $bornafter . "' and ";
-}
-
-$sql_where_text = substr("`line`=`line` and " . $lf . $gf . $doaf . $sf . $cf . $bbf . $baf . $locf . $rolef, 0, -4); // 523
+///  P2 Option B: with-cage WHERE via builder
+$mbvals = animals_filter_values_from_post($_POST);
+$sql_where_text = animals_where_build($conn, $mbvals) . cage_eq_where($conn, $sourcecage_selection);
 $animals_sql_where_text = $sql_where_text;
 
 $sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
@@ -720,7 +628,6 @@ $conn->close();
 			<br>
 			<?php echo $sqlreport; ?>
 			<br>
-			<input type=hidden id="animals_sql_where_text" name="animals_sql_where_text" value="<?php echo htmlspecialchars($animals_sql_where_text, ENT_QUOTES); ?>">
 
 
 

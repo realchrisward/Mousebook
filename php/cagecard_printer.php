@@ -175,19 +175,19 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';
 } else {
-	$lf = '`line`="' . $line_filter . '" and ';
+	$lf = '`line`="' . $conn->real_escape_string($line_filter) . '" and ';
 }
 
 if ($sex_filter === "all" or $sex_filter === null) {
 	$gf = '';
 } else {
-	$gf = '`sex`="' . $sex_filter . '" and ';
+	$gf = '`sex`="' . $conn->real_escape_string($sex_filter) . '" and ';
 }
 
 if ($source_category_selection === "all" or $source_category_selection === null) {
 	$sf = '';
 } else {
-	$sf = 'left(`currentcage`,1)=left("' . $source_category_selection . '",1) and ';
+	$sf = 'left(`currentcage`,1)=left("' . $conn->real_escape_string($source_category_selection) . '",1) and ';
 }
 
 $sql_where_text = substr($lf . $gf . $sf, 0, -4);

@@ -69,15 +69,18 @@ if ($conn->connect_error) {
 $sqlreport = '';
 
 //*****purge old animal number reservations*****
-$sqlpurge = "LOCK table `" . $dbname . "`.`reservations_animals` WRITE; DELETE FROM `" . $dbname . "`.`reservations_animals` WHERE `user`='" . $xusername . "'; UNLOCK tables;";
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-if ($conn->multi_query($sqlpurge) === TRUE) {
-	//flush the mysql submission
-	while (mysqli_next_result($conn));
-	$sqlstatus = '-autonumber reservations cleared' . '...';
+// P2: parameterized purge (LOCK/UNLOCK preserved; table name unqualified — conn default DB is $dbname)
+$conn->query("LOCK TABLES `reservations_animals` WRITE");
+$stp = $conn->prepare("DELETE FROM `reservations_animals` WHERE `user` = ?");
+if ($stp) {
+	$stp->bind_param('s', $xusername);
+	$sqlstatus = $stp->execute() ? '-autonumber reservations cleared...' : ('-failed ' . $stp->error . '...');
+	$stp->close();
 } else {
-	$sqlstatus = '-failed ' . $conn->error . '...' . $sqltext;
+	$sqlstatus = '-failed ' . $conn->error . '...';
 }
+$conn->query("UNLOCK TABLES");
 $sqlreport .= $sqlstatus;
 $conn->close();
 
@@ -161,18 +164,19 @@ if (isset($_POST['generate_animals'])) {
 	$xmaxanimalinline = max($maxanimalinline1, $maxanimalinline2);
 
 	//deposit user, xmaxanimalautono, line, maxanimalinline into reservation list
-	$sqlres = "LOCK table `" . $dbname . "`.`reservations_animals` WRITE; INSERT INTO `" . $dbname . "`.`reservations_animals` (`user`, `line`, `maxautono`, `maxidno`, `timestamp`) "
-		. "VALUES ('" . $xusername . "', '" . $xline_selection . "', '" . ($xmaxanimalautono + $xtotalnumber) . "', '" . ($xmaxanimalinline + $xtotalnumber) . "', now())"
-		. " ON DUPLICATE KEY UPDATE `line`='" . $xline_selection . "', `maxautono`='" . ($xmaxanimalautono + $xtotalnumber) . "', "
-		. "`maxidno`='" . ($xmaxanimalinline + $xtotalnumber) . "', `timestamp`=now(); UNLOCK tables;";
-	//echo $sqlres;
-	if ($conn->multi_query($sqlres) === TRUE) {
-		//flush the mysql submission
-		while (mysqli_next_result($conn));
-		$sqlstatus = '-successful' . '...' . $sqltext;
+	// P2: parameterized reservation upsert (LOCK/UNLOCK preserved; row-alias avoids VALUES() deprecation)
+	$resAuto = (int)($xmaxanimalautono + $xtotalnumber);
+	$resIdno = (int)($xmaxanimalinline + $xtotalnumber);
+	$conn->query("LOCK TABLES `reservations_animals` WRITE");
+	$str = $conn->prepare("INSERT INTO `reservations_animals` (`user`,`line`,`maxautono`,`maxidno`,`timestamp`) VALUES (?,?,?,?,now()) AS newrow ON DUPLICATE KEY UPDATE `line`=newrow.`line`, `maxautono`=newrow.`maxautono`, `maxidno`=newrow.`maxidno`, `timestamp`=now()");
+	if ($str) {
+		$str->bind_param('ssii', $xusername, $xline_selection, $resAuto, $resIdno);
+		$sqlstatus = $str->execute() ? '-successful...' : ('-failed ' . $str->error . '...');
+		$str->close();
 	} else {
-		$sqlstatus = '-failed ' . $conn->error . '...' . $sqltext;
+		$sqlstatus = '-failed ' . $conn->error . '...';
 	}
+	$conn->query("UNLOCK TABLES");
 	$sqlreport .= $sqlstatus;
 	$conn->close();
 	/**/
@@ -447,6 +451,17 @@ if (isset($_POST['confirm_animals'])) {
 	$xassign_location = $_POST['gen_assign_location'] ?? 'Limbo';
 	$xassign_role     = $_POST['gen_assign_role'] ?? '';
 	if ($xassign_location === '') { $xassign_location = 'Limbo'; }
+	// P2: split the multi_query INSERT batch into per-row PREPARED statements.
+	// Parameterized (no injection) and errors are no longer swallowed by
+	// `while (mysqli_next_result())`. Targets are MyISAM, so no transaction is
+	// available; we halt on the first failing statement and report which one.
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$ins_error = '';
+	$st_cage   = $conn->prepare('INSERT INTO `table_cages` (`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`,`cageno`,`cagecontents`,`cagelocation_room`,`cagerole_assignment`) VALUES (?,"Litter",?,"1",?,0,"pups",?,?) ON DUPLICATE KEY UPDATE `cageno`=`cageno`');
+	$st_animal = $conn->prepare('INSERT INTO `table_animals` (`animalautono`,`line`,`idno`,`sex`,`eartag`,`dob`,`matingcage`,`currentcage`,`parents`) VALUES (?,?,?,?,?,?,?,?,?)');
+	$st_comment= $conn->prepare('INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (?,curdate(),?)');
+	$st_geno   = $conn->prepare('INSERT INTO `table_genotypes` (`allelegroup`,`allele`,`animalautono`) VALUES (?,?,?)');
+	if (!$st_cage || !$st_animal || !$st_comment || !$st_geno) { $ins_error = 'prepare failed: ' . $conn->error; }
 	foreach (range($xminauto, $xmaxauto, 1) as $i) {
 		$man[$i] = ($_POST['animalautono' . $i] ?? '');
 		$line[$i] = ($_POST['line' . $i] ?? '');
@@ -467,48 +482,40 @@ echo $gene.':'.$genotypes[$gene][$i].'|';
 }
 */
 
-		//check for null in dob field
-		if (empty($dob[$i])) {
-			$dob[$i] = 'null';
-		} else {
-			$dob[$i] = '"' . $dob[$i] . '"';
+		// P2: dob as a bindable value (NULL when empty) rather than an inline SQL literal
+		$dobVal = empty($dob[$i]) ? null : $dob[$i];
+
+		if ($ins_error === '') {
+			$st_cage->bind_param('sssss', $currentcage[$i], $dobVal, $line[$i], $xassign_location, $xassign_role);
+			if (!$st_cage->execute()) { $ins_error = 'table_cages: ' . $st_cage->error; }
 		}
-
-		$sqltext_table_cages = 'INSERT INTO `' . $dbname . '`.`table_cages` 
-(`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`
-,`cageno`,`cagecontents`,`cagelocation_room`,`cagerole_assignment`) VALUES 
-("' . $currentcage[$i] . '","Litter",' . $dob[$i] . ',"1","' . $line[$i] . '",0,"pups","' . $conn->real_escape_string($xassign_location) . '","' . $conn->real_escape_string($xassign_role) . '")
-ON DUPLICATE KEY UPDATE `cageno`=`cageno`;';
-
-
-
-		$sqltext_table_animals = 'INSERT INTO `' . $dbname . '`.`table_animals` (`animalautono`,`line`,`idno`,`sex`,`eartag`,`dob`,`matingcage`,`currentcage`,
-`parents`) VALUES (' . $man[$i] . ',"' . $line[$i] . '",' . $idno[$i] . ',"' . $sex[$i] .
-			'","' . $eartag[$i] . '",' . $dob[$i] . ',"' . $sourcecage[$i] . '","' . $currentcage[$i] .
-			'","' . $parents[$i] . '");';
-
-		$sqltext_data_comments = 'INSERT INTO `' . $dbname . '`.`data_comments`
-(`animalautono`,`commentdate`,`general_comment`) VALUES
-(' . $man[$i] . ',curdate(),"' . $xusername . ': animal created - ' . $bulkcomments[$i] . '");';
-
-		//need for loop to populate genotype sql
-		$sqltext_table_genotypes = '';
-		foreach ($xgenelist as $gene) {
-			//echo $gene.':'.$genotypes[$gene][$i].'|';
-			$sqltext_table_genotypes .= 'INSERT INTO `' . $dbname . '`.`table_genotypes`
-(`allelegroup`,`allele`,`animalautono`) VALUES
-("' . $gene . '","' . $genotypes[$gene][$i] . '",' . $man[$i] . ');';
+		if ($ins_error === '') {
+			$st_animal->bind_param('sssssssss', $man[$i], $line[$i], $idno[$i], $sex[$i], $eartag[$i], $dobVal, $sourcecage[$i], $currentcage[$i], $parents[$i]);
+			if (!$st_animal->execute()) { $ins_error = 'table_animals: ' . $st_animal->error; }
 		}
-		$sqltext .= $sqltext_table_cages . $sqltext_table_animals . $sqltext_data_comments . $sqltext_table_genotypes;
+		if ($ins_error === '') {
+			$commenttext = $xusername . ': animal created - ' . $bulkcomments[$i];
+			$st_comment->bind_param('is', $man[$i], $commenttext);
+			if (!$st_comment->execute()) { $ins_error = 'data_comments: ' . $st_comment->error; }
+		}
+		if ($ins_error === '') {
+			foreach ($xgenelist as $gene) {
+				$alleleval = $genotypes[$gene][$i] ?? '';
+				$st_geno->bind_param('ssi', $gene, $alleleval, $man[$i]);
+				if (!$st_geno->execute()) { $ins_error = 'table_genotypes: ' . $st_geno->error; break; }
+			}
+		}
 	}
 	$sqlreport = 'Addition of new animals ';
-	if ($conn->multi_query($sqltext) === TRUE) {
-		//flush the mysql submission
-		while (mysqli_next_result($conn));
-		$sqlstatus = '-successful' . '...' . $sqltext;
+	if ($ins_error === '') {
+		$sqlstatus = '-successful...';
 	} else {
-		$sqlstatus = '-failed ' . $conn->error . '...' . $sqltext;
+		$sqlstatus = '-failed ' . $ins_error . '...';
 	}
+	if ($st_cage)    { $st_cage->close(); }
+	if ($st_animal)  { $st_animal->close(); }
+	if ($st_comment) { $st_comment->close(); }
+	if ($st_geno)    { $st_geno->close(); }
 	$sqlreport .= $sqlstatus;
 	$conn->close();
 }

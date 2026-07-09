@@ -96,7 +96,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 if (isset($_POST['addcage1_single'])) {
 	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage1` (`animalautono`) VALUES (" . $animals_selection . ");";
+	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage1` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -107,7 +107,7 @@ if (isset($_POST['addcage1_single'])) {
 if (isset($_POST['addcage2_single'])) {
 	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage2` (`animalautono`) VALUES (" . $animals_selection . ");";
+	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage2` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -118,7 +118,7 @@ if (isset($_POST['addcage2_single'])) {
 if (isset($_POST['addcage3_single'])) {
 	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage3` (`animalautono`) VALUES (" . $animals_selection . ");";
+	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage3` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -129,7 +129,7 @@ if (isset($_POST['addcage3_single'])) {
 if (isset($_POST['addcage4_single'])) {
 	$animals_selection = ($_POST['animals_selection'] ?? '');
 	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage4` (`animalautono`) VALUES (" . $animals_selection . ");";
+	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage4` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -140,7 +140,7 @@ if (isset($_POST['addcage4_single'])) {
 if (isset($_POST['remcage1_single'])) {
 	$animals_selection = ($_POST['cage1_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage1` WHERE `animalautono`=" . $animals_selection . ";";
+	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage1` WHERE `animalautono`=" . (int)$animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -151,7 +151,7 @@ if (isset($_POST['remcage1_single'])) {
 if (isset($_POST['remcage2_single'])) {
 	$animals_selection = ($_POST['cage2_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage2` WHERE `animalautono`=" . $animals_selection . ";";
+	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage2` WHERE `animalautono`=" . (int)$animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -162,7 +162,7 @@ if (isset($_POST['remcage2_single'])) {
 if (isset($_POST['remcage3_single'])) {
 	$animals_selection = ($_POST['cage3_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage3` WHERE `animalautono`=" . $animals_selection . ";";
+	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage3` WHERE `animalautono`=" . (int)$animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -173,7 +173,7 @@ if (isset($_POST['remcage3_single'])) {
 if (isset($_POST['remcage4_single'])) {
 	$animals_selection = ($_POST['cage4_selection'] ?? '');
 	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage4` WHERE `animalautono`=" . $animals_selection . ";";
+	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage4` WHERE `animalautono`=" . (int)$animals_selection . ";";
 	if ($conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
@@ -182,10 +182,10 @@ if (isset($_POST['remcage4_single'])) {
 }
 //Bulk add to cage 1|2|3|4
 if (isset($_POST['addcage1_batch'])) {
-	$animals_batch = ($_POST['animals_batchlist'] ?? '');
+	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
 	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage1` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($conn->query($sqltext) === TRUE) {
+	$sqltext = "INSERT INTO `temp_cage1` (`animalautono`) VALUES " . $animals_batch . ";";
+	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
@@ -193,10 +193,10 @@ if (isset($_POST['addcage1_batch'])) {
 }
 //cage2
 if (isset($_POST['addcage2_batch'])) {
-	$animals_batch = ($_POST['animals_batchlist'] ?? '');
+	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
 	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage2` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($conn->query($sqltext) === TRUE) {
+	$sqltext = "INSERT INTO `temp_cage2` (`animalautono`) VALUES " . $animals_batch . ";";
+	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
@@ -204,10 +204,10 @@ if (isset($_POST['addcage2_batch'])) {
 }
 //cage3
 if (isset($_POST['addcage3_batch'])) {
-	$animals_batch = ($_POST['animals_batchlist'] ?? '');
+	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
 	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage3` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($conn->query($sqltext) === TRUE) {
+	$sqltext = "INSERT INTO `temp_cage3` (`animalautono`) VALUES " . $animals_batch . ";";
+	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
@@ -215,10 +215,10 @@ if (isset($_POST['addcage3_batch'])) {
 }
 //cage4
 if (isset($_POST['addcage4_batch'])) {
-	$animals_batch = ($_POST['animals_batchlist'] ?? '');
+	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
 	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage4` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($conn->query($sqltext) === TRUE) {
+	$sqltext = "INSERT INTO `temp_cage4` (`animalautono`) VALUES " . $animals_batch . ";";
+	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
 		$sqlstatus = 'successful';
 	} else {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
@@ -731,13 +731,13 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 if ($line_filter === "all") {
 	$lf = '';
 } else {
-	$lf = '`line`="' . $line_filter . '" and ';
+	$lf = '`line`="' . $conn->real_escape_string($line_filter) . '" and ';
 }
 
 if ($sex_filter === "all") {
 	$gf = '';
 } else {
-	$gf = '`sex`="' . $sex_filter . '" and ';
+	$gf = '`sex`="' . $conn->real_escape_string($sex_filter) . '" and ';
 }
 
 if ($move_selection === "Weaning") {
@@ -749,7 +749,7 @@ if ($move_selection === "Weaning") {
 if ($source_category_selection === "all") {
 	$sf = '';
 } else {
-	$sf = 'left(`currentcage`,1)=left("' . $source_category_selection . '",1) and ';
+	$sf = 'left(`currentcage`,1)=left("' . $conn->real_escape_string($source_category_selection) . '",1) and ';
 }
 //location + role (subquery form — no table_cages join on this page)
 $location_listbox = filter_selectbox(location_filter_options($conn), $location_filter, 'location_filter', 'submitForm()', true);
@@ -794,13 +794,13 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 if ($line_filter === "all") {
 	$lf = '';
 } else {
-	$lf = '`line`="' . $line_filter . '" and ';
+	$lf = '`line`="' . $conn->real_escape_string($line_filter) . '" and ';
 }
 
 if ($sex_filter === "all") {
 	$gf = '';
 } else {
-	$gf = '`sex`="' . $sex_filter . '" and ';
+	$gf = '`sex`="' . $conn->real_escape_string($sex_filter) . '" and ';
 }
 
 if ($move_selection === "Weaning") {
@@ -812,7 +812,7 @@ if ($move_selection === "Weaning") {
 if ($source_category_selection === "all") {
 	$sf = '';
 } else {
-	$sf = 'left(`currentcage`,1)=left("' . $source_category_selection . '",1) and ';
+	$sf = 'left(`currentcage`,1)=left("' . $conn->real_escape_string($source_category_selection) . '",1) and ';
 }
 
 if ($sourcecage_selection == "" or $sourcecage_selection === "all") {

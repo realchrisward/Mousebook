@@ -304,6 +304,171 @@ if (!function_exists('mb_filters_loaded')) {
         return _mb_col($conn, $sql, 'currentcage');
     }
 
+    /* =====================================================================
+     * P2 (2b) — centralized animal-filter WHERE builder  [Option B]
+     * ---------------------------------------------------------------------
+     * The query/manage_animals pages used to assemble a raw SQL WHERE string
+     * and round-trip it through a hidden <input> (animals_sql_where_text),
+     * then re-interpolate it verbatim on the receiving request — i.e. the
+     * client controlled the entire WHERE clause (SQL injection).
+     *
+     * Under Option B the hidden field carries the individual filter VALUES,
+     * and the receiving request rebuilds the WHERE here, server-side, through
+     * escaped/allowlisted predicate helpers. Because values (not SQL) travel
+     * through the client, the old "single-quoted fragments only" round-trip
+     * constraint no longer applies — the double-quoted helpers below are safe.
+     *
+     * animals_where_build() returns the inner text for `... WHERE <text> ...`,
+     * opening with the always-true sentinel 1=1 so every predicate is AND-.
+     * ===================================================================== */
+
+    /** Canonical ordered list of round-tripped filter value field names. */
+    function animals_filter_fields()
+    {
+        return array(
+            'line_filter', 'sex_filter', 'source_category_selection', 'deadoralive_filter',
+            'bornbefore', 'bornafter', 'deadbefore', 'deadafter',
+            'linetextfilter', 'idnotextfilter', 'sourcetextfilter', 'parenttextfilter',
+            'commenttextfilter', 'location_filter', 'role_filter',
+        );
+    }
+
+    /** Pull the filter values out of a POST array with safe 'all' sentinels. */
+    function animals_filter_values_from_post(array $post)
+    {
+        $v = array();
+        foreach (animals_filter_fields() as $f) {
+            $v[$f] = isset($post[$f]) ? (string)$post[$f] : '';
+        }
+        foreach (array('line_filter', 'sex_filter', 'source_category_selection', 'location_filter', 'role_filter') as $f) {
+            if ($v[$f] === '') $v[$f] = 'all';
+        }
+        return $v;
+    }
+
+    /** Emit hidden inputs carrying the VALUES (not SQL) for the client round-trip. */
+    function animals_filter_hidden_fields(array $v)
+    {
+        $html = '';
+        foreach (animals_filter_fields() as $f) {
+            $val = isset($v[$f]) ? (string)$v[$f] : '';
+            $html .= '<input type="hidden" id="' . htmlspecialchars($f, ENT_QUOTES)
+                . '" name="' . htmlspecialchars($f, ENT_QUOTES)
+                . '" value="' . htmlspecialchars($val, ENT_QUOTES) . '">' . "\n";
+        }
+        return $html;
+    }
+
+    /* ---- discrete safe predicate helpers (all AND-prefixed or '') ------- */
+
+    /** dead/alive allowlist -> `dod` IS [NOT] NULL. */
+    function deadoralive_where($sel)
+    {
+        if ($sel === 'dead')  return ' AND `dod` is not NULL';
+        if ($sel === 'alive') return ' AND `dod` is NULL';
+        return '';
+    }
+
+    /** Date bound predicate, format-validated to YYYY-MM-DD then escaped. */
+    function date_bound_where(mysqli $conn, $value, $col, $op)
+    {
+        if ($value === null || $value === '') return '';
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) return ''; // reject non-dates outright
+        if ($op !== '<=' && $op !== '>=') return '';
+        return ' AND `' . $col . '` ' . $op . " '" . $conn->real_escape_string($value) . "'";
+    }
+
+    /** Line equality (value, escaped). */
+    function line_eq_where(mysqli $conn, $sel)
+    {
+        if ($sel === null || $sel === '' || $sel === 'all') return '';
+        return ' AND `line` = "' . $conn->real_escape_string($sel) . '"';
+    }
+
+    /** Source-category first-letter match, mirroring left(currentcage,1). */
+    function source_category_where(mysqli $conn, $sel)
+    {
+        if ($sel === null || $sel === '' || $sel === 'all') return '';
+        return ' AND left(`currentcage`,1) = left("' . $conn->real_escape_string($sel) . '",1)';
+    }
+
+    /** Exact current-cage equality (value, escaped). 'all'/'' -> no predicate. */
+    function cage_eq_where(mysqli $conn, $sel, $col = 'currentcage')
+    {
+        if ($sel === null || $sel === '' || $sel === 'all') return '';
+        return ' AND `' . $col . '` = "' . $conn->real_escape_string($sel) . '"';
+    }
+
+    /**
+     * Build the whole WHERE inner text from a values array, server-side.
+     * Semantics mirror the historical fragment order on query_animals /
+     * manage_animals. Sex is allowlisted against MB_SEX_OPTIONS; location/role
+     * use the subquery (no-cage-join) form; text filters use REGEXP word-
+     * boundary; dates are validated. Returns e.g. `1=1 AND ...`.
+     */
+    function animals_where_build(mysqli $conn, array $v)
+    {
+        $w = '1=1';
+        $w .= line_eq_where($conn, $v['line_filter'] ?? 'all');
+        $sex = $v['sex_filter'] ?? 'all';
+        if ($sex !== 'all' && $sex !== '' && in_array($sex, sex_options(), true)) {
+            $w .= ' AND `sex` = "' . $conn->real_escape_string($sex) . '"';
+        }
+        $w .= source_category_where($conn, $v['source_category_selection'] ?? 'all');
+        $w .= deadoralive_where($v['deadoralive_filter'] ?? '');
+        $w .= date_bound_where($conn, $v['bornbefore'] ?? '', 'dob', '<=');
+        $w .= date_bound_where($conn, $v['bornafter']  ?? '', 'dob', '>=');
+        $w .= date_bound_where($conn, $v['deadbefore'] ?? '', 'dod', '<=');
+        $w .= date_bound_where($conn, $v['deadafter']  ?? '', 'dod', '>=');
+        $w .= text_filter_where($conn, $v['linetextfilter']   ?? '', 'line');
+        $w .= text_filter_where($conn, $v['idnotextfilter']   ?? '', 'idno');
+        $w .= text_filter_where($conn, $v['sourcetextfilter'] ?? '', 'matingcage');
+        $w .= text_filter_where($conn, $v['parenttextfilter'] ?? '', 'parents');
+        $w .= location_where_sub($conn, $v['location_filter'] ?? 'all');
+        $w .= role_where_sub($conn, $v['role_filter'] ?? 'all');
+        return $w;
+    }
+
+    /** Escaped value for the comment REGEXP subquery (feature: user regex). */
+    function comment_regexp_escaped(mysqli $conn, $value)
+    {
+        return $conn->real_escape_string((string)$value);
+    }
+
+    /**
+     * Genotype OR-predicate builder for the get_genofilt path. Values arrive as
+     * geno$i (allelegroup) + genofilt$i[] (selected alleles) — already values,
+     * so this just escapes and composes. Returns array(where_or_text, group_ct).
+     */
+    function genotype_or_where(mysqli $conn, array $agarray, array $gfarray)
+    {
+        $ors = array();
+        $groups = 0;
+        foreach ($agarray as $i => $ag) {
+            $sel = isset($gfarray[$i]) ? $gfarray[$i] : array();
+            if (!is_array($sel)) $sel = ($sel === '' ? array() : array($sel));
+            if (count($sel) > 0) $groups++;
+            foreach ($sel as $al) {
+                $ors[] = '(allelegroup="' . $conn->real_escape_string($ag)
+                    . '" and allele="' . $conn->real_escape_string($al) . '")';
+            }
+        }
+        return array(implode(' or ', $ors), $groups);
+    }
+
+    /**
+     * Sanitize a client-supplied "(1),(2),(3)" VALUES list down to integers only.
+     * Used for the temp_cage batch-staging INSERTs, where animalautono is strictly
+     * integer. Returns '' when no integer survives (caller should skip the query).
+     */
+    function mb_int_values_list($raw)
+    {
+        preg_match_all('/\d+/', (string)$raw, $m);
+        if (empty($m[0])) return '';
+        $ids = array_map('intval', $m[0]);
+        return implode(',', array_map(function ($x) { return '(' . $x . ')'; }, $ids));
+    }
+
     /* ---- tiny internal helper ------------------------------------------- */
     function _mb_col(mysqli $conn, $sql, $key)
     {

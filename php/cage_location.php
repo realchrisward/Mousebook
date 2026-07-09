@@ -285,19 +285,19 @@ $cage_listbox .= '</select>';
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';
 } else {
-	$lf = '`line`="' . $line_filter . '" and ';
+	$lf = '`line`="' . $conn->real_escape_string($line_filter) . '" and ';
 }
 
 if ($sex_filter === "all" or $sex_filter === null) {
 	$gf = '';
 } else {
-	$gf = '`sex`="' . $sex_filter . '" and ';
+	$gf = '`sex`="' . $conn->real_escape_string($sex_filter) . '" and ';
 }
 
 if ($source_category_selection === "all" or $source_category_selection === null) {
 	$sf = '';
 } else {
-	$sf = 'left(`currentcage`,1)=left("' . $source_category_selection . '",1) and ';
+	$sf = 'left(`currentcage`,1)=left("' . $conn->real_escape_string($source_category_selection) . '",1) and ';
 }
 
 if ($locationA_selection === "all" or $locationA_selection === null) {
@@ -305,7 +305,7 @@ if ($locationA_selection === "all" or $locationA_selection === null) {
 } elseif ($locationA_selection === "unknown") {
 	$locf = '(`cagelocation_room` is null or `cagelocation_room`="unknown") and ';
 } else {
-	$locf = '`cagelocation_room`="' . $locationA_selection . '" and ';
+	$locf = '`cagelocation_room`="' . $conn->real_escape_string($locationA_selection) . '" and ';
 }
 
 $sql_where_text = substr($lf . $gf . $sf . $locf, 0, -4);
