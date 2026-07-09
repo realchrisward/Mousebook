@@ -10,6 +10,12 @@ $host = $accessun = $accesspw = null;
 $locationA_selection = null; $locationB_selection = null; $line_filter = null; $sex_filter = null; $source_category_selection = null; $lf = null;
 $gf = null; $sf = null; $locf = null; $loc_addstatus = null; $contact1 = null; $contact2 = null;
 $genoconver = null; $cagearray = null; $mdata = null; $sqlerror = null; $buttonmessage = null; $sqlstatusclear = null;
+// issue #22: init DB-dependent controls + batch list so a failed/absent DB
+// connection renders empty controls (not undefined-variable warnings) and the
+// implode() below never receives null (a fatal TypeError under PHP 8).
+$line_listbox = ''; $sourcecage_listbox = ''; $cage_listbox = '';
+$locA_listbox = ''; $locB_listbox = ''; $locRetire_listbox = ''; $locRestore_listbox = '';
+$cage_batchlist = array();
 
 // -------------------------------------------------------
 // PATCHED: removed stale hardcoded $host="{server ip}"
@@ -72,6 +78,10 @@ require_once __DIR__ . '/../includes/filters.php';
 
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //check connection
+// issue #22: a failed connection here means every reconnect below fails too;
+// calling ->query() on it fatals ("mysqli object is already closed"). Gate all
+// DB-dependent blocks on this flag so the page degrades to a login prompt.
+$dbconnected = !$conn->connect_error;
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
 	echo '<h2 class="centertext"> please connect to the database </h2>';
@@ -158,21 +168,25 @@ foreach ($source_category_options as $row) {
 $source_category_listbox .= '</select>';
 
 //line lists
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "call get_lines();";
-$results = $conn->query($sqltext);
-//set up static portion of table
 $line_listbox = '<select id="line_filter" name="line_filter" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
-//loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
-	if ($row['line'] === $line_filter) {
-		$line_listbox .= '<option value="' . $row["line"] . '" selected>' . $row["line"] . '</option>';
-	} else {
-		$line_listbox .= '<option value="' . $row["line"] . '">' . $row["line"] . '</option>';
+// issue #22: only touch the DB when connected, and only iterate a real result
+// set — a query on a failed connection fatals, and a failed query returns false
+// (a TypeError under PHP 8's mysqli_fetch_array).
+if ($dbconnected) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$results = $conn->query("call get_lines();");
+	if ($results instanceof mysqli_result) {
+		while ($row = mysqli_fetch_array($results)) {
+			if ($row['line'] === $line_filter) {
+				$line_listbox .= '<option value="' . $row["line"] . '" selected>' . $row["line"] . '</option>';
+			} else {
+				$line_listbox .= '<option value="' . $row["line"] . '">' . $row["line"] . '</option>';
+			}
+		}
 	}
+	$conn->close();
 }
 $line_listbox .= '</select>';
-$conn->close();
 
 // -------------------------------------------------------
 // PATCHED: replaced hardcoded `animalbook.list_cage_locations`
@@ -214,33 +228,39 @@ if (isset($_POST['button_restorelocation'])) {
 //location dropdowns via shared library:
 //  A = FILTER (active + any still-tagged) — filter by a retired-but-in-use room
 //  B = ASSIGN (active only) — the move destination
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$locA_listbox       = filter_selectbox(location_filter_options($conn),  $locationA_selection, 'locationA_selection', 'submitForm()', true);
-$locB_listbox       = filter_selectbox(location_assign_options($conn),  $locationB_selection, 'locationB_selection', 'submitForm()', false);
-$locRetire_listbox  = filter_selectbox(location_assign_options($conn),  '', 'retire_location',  '', false);
-$locRestore_listbox = filter_selectbox(location_retired_options($conn), '', 'restore_location', '', false);
-$conn->close();
-
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+// issue #22: these query the DB via the shared filter library; skip when
+// disconnected (empty controls already initialised above).
+if ($dbconnected) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$locA_listbox       = filter_selectbox(location_filter_options($conn),  $locationA_selection, 'locationA_selection', 'submitForm()', true);
+	$locB_listbox       = filter_selectbox(location_assign_options($conn),  $locationB_selection, 'locationB_selection', 'submitForm()', false);
+	$locRetire_listbox  = filter_selectbox(location_assign_options($conn),  '', 'retire_location',  '', false);
+	$locRestore_listbox = filter_selectbox(location_retired_options($conn), '', 'restore_location', '', false);
+	$conn->close();
+}
 
 // PATCHED: fixed malformed HTML attribute (missing closing quote on onchange)
 $cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox" onchange="">';
-//loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
-	if ($row['cageid'] === $cagelist_selection) {
-		$cage_listbox .= '<option value="' . $row['cageid'] . '" selected>' . $row['cageid'] . '</option>';
-	} else {
-		$cage_listbox .= '<option value="' . $row['cageid'] . '">' . $row['cageid'] . '</option>';
+// issue #22 (KNOWN-EMPTY, pending): this "Cages already in destination" box is
+// not yet populated. The loop below reuses a stale result set from get_lines()
+// (already consumed and on a closed connection) and reads a 'cageid' column that
+// result never contained — so the box is always empty. Guarded here so it cannot
+// fatal; the intended query is a design decision (see handoff) and is left out
+// until confirmed.
+if (isset($results) && $results instanceof mysqli_result) {
+	while ($row = mysqli_fetch_array($results)) {
+		if ($row['cageid'] === $cagelist_selection) {
+			$cage_listbox .= '<option value="' . $row['cageid'] . '" selected>' . $row['cageid'] . '</option>';
+		} else {
+			$cage_listbox .= '<option value="' . $row['cageid'] . '">' . $row['cageid'] . '</option>';
+		}
 	}
 }
 //close the table
 $cage_listbox .= '</select>';
 
-$conn->close();
-
 
 //locationA contents - cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';
@@ -278,32 +298,44 @@ where dod is null and dob is not null " . $sql_where_text . "
 GROUP BY `currentcage`
 order by `lineassignment`, field(`cagetype`, 'holding', 'rearrange', 'experimental', 'mating', 'litter', 'sac'), `cageno`
 ;";
-$results = $conn->query($sqltext);
 $sourcecage_listbox = '<select id="cage_selection" name="cage_selection[]" size=14 class="largelistbox" multiple="multiple" >';
-while ($row = mysqli_fetch_array($results)) {
-	$nkey = array_search($row['currentcage'], $cage_selection);
-	if ($nkey !== false) {
-		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
-	} else {
-		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '">' . $row['currentcage'] . '</option>';
+// issue #22: gate the query + loop on connection and a real result set. An empty
+// location simply yields no rows here; $cage_batchlist stays the empty array from
+// init, so the implode below is a no-op instead of a fatal.
+if ($dbconnected) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$results = $conn->query($sqltext);
+	if ($results instanceof mysqli_result) {
+		while ($row = mysqli_fetch_array($results)) {
+			$nkey = array_search($row['currentcage'], $cage_selection);
+			if ($nkey !== false) {
+				$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
+			} else {
+				$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '">' . $row['currentcage'] . '</option>';
+			}
+			$cage_batchlist[] = $row['currentcage'];
+		} //close the table
 	}
-	$cage_batchlist[] = $row['currentcage'];
-} //close the table
+	$conn->close();
+}
 $sourcecage_listbox .= '</select>';
-$conn->close();
 
 $cage_batchlist = '("' . implode('"),("', $cage_batchlist) . '")';
 
 //functions and form controls
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-
 // -------------------------------------------------------
 // PATCHED: replaced hardcoded `animalbook`.`table_cages`
 // with `$dbname`.`table_cages` in the UPDATE statement.
 // This was the primary cause of cage-move failures on
 // installations using a different database name.
 // -------------------------------------------------------
-if (isset($_POST['addcage_single'])) {
+// issue #22: only run the move when connected, and open the connection inside
+// the handler so a disconnected/absent session can't fatal on ->query().
+// NOTE (P6): this mutation posts as `addcage_single`, not `button_*`, so the
+// Phase F mb_guard_write() tier gate does not currently neutralise it for
+// read-only users — flagged for the non-button_* mutation-path audit.
+if ($dbconnected && isset($_POST['addcage_single'])) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 	$cage_selection = ($_POST['cage_selection'] ?? '');
 	$cageselection = '("' . implode('","', $cage_selection) . '")';
 	$sqlaction = 'move cages:' . $cageselection;
@@ -315,6 +347,7 @@ if (isset($_POST['addcage_single'])) {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
 	}
 	echo $sqlstatus;
+	$conn->close();
 }
 
 
