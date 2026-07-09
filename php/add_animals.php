@@ -272,16 +272,24 @@ if (isset($_POST['generate_animals'])) {
 	}
 	//echo var_dump($xgendarray);
 	//get allelegroups
+	// issue #24: a line with NO configured allelegroups (typical for a brand-new
+	// external/FOUNDER line) left $genelist/$aglist undefined, so count($genelist)
+	// below fatalled (count(null)) and whitescreened the whole generate step.
+	// Initialise them, and guard the fetch so a failed query can't fatal either.
+	$genelist = array();
+	$aglist = array();
 	$sqltext = "SELECT `allelegroup` FROM `" . $dbname . "`.`key_allelebyline` WHERE `line`='" . $xline_selection . "' GROUP BY `allelegroup`;";
 	$results = $conn->query($sqltext);
-	while ($row = mysqli_fetch_array($results)) {
-		$aglist[$row['allelegroup']] = array('M' => '', 'F' => '', 'all' => '');
-		$genelist[] = $row['allelegroup'];
+	if ($results instanceof mysqli_result) {
+		while ($row = mysqli_fetch_array($results)) {
+			$aglist[$row['allelegroup']] = array('M' => '', 'F' => '', 'all' => '');
+			$genelist[] = $row['allelegroup'];
+		}
 	}
 
 	$genecount = count($genelist);
 	$genepost = '';
-	foreach (range(0, $genecount - 1, 1) as $i) {
+	foreach (($genecount > 0 ? range(0, $genecount - 1, 1) : array()) as $i) {
 		$genepost .= '<input type=hidden id="geno' . $i . '" name="geno' . $i . '" value="' . $genelist[$i] . '">';
 	}
 	//echo $genepost;
@@ -294,8 +302,10 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 	$results = $conn->query($sqltext);
 
 
-	while ($row = mysqli_fetch_array($results)) {
-		$aglist[$row['allelegroup']][$row['sexspecific']] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
+	if ($results instanceof mysqli_result) {
+		while ($row = mysqli_fetch_array($results)) {
+			$aglist[$row['allelegroup']][$row['sexspecific']] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
+		}
 	}
 	//echo var_dump($aglist);
 	//close the table
@@ -307,7 +317,7 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
 	$genom = '';
 	$genof = '';
 	//foreach (array_keys($aglist) as $ag){
-	foreach (range(0, $genecount - 1, 1) as $i) {
+	foreach (($genecount > 0 ? range(0, $genecount - 1, 1) : array()) as $i) {
 		$ag = $genelist[$i];
 		//$genou.='<td id="geno'.$ag.'[]" name="geno'.$ag.'[]"><select><option value="unk" selected>unk</option>'.$aglist[$ag]['M'].$aglist[$ag]['F'].$aglist[$ag]['all'].'</select></td>';
 		$genou .= '<td ><select id="geno' . $i . '-[]" name="geno' . $i . '-[]"><option value="unk" selected>unk</option>' . $aglist[$ag]['M'] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
@@ -419,7 +429,12 @@ if (isset($_POST['confirm_animals'])) {
 	$xmaxauto = ($_POST['maxauto'] ?? '');
 	$xgenecount = ($_POST['genecount'] ?? '');
 
-	foreach (range(0, $xgenecount - 1, 1) as $i) {
+	// issue #24: a no-allele line posts genecount=0. Keep $xgenelist a real array
+	// (the later `foreach ($xgenelist as $gene)` would fatal on null) and skip the
+	// gene loop entirely instead of iterating a bogus range(0, -1).
+	$xgenelist = array();
+	$genotypes = array();
+	foreach (((int)$xgenecount > 0 ? range(0, (int)$xgenecount - 1, 1) : array()) as $i) {
 		$xgenelist[] = ($_POST['geno' . $i] ?? '');
 		$genotypes[$xgenelist[$i]] = [];
 		foreach (range($xminauto, $xmaxauto, 1) as $j) {
