@@ -226,34 +226,54 @@ if (isset($_POST['button_restorelocation'])) {
 }
 
 //location dropdowns via shared library:
-//  A = FILTER (active + any still-tagged) — filter by a retired-but-in-use room
-//  B = ASSIGN (active only) — the move destination
+//  A = FILTER — any room that currently holds a cage with a live animal
+//      (issue #22: retired-but-in-use rooms included; empty/dead-only excluded)
+//  B = ASSIGN (active pick-list only) — the move destination
 // issue #22: these query the DB via the shared filter library; skip when
 // disconnected (empty controls already initialised above).
 if ($dbconnected) {
 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-	$locA_listbox       = filter_selectbox(location_filter_options($conn),  $locationA_selection, 'locationA_selection', 'submitForm()', true);
+	$locA_listbox       = filter_selectbox(location_liveanimal_options($conn), $locationA_selection, 'locationA_selection', 'submitForm()', true);
 	$locB_listbox       = filter_selectbox(location_assign_options($conn),  $locationB_selection, 'locationB_selection', 'submitForm()', false);
 	$locRetire_listbox  = filter_selectbox(location_assign_options($conn),  '', 'retire_location',  '', false);
 	$locRestore_listbox = filter_selectbox(location_retired_options($conn), '', 'restore_location', '', false);
 	$conn->close();
 }
 
-// PATCHED: fixed malformed HTML attribute (missing closing quote on onchange)
+// "Cages already in destination" (issue #22): list cages in the selected
+// destination room (locationB_selection) that still hold a live animal
+// (dod IS NULL AND dob IS NOT NULL) — old cages whose mice were euthanized are
+// excluded. Only runs once a destination is chosen. Prepared statement: the
+// room value is user-controlled.
 $cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox" onchange="">';
-// issue #22 (KNOWN-EMPTY, pending): this "Cages already in destination" box is
-// not yet populated. The loop below reuses a stale result set from get_lines()
-// (already consumed and on a closed connection) and reads a 'cageid' column that
-// result never contained — so the box is always empty. Guarded here so it cannot
-// fatal; the intended query is a design decision (see handoff) and is left out
-// until confirmed.
-if (isset($results) && $results instanceof mysqli_result) {
-	while ($row = mysqli_fetch_array($results)) {
-		if ($row['cageid'] === $cagelist_selection) {
-			$cage_listbox .= '<option value="' . $row['cageid'] . '" selected>' . $row['cageid'] . '</option>';
-		} else {
-			$cage_listbox .= '<option value="' . $row['cageid'] . '">' . $row['cageid'] . '</option>';
+if ($dbconnected
+	&& $locationB_selection !== null
+	&& $locationB_selection !== ''
+	&& $locationB_selection !== 'all') {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	if (!$conn->connect_error) {
+		$stmt = $conn->prepare(
+			"SELECT c.`cageid` AS cageid
+			 FROM `table_cages` c
+			 JOIN `table_animals` a ON a.`currentcage` = c.`cageid`
+			 WHERE c.`cagelocation_room` = ?
+			   AND a.`dod` IS NULL AND a.`dob` IS NOT NULL
+			 GROUP BY c.`cageid`, c.`cageno`
+			 ORDER BY c.`cageno`"
+		);
+		if ($stmt) {
+			$stmt->bind_param('s', $locationB_selection);
+			$stmt->execute();
+			$res = $stmt->get_result();
+			if ($res instanceof mysqli_result) {
+				while ($row = $res->fetch_assoc()) {
+					$cid = htmlspecialchars($row['cageid']);
+					$cage_listbox .= '<option value="' . $cid . '">' . $cid . '</option>';
+				}
+			}
+			$stmt->close();
 		}
+		$conn->close();
 	}
 }
 //close the table

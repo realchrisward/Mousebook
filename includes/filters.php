@@ -150,6 +150,24 @@ if (!function_exists('mb_filters_loaded')) {
     {
         return cage_attr_filter_options($c, 'list_cage_locations', 'Location_Option', 'cagelocation_room');
     }
+    /**
+     * FILTER options for a room-of-live-cages view (issue #22): distinct rooms
+     * that currently hold at least one cage containing a live animal
+     * (dod IS NULL AND dob IS NOT NULL). Unlike location_filter_options(), this
+     * is driven purely by cage occupancy — retired rooms still holding live
+     * animals appear; active-but-empty and dead-only rooms do not. No user input,
+     * so a plain query is safe.
+     */
+    function location_liveanimal_options(mysqli $c)
+    {
+        $sql = "SELECT DISTINCT c.`cagelocation_room` AS loc
+                FROM `table_cages` c
+                JOIN `table_animals` a ON a.`currentcage` = c.`cageid`
+                WHERE a.`dod` IS NULL AND a.`dob` IS NOT NULL
+                  AND c.`cagelocation_room` IS NOT NULL AND c.`cagelocation_room` <> ''
+                ORDER BY loc;";
+        return _mb_col($c, $sql, 'loc');
+    }
     function location_assign_options(mysqli $c)
     {
         return cage_attr_assign_options($c, 'list_cage_locations', 'Location_Option');
