@@ -281,6 +281,7 @@ $cage_listbox .= '</select>';
 
 
 //locationA contents - cage list filtered by line, sex, etc
+$conn = new mysqli($host, $accessun, $accesspw, $dbname); // reopen: closed above, needed for filter-value escaping
 //set filter text
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';

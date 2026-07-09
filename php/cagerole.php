@@ -246,14 +246,17 @@ GROUP BY `currentcage`
 order by `lineassignment`, field(`cagetype`, 'holding', 'rearrange', 'experimental', 'mating', 'litter', 'sac'), `cageno`;";
 $results = $conn->query($sqltext);
 $sourcecage_listbox = '<select id="cage_selection" name="cage_selection[]" size=14 class="largelistbox" multiple="multiple" >';
-while ($row = mysqli_fetch_array($results)) {
-	$nkey = array_search($row['currentcage'], $cage_selection);
-	if ($nkey !== false) {
-		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
-	} else {
-		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '">' . $row['currentcage'] . '</option>';
+$cage_batchlist = array(); // issue #22: init so an empty result set doesn't fatal the implode below
+if ($results instanceof mysqli_result) {
+	while ($row = mysqli_fetch_array($results)) {
+		$nkey = array_search($row['currentcage'], $cage_selection);
+		if ($nkey !== false) {
+			$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
+		} else {
+			$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '">' . $row['currentcage'] . '</option>';
+		}
+		$cage_batchlist[] = $row['currentcage'];
 	}
-	$cage_batchlist[] = $row['currentcage'];
 }
 $sourcecage_listbox .= '</select>';
 $conn->close();
