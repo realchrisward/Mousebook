@@ -46,6 +46,7 @@ if (!function_exists('mb_render_nav')) {
         'query_genotodo.php'           => 'Plan Genotyping',
         'query_viewer.php'             => 'View Database Queries',
         'query_animals.php'            => 'View animals',
+        'change_password.php'          => 'Change Password',
         // Intentionally NOT in the global menu (see BACKUP/HANDOFF notes):
         //   cagecard_gen5rs.php / cagecard_gen5rs-blindgeno.php  (reached from Card Printer)
         //   autoclipsheet.php                                    (orphan; feeds Phase E clipping-logs PDF)
@@ -99,6 +100,32 @@ if (!function_exists('mb_render_nav')) {
             }
             echo '  </form>' . "\n";
         }
+
+        // Userbook-only admin pages (Phase G / issue #19): shown only when
+        // the active context is the userbook auth db, so colony sidebars
+        // stay uncluttered. Tier enforcement still happens server-side via
+        // mb_guard_admin() on each page.
+        $ub = defined('MB_USERBOOK_DB') ? MB_USERBOOK_DB : 'userbook';
+        if ($dbname === $ub) {
+            $admin_items = [
+                'manage_users.php'     => 'Manage Users',
+                'manage_databases.php' => 'Manage Databases',
+            ];
+            foreach ($admin_items as $script => $label) {
+                $action    = $base . 'php/' . $script;
+                $is_active = ($script === $active);
+                $style = $is_active
+                    ? ' style="background-color:#2d8fb3; color:white; font-weight:bold;"'
+                    : '';
+                echo '  <form action="' . $action . '" method=post target="_blank">' . "\n";
+                echo '    <input type=hidden name="dbname" value="' . $db . '" />' . "\n";
+                echo '    <input type=hidden name="button_login" value="connect" />' . "\n";
+                echo '    <input type=submit class="button" name=""' . $style
+                   . ' value="' . htmlspecialchars($label, ENT_QUOTES) . '" />' . "\n";
+                echo '  </form>' . "\n";
+            }
+        }
+
         echo '</div>' . "\n";
     }
 }

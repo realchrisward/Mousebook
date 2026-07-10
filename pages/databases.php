@@ -141,6 +141,12 @@
 							value="disco" />
 					</th>
 				</tr>
+
+				<tr>
+					<td colspan=2 style="text-align:center;font-size:0.85em;">
+						<a href="../php/forgot_password.php">Forgot password?</a>
+					</td>
+				</tr>
 			</table>
 
 		</form>
