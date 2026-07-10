@@ -111,6 +111,32 @@ CREATE TABLE `userpass` (
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
+-- Table structure for table `usertoken`
+-- Single-use, time-limited tokens for invitations and password resets
+-- (Phase G / issue #19). Stores only the sha256 hash of each token; the
+-- raw token exists only in the emailed link. See includes/usertoken.php.
+--
+
+DROP TABLE IF EXISTS `usertoken`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `usertoken` (
+  `token_id`   bigint      NOT NULL AUTO_INCREMENT,
+  `user_idno`  bigint      NOT NULL,
+  `token_hash` char(64)    NOT NULL,
+  `purpose`    varchar(16) NOT NULL,
+  `created_by` varchar(45) DEFAULT NULL,
+  `created_at` datetime    NOT NULL,
+  `expires_at` datetime    NOT NULL,
+  `used_at`    datetime    DEFAULT NULL,
+  PRIMARY KEY (`token_id`),
+  UNIQUE KEY `token_hash_UNIQUE` (`token_hash`),
+  KEY `user_idno` (`user_idno`),
+  KEY `lookup` (`token_hash`,`purpose`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
 -- ---------------------------------------------------------------------
 -- BOOTSTRAP (do NOT commit real credentials to the repo)
 -- ---------------------------------------------------------------------
