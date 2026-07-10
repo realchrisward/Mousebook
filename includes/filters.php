@@ -479,4 +479,127 @@ if (!function_exists('mb_filters_loaded')) {
         }
         return $out;
     }
+
+    /* =====================================================================
+     * P3 (#8 V1, Option A): session-keyed cage staging.
+     *
+     * Replaces the shared global temp_cage1..4 (MyISAM) tables — which had
+     * no user/session column and so collided between concurrent users —
+     * with per-session, per-colony integer lists:
+     *
+     *     $_SESSION['mb_stage'][$dbname][1..4]   (arrays of positive ints)
+     *
+     * These live entirely in the PHP session and die with it: an
+     * uncommitted staging set does not survive logout, which is the
+     * intended isolation win. Commit reads the slot as a `WHERE
+     * animalautono IN (...)`; the available lists exclude the union with
+     * `NOT IN (...)`. Because every value is an int by construction, these
+     * fragments are injection-safe without escaping.
+     *
+     * NOTE: the legacy temp_cage1..4 tables are intentionally left in the
+     * schema (now unused). See handoff — schedule an orphaned-table sweep.
+     * ===================================================================== */
+
+    /** Return the staged int list for one destination cage (1..4), or []. */
+    function mb_stage_slot($dbname, $n)
+    {
+        $n = (int)$n;
+        if ($n < 1 || $n > 4) return array();
+        if (!isset($_SESSION['mb_stage'][$dbname][$n]) || !is_array($_SESSION['mb_stage'][$dbname][$n])) {
+            return array();
+        }
+        return $_SESSION['mb_stage'][$dbname][$n];
+    }
+
+    /**
+     * Coerce client input (multi-select array, scalar, or a delimited /
+     * "(1),(2)" string) to de-duplicated positive ints only. Any non-digit
+     * content (injection payloads included) collapses to its digits.
+     */
+    function mb_stage_normalize_ints($raw)
+    {
+        $seen = array();
+        if (is_array($raw)) {
+            foreach ($raw as $v) {
+                $i = (int)$v;
+                if ($i > 0) $seen[$i] = true;
+            }
+        } else {
+            preg_match_all('/\d+/', (string)$raw, $m);
+            foreach ($m[0] as $v) {
+                $i = (int)$v;
+                if ($i > 0) $seen[$i] = true;
+            }
+        }
+        return array_keys($seen);
+    }
+
+    /** Merge input ints into destination cage $n (de-duplicated). */
+    function mb_stage_add($dbname, $n, $raw)
+    {
+        $n = (int)$n;
+        if ($n < 1 || $n > 4) return;
+        $ints = mb_stage_normalize_ints($raw);
+        if (empty($ints)) return;
+        $merged = array();
+        foreach (array_merge(mb_stage_slot($dbname, $n), $ints) as $i) {
+            $merged[(int)$i] = true;
+        }
+        $_SESSION['mb_stage'][$dbname][$n] = array_keys($merged);
+    }
+
+    /** Drop input ints from destination cage $n. */
+    function mb_stage_remove($dbname, $n, $raw)
+    {
+        $n = (int)$n;
+        if ($n < 1 || $n > 4) return;
+        $drop = array();
+        foreach (mb_stage_normalize_ints($raw) as $i) $drop[(int)$i] = true;
+        if (empty($drop)) return;
+        $kept = array();
+        foreach (mb_stage_slot($dbname, $n) as $i) {
+            if (!isset($drop[(int)$i])) $kept[] = (int)$i;
+        }
+        $_SESSION['mb_stage'][$dbname][$n] = $kept;
+    }
+
+    /** Empty one destination cage. */
+    function mb_stage_clear($dbname, $n)
+    {
+        $n = (int)$n;
+        if ($n < 1 || $n > 4) return;
+        $_SESSION['mb_stage'][$dbname][$n] = array();
+    }
+
+    /** Empty all four destination cages for this colony. */
+    function mb_stage_clear_all($dbname)
+    {
+        $_SESSION['mb_stage'][$dbname] = array(1 => array(), 2 => array(), 3 => array(), 4 => array());
+    }
+
+    /** Union of all four staged slots (for the NOT IN exclusion). */
+    function mb_stage_union($dbname)
+    {
+        $u = array();
+        for ($n = 1; $n <= 4; $n++) {
+            foreach (mb_stage_slot($dbname, $n) as $i) $u[(int)$i] = true;
+        }
+        return array_keys($u);
+    }
+
+    /**
+     * Render an int list as a SQL IN(...) body ("1,2,3"), or '' when empty.
+     * Values are re-cast to int here so the result is injection-safe even if
+     * a caller passes an unvalidated array. Callers MUST treat '' as "omit
+     * the predicate" — MySQL rejects an empty `IN ()`.
+     */
+    function mb_stage_in_csv(array $ints)
+    {
+        $clean = array();
+        foreach ($ints as $i) {
+            $ci = (int)$i;
+            if ($ci > 0) $clean[] = $ci;
+        }
+        return implode(',', $clean);
+    }
 }
