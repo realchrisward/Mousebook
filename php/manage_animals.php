@@ -272,7 +272,7 @@ if (isset($_POST['get_tempanimals'])) {
 	</td>
 <td ><input class="smalllistbox" type=date name="dow' . $ck . '" id="dow' . $ck . '" value=' . $arraydow[$ck] . '>
 	</td>
-<td ><input class="smalllistbox" type=date name="dod' . $ck . '" id="dod' . $ck . '" value=' . $arraydod[$ck] . '>
+<td ><input class="smalllistbox" type=date name="dod' . $ck . '" id="dod' . $ck . '"' . ((isset($arraydod[$ck]) && trim((string)$arraydod[$ck]) !== '') ? ' data-locked="1"' : '') . ' oninput="mbMarkDirty(this)" value=' . $arraydod[$ck] . '>
 	</td>' .
 			$arraygensel[$ck] . '
 <td ><input class="mediumlistbox" type=text name="currentcage' . $ck . '" id="currentcage' . $ck . '" readonly="readonly" value="' . $arraycur[$ck] . '" >
@@ -285,7 +285,7 @@ if (isset($_POST['get_tempanimals'])) {
 	</td>
 <td ><input class="smalllistbox" type=text name="parents' . $ck . '" id="parents' . $ck . '" readonly="readonly" value="' . $arraypar[$ck] . '" >
 	</td>
-<td ><input class="smalllistbox" type=text name="newcomments' . $ck . '" id="newcomments' . $ck . '" value="' . $arraycom[$ck] . '">
+<td ><input class="smalllistbox" type=text name="newcomments' . $ck . '" id="newcomments' . $ck . '" oninput="mbMarkDirty(this)" value="' . $arraycom[$ck] . '">
 	</td>
 <td ><input class="smalllistbox" type=text name="bulkcomments' . $ck . '" id="bulkcomments' . $ck . '" value="' . $arraybkc[$ck] . '">
 	</td>
@@ -296,6 +296,14 @@ if (isset($_POST['get_tempanimals'])) {
 	$testtable = $temptable . $temprow . '</table>
 <br><br>
 <input type=hidden id="mankey" name="mankey" value="' . implode(',', $arrayman) . '">
+<!-- P4 (#20): group euth / group comment tools. Client-side only; values populate the per-row dod / newcomments inputs, which the user reviews and commits through the normal confirm_changes workflow. The group controls carry no name attribute, so they are never posted. -->
+<div id="group_tools" style="margin:6px 0;">
+<input type=button id="btn_group_euth" value="Group Euth" onclick="mbToggleGroupEuth()">
+<span id="group_euth_ctrl" style="display:none;"> DOD for all managed animals: <input type=date id="group_dod" oninput="mbGroupEuthApply()"></span>
+&nbsp;&nbsp;
+<input type=button id="btn_group_comment" value="Group Comment" onclick="mbToggleGroupComment()">
+<span id="group_comment_ctrl" style="display:none;"> comment for all managed animals: <input type=text id="group_comment" class="smalllistbox"> <input type=button id="btn_group_comment_apply" value="Apply to all" onclick="mbGroupCommentApply()"></span>
+</div>
 <input type=submit id="confirm_changes" name="confirm_changes" value="Confirm Changes">';
 }
 
@@ -332,24 +340,24 @@ if (isset($_POST['confirm_changes'])) {
 		if (empty($dob[$man])) {
 			$dob[$man] = 'null';
 		} else {
-			$dob[$man] = "'" . $dob[$man] . "'";
+			$dob[$man] = "'" . $conn->real_escape_string($dob[$man]) . "'";
 		}
 
 		if (empty($dow[$man])) {
 			$dow[$man] = 'null';
 		} else {
-			$dow[$man] = "'" . $dow[$man] . "'";
+			$dow[$man] = "'" . $conn->real_escape_string($dow[$man]) . "'";
 		}
 
 		if (empty($dod[$man])) {
 			$dod[$man] = 'null';
 		} else {
-			$dod[$man] = "'" . $dod[$man] . "'";
+			$dod[$man] = "'" . $conn->real_escape_string($dod[$man]) . "'";
 		}
 
 		$sqltext .= "UPDATE `table_animals` 
-		SET `line`='" . $line[$man] . "',`idno`='" . $idno[$man] . "',`sex`='" . $sex[$man] . "',`eartag`='" . $eartag[$man] . "',`dob`=" . $dob[$man] . ",`dow`=" . $dow[$man] . ",`dod`=" . $dod[$man] . " 
-		WHERE `animalautono`=" . $man . ";" .
+		SET `line`='" . $conn->real_escape_string($line[$man]) . "',`idno`='" . $conn->real_escape_string($idno[$man]) . "',`sex`='" . $conn->real_escape_string($sex[$man]) . "',`eartag`='" . $conn->real_escape_string($eartag[$man]) . "',`dob`=" . $dob[$man] . ",`dow`=" . $dow[$man] . ",`dod`=" . $dod[$man] . " 
+		WHERE `animalautono`=" . (int)$man . ";" .
 			"UPDATE `table_animals` 
 		SET `dob`=NULL WHERE `dob`=0;" .
 			"UPDATE `table_animals` 
@@ -358,12 +366,12 @@ if (isset($_POST['confirm_changes'])) {
 		SET `dod`=NULL WHERE `dod`=0;";
 		//data_comments
 		if ($comments[$man] != "") {
-			$sqltext .= "INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (" . $man . ",curdate(),'" . $comments[$man] . "');";
+			$sqltext .= "INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (" . (int)$man . ",curdate(),'" . $conn->real_escape_string($comments[$man]) . "');";
 		}
 		//table_genotypes
 		foreach (range(0, $genecount - 1, 1) as $i) {
 			if ($genearray[$i][$man] != "") {
-				$sqltext .= "UPDATE `table_genotypes` SET `allele`='" . $genearray[$i][$man] . "' WHERE `animalautono`=" . $man . " and `allelegroup`='" . $genelist[$i] . "';";
+				$sqltext .= "UPDATE `table_genotypes` SET `allele`='" . $conn->real_escape_string($genearray[$i][$man]) . "' WHERE `animalautono`=" . (int)$man . " and `allelegroup`='" . $conn->real_escape_string($genelist[$i]) . "';";
 			}
 		}
 	}
@@ -587,6 +595,41 @@ $conn->close();
 			<script type="text/javascript">
 				function submitForm() {
 					document.getElementById("animals_management_form").submit();
+				}
+				// P4 (#20): group euth / group comment. Fan one value across every managed row,
+				// skipping any field the user has manually edited this session (data-dirty).
+				// Programmatic .value writes do not fire oninput, so group-applies never mark a
+				// field dirty; only real typing does.
+				function mbManagedKeys() {
+					var mk = document.getElementById("mankey");
+					if (!mk || mk.value === "") { return []; }
+					return mk.value.split(",");
+				}
+				function mbMarkDirty(el) { if (el) { el.setAttribute("data-dirty", "1"); } }
+				function mbToggleGroupEuth() {
+					var e = document.getElementById("group_euth_ctrl");
+					e.style.display = (e.style.display === "none") ? "inline" : "none";
+				}
+				function mbToggleGroupComment() {
+					var e = document.getElementById("group_comment_ctrl");
+					e.style.display = (e.style.display === "none") ? "inline" : "none";
+				}
+				function mbGroupEuthApply() {
+					var d = document.getElementById("group_dod").value;
+					mbManagedKeys().forEach(function (man) {
+						var f = document.getElementById("dod" + man);
+						// skip fields the user hand-edited this session (data-dirty) and animals that
+						// already had a DOD when the record was retrieved (data-locked, set server-side)
+						// so a pre-existing DOD is never overwritten by a group euth.
+						if (f && f.getAttribute("data-dirty") !== "1" && f.getAttribute("data-locked") !== "1") { f.value = d; }
+					});
+				}
+				function mbGroupCommentApply() {
+					var c = document.getElementById("group_comment").value;
+					mbManagedKeys().forEach(function (man) {
+						var f = document.getElementById("newcomments" + man);
+						if (f && f.getAttribute("data-dirty") !== "1") { f.value = c; }
+					});
 				}
 			</script>
 			<table>
