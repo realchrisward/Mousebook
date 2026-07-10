@@ -94,188 +94,127 @@ if (!isset($_POST['submit_cages'])) {
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 //Add animals individually to cage1|2|3|4
 if (isset($_POST['addcage1_single'])) {
-	$animals_selection = ($_POST['animals_selection'] ?? '');
-	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage1` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// P3 #21: the source list is a multi-select; add the whole selected subset.
+	$sel = $_POST['animals_selection'] ?? array();
+	mb_stage_add($dbname, 1, $sel);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //cage2
 if (isset($_POST['addcage2_single'])) {
-	$animals_selection = ($_POST['animals_selection'] ?? '');
-	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage2` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// P3 #21: the source list is a multi-select; add the whole selected subset.
+	$sel = $_POST['animals_selection'] ?? array();
+	mb_stage_add($dbname, 2, $sel);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //cage3
 if (isset($_POST['addcage3_single'])) {
-	$animals_selection = ($_POST['animals_selection'] ?? '');
-	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage3` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// P3 #21: the source list is a multi-select; add the whole selected subset.
+	$sel = $_POST['animals_selection'] ?? array();
+	mb_stage_add($dbname, 3, $sel);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //cage4
 if (isset($_POST['addcage4_single'])) {
-	$animals_selection = ($_POST['animals_selection'] ?? '');
-	$sqlaction = 'add animal:' . $animals_selection;
-	$sqltext = "INSERT INTO `" . $dbname . "`.`temp_cage4` (`animalautono`) VALUES (" . (int)$animals_selection . ");";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// P3 #21: the source list is a multi-select; add the whole selected subset.
+	$sel = $_POST['animals_selection'] ?? array();
+	mb_stage_add($dbname, 4, $sel);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //Remove animals individually to cage1|2|3|4
 if (isset($_POST['remcage1_single'])) {
-	$animals_selection = ($_POST['cage1_selection'] ?? '');
-	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage1` WHERE `animalautono`=" . (int)$animals_selection . ";";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	$sel = $_POST['cage1_selection'] ?? '';
+	mb_stage_remove($dbname, 1, $sel);
+	$sqlaction = 'rem animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //cage2
 if (isset($_POST['remcage2_single'])) {
-	$animals_selection = ($_POST['cage2_selection'] ?? '');
-	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage2` WHERE `animalautono`=" . (int)$animals_selection . ";";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	$sel = $_POST['cage2_selection'] ?? '';
+	mb_stage_remove($dbname, 2, $sel);
+	$sqlaction = 'rem animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //cage3
 if (isset($_POST['remcage3_single'])) {
-	$animals_selection = ($_POST['cage3_selection'] ?? '');
-	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage3` WHERE `animalautono`=" . (int)$animals_selection . ";";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	$sel = $_POST['cage3_selection'] ?? '';
+	mb_stage_remove($dbname, 3, $sel);
+	$sqlaction = 'rem animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //cage4
 if (isset($_POST['remcage4_single'])) {
-	$animals_selection = ($_POST['cage4_selection'] ?? '');
-	$sqlaction = 'rem animal:' . $animals_selection;
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage4` WHERE `animalautono`=" . (int)$animals_selection . ";";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	$sel = $_POST['cage4_selection'] ?? '';
+	mb_stage_remove($dbname, 4, $sel);
+	$sqlaction = 'rem animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($sel));
+	$sqlstatus = 'successful';
 }
 //Bulk add to cage 1|2|3|4
 if (isset($_POST['addcage1_batch'])) {
-	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
-	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `temp_cage1` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// "add all filtered": batchlist holds every currently-listed animal.
+	$batch = $_POST['animals_batchlist'] ?? '';
+	mb_stage_add($dbname, 1, $batch);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($batch));
+	$sqlstatus = 'successful';
 }
 //cage2
 if (isset($_POST['addcage2_batch'])) {
-	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
-	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `temp_cage2` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// "add all filtered": batchlist holds every currently-listed animal.
+	$batch = $_POST['animals_batchlist'] ?? '';
+	mb_stage_add($dbname, 2, $batch);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($batch));
+	$sqlstatus = 'successful';
 }
 //cage3
 if (isset($_POST['addcage3_batch'])) {
-	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
-	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `temp_cage3` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// "add all filtered": batchlist holds every currently-listed animal.
+	$batch = $_POST['animals_batchlist'] ?? '';
+	mb_stage_add($dbname, 3, $batch);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($batch));
+	$sqlstatus = 'successful';
 }
 //cage4
 if (isset($_POST['addcage4_batch'])) {
-	$animals_batch = mb_int_values_list($_POST['animals_batchlist'] ?? ''); // P2 (2b): integers only
-	$sqlaction = 'add animal:' . $animals_batch;
-	$sqltext = "INSERT INTO `temp_cage4` (`animalautono`) VALUES " . $animals_batch . ";";
-	if ($animals_batch !== '' && $conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	// "add all filtered": batchlist holds every currently-listed animal.
+	$batch = $_POST['animals_batchlist'] ?? '';
+	mb_stage_add($dbname, 4, $batch);
+	$sqlaction = 'add animal(s):' . mb_stage_in_csv(mb_stage_normalize_ints($batch));
+	$sqlstatus = 'successful';
 }
 
 //Bulk remove from 1|2|3|4
 if (isset($_POST['remcage1_batch'])) {
 	$sqlaction = 'clear cage';
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage1`;";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	mb_stage_clear($dbname, 1);
+	$sqlstatus = 'successful';
 }
 //cage2
 if (isset($_POST['remcage2_batch'])) {
 	$sqlaction = 'clear cage';
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage2`;";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	mb_stage_clear($dbname, 2);
+	$sqlstatus = 'successful';
 }
 //cage3
 if (isset($_POST['remcage3_batch'])) {
 	$sqlaction = 'clear cage';
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage3`;";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	mb_stage_clear($dbname, 3);
+	$sqlstatus = 'successful';
 }
 //cage4
 if (isset($_POST['remcage4_batch'])) {
 	$sqlaction = 'clear cage';
-	$sqltext = "DELETE FROM `" . $dbname . "`.`temp_cage4`;";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful';
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
+	mb_stage_clear($dbname, 4);
+	$sqlstatus = 'successful';
 }
 
 //clear all cages
 if (isset($_POST['clear_cages'])) {
 	$sqlactionclear = 'clear all cages';
-	$sqltextclear = "DELETE FROM `" . $dbname . "`.`temp_cage1`;DELETE FROM `" . $dbname . "`.`temp_cage2`;
-DELETE FROM `" . $dbname . "`.`temp_cage3`;DELETE FROM `" . $dbname . "`.`temp_cage4`;";
-	if ($conn->multi_query($sqltextclear) === TRUE) {
-		$sqlstatusclear = 'successful';
-	} else {
-		$sqlstatusclear = 'failed ' . $conn->error . '...' . $sqltextclear;
-	}
+	mb_stage_clear_all($dbname);
+	$sqlstatusclear = 'successful';
 }
 
 //submit cages
@@ -328,76 +267,84 @@ if (isset($_POST['submit_cages'])) {
 	$c1values = $c2values = $c3values = $c4values = "";
 	$c1updates = $c2updates = $c3updates = $c4updates = "";
 	if ($xcage1size > 0) {
-		$PrintCages .= "('" . $xcage1name . "'),";
-		$c1values = "('" . $xcage1name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage1no . ",'" . $xcage1contents . "','" . $conn->real_escape_string($xcage1location) . "','" . $conn->real_escape_string($xcage1role) . "'),";
-		if ($xmove_selection === "Weaning") {
-			$c1updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage1` 
-ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage1name . "',
-`table_animals`.`dow`='" . $xsetupdate . "';
+		// P2 residual: escape cage name / line / category / contents (were raw-interpolated).
+		$esc_c1name = $conn->real_escape_string($xcage1name);
+		$PrintCages .= "('" . $esc_c1name . "'),";
+		$c1values = "('" . $esc_c1name . "','" . $conn->real_escape_string($xcategory_selection) . "','" . $conn->real_escape_string($xsetupdate) . "',1,'" . $conn->real_escape_string($xline_assignment) . "'," . (int)$xcage1no . ",'" . $conn->real_escape_string($xcage1contents) . "','" . $conn->real_escape_string($xcage1location) . "','" . $conn->real_escape_string($xcage1role) . "'),";
+		// P3 Option A: move the session-staged animals via WHERE animalautono IN (...) instead of JOIN temp_cage1.
+		$c1in = mb_stage_in_csv(mb_stage_slot($dbname, 1));
+		if ($c1in !== '') {
+			$esc_c1date = $conn->real_escape_string($xsetupdate);
+			if ($xmove_selection === "Weaning") {
+				$c1updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c1name . "', `dow`='" . $esc_c1date . "' WHERE `animalautono` IN (" . $c1in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage1name . "' as general_comment FROM `" . $dbname . "`.`temp_cage1`;";
-		} else {
-			$c1updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage1` 
-ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage1name . "';
+SELECT `animalautono`, '" . $esc_c1date . "' as commentdate, 'moved to cage:" . $esc_c1name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c1in . ");";
+			} else {
+				$c1updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c1name . "' WHERE `animalautono` IN (" . $c1in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage1name . "' as general_comment FROM `" . $dbname . "`.`temp_cage1`;";
+SELECT `animalautono`, '" . $esc_c1date . "' as commentdate, 'moved to cage:" . $esc_c1name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c1in . ");";
+			}
 		}
 	}
 
 	if ($xcage2size > 0) {
-		$PrintCages .= "('" . $xcage2name . "'),";
-		$c2values = "('" . $xcage2name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage2no . ",'" . $xcage2contents . "','" . $conn->real_escape_string($xcage2location) . "','" . $conn->real_escape_string($xcage2role) . "'),";
-		if ($xmove_selection === "Weaning") {
-			$c2updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage2` 
-ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage2name . "',
-`table_animals`.`dow`='" . $xsetupdate . "';
+		// P2 residual: escape cage name / line / category / contents (were raw-interpolated).
+		$esc_c2name = $conn->real_escape_string($xcage2name);
+		$PrintCages .= "('" . $esc_c2name . "'),";
+		$c2values = "('" . $esc_c2name . "','" . $conn->real_escape_string($xcategory_selection) . "','" . $conn->real_escape_string($xsetupdate) . "',1,'" . $conn->real_escape_string($xline_assignment) . "'," . (int)$xcage2no . ",'" . $conn->real_escape_string($xcage2contents) . "','" . $conn->real_escape_string($xcage2location) . "','" . $conn->real_escape_string($xcage2role) . "'),";
+		// P3 Option A: move the session-staged animals via WHERE animalautono IN (...) instead of JOIN temp_cage2.
+		$c2in = mb_stage_in_csv(mb_stage_slot($dbname, 2));
+		if ($c2in !== '') {
+			$esc_c2date = $conn->real_escape_string($xsetupdate);
+			if ($xmove_selection === "Weaning") {
+				$c2updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c2name . "', `dow`='" . $esc_c2date . "' WHERE `animalautono` IN (" . $c2in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage2name . "' as general_comment FROM `" . $dbname . "`.`temp_cage2`;";
-		} else {
-			$c2updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage2` 
-ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage2name . "';
+SELECT `animalautono`, '" . $esc_c2date . "' as commentdate, 'moved to cage:" . $esc_c2name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c2in . ");";
+			} else {
+				$c2updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c2name . "' WHERE `animalautono` IN (" . $c2in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage2name . "' as general_comment FROM `" . $dbname . "`.`temp_cage2`;";
+SELECT `animalautono`, '" . $esc_c2date . "' as commentdate, 'moved to cage:" . $esc_c2name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c2in . ");";
+			}
 		}
 	}
 	if ($xcage3size > 0) {
-		$PrintCages .= "('" . $xcage3name . "'),";
-		$c3values = "('" . $xcage3name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage3no . ",'" . $xcage3contents . "','" . $conn->real_escape_string($xcage3location) . "','" . $conn->real_escape_string($xcage3role) . "'),";
-		if ($xmove_selection === "Weaning") {
-			$c3updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage3` 
-ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage3name . "',
-`table_animals`.`dow`='" . $xsetupdate . "';
+		// P2 residual: escape cage name / line / category / contents (were raw-interpolated).
+		$esc_c3name = $conn->real_escape_string($xcage3name);
+		$PrintCages .= "('" . $esc_c3name . "'),";
+		$c3values = "('" . $esc_c3name . "','" . $conn->real_escape_string($xcategory_selection) . "','" . $conn->real_escape_string($xsetupdate) . "',1,'" . $conn->real_escape_string($xline_assignment) . "'," . (int)$xcage3no . ",'" . $conn->real_escape_string($xcage3contents) . "','" . $conn->real_escape_string($xcage3location) . "','" . $conn->real_escape_string($xcage3role) . "'),";
+		// P3 Option A: move the session-staged animals via WHERE animalautono IN (...) instead of JOIN temp_cage3.
+		$c3in = mb_stage_in_csv(mb_stage_slot($dbname, 3));
+		if ($c3in !== '') {
+			$esc_c3date = $conn->real_escape_string($xsetupdate);
+			if ($xmove_selection === "Weaning") {
+				$c3updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c3name . "', `dow`='" . $esc_c3date . "' WHERE `animalautono` IN (" . $c3in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage3name . "' as general_comment FROM `" . $dbname . "`.`temp_cage3`;";
-		} else {
-			$c3updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage3` 
-ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage3name . "';
+SELECT `animalautono`, '" . $esc_c3date . "' as commentdate, 'moved to cage:" . $esc_c3name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c3in . ");";
+			} else {
+				$c3updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c3name . "' WHERE `animalautono` IN (" . $c3in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage3name . "' as general_comment FROM `" . $dbname . "`.`temp_cage3`;";
+SELECT `animalautono`, '" . $esc_c3date . "' as commentdate, 'moved to cage:" . $esc_c3name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c3in . ");";
+			}
 		}
 	}
 	if ($xcage4size > 0) {
-		$PrintCages .= "('" . $xcage4name . "'),";
-		$c4values = "('" . $xcage4name . "','" . $xcategory_selection . "','" . $xsetupdate . "',1,'" . $xline_assignment . "'," . $xcage4no . ",'" . $xcage4contents . "','" . $conn->real_escape_string($xcage4location) . "','" . $conn->real_escape_string($xcage4role) . "'),";
-		if ($xmove_selection === "Weaning") {
-			$c4updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage4` 
-ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage4name . "',
-`table_animals`.`dow`='" . $xsetupdate . "';
+		// P2 residual: escape cage name / line / category / contents (were raw-interpolated).
+		$esc_c4name = $conn->real_escape_string($xcage4name);
+		$PrintCages .= "('" . $esc_c4name . "'),";
+		$c4values = "('" . $esc_c4name . "','" . $conn->real_escape_string($xcategory_selection) . "','" . $conn->real_escape_string($xsetupdate) . "',1,'" . $conn->real_escape_string($xline_assignment) . "'," . (int)$xcage4no . ",'" . $conn->real_escape_string($xcage4contents) . "','" . $conn->real_escape_string($xcage4location) . "','" . $conn->real_escape_string($xcage4role) . "'),";
+		// P3 Option A: move the session-staged animals via WHERE animalautono IN (...) instead of JOIN temp_cage4.
+		$c4in = mb_stage_in_csv(mb_stage_slot($dbname, 4));
+		if ($c4in !== '') {
+			$esc_c4date = $conn->real_escape_string($xsetupdate);
+			if ($xmove_selection === "Weaning") {
+				$c4updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c4name . "', `dow`='" . $esc_c4date . "' WHERE `animalautono` IN (" . $c4in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage4name . "' as general_comment FROM `" . $dbname . "`.`temp_cage4`;";
-		} else {
-			$c4updates = "UPDATE `" . $dbname . "`.`table_animals` join `" . $dbname . "`.`temp_cage4` 
-ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono`
-SET `table_animals`.`currentcage`='" . $xcage4name . "';
+SELECT `animalautono`, '" . $esc_c4date . "' as commentdate, 'moved to cage:" . $esc_c4name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c4in . ");";
+			} else {
+				$c4updates = "UPDATE `" . $dbname . "`.`table_animals` SET `currentcage`='" . $esc_c4name . "' WHERE `animalautono` IN (" . $c4in . ");
 INSERT INTO `" . $dbname . "`.data_comments (`animalautono`,`commentdate`,`general_comment`)
-Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . $xcage4name . "' as general_comment FROM `" . $dbname . "`.`temp_cage4`;";
+SELECT `animalautono`, '" . $esc_c4date . "' as commentdate, 'moved to cage:" . $esc_c4name . "' as general_comment FROM `" . $dbname . "`.`table_animals` WHERE `animalautono` IN (" . $c4in . ");";
+			}
 		}
 	}
 	$xInsertValues = substr($c1values . $c2values . $c3values . $c4values, 0, -1);
@@ -407,12 +354,10 @@ Select `animalautono`, '" . $xsetupdate . "' as commentdate, 'moved to cage:" . 
 	$insertTableCages = "INSERT INTO `" . $dbname . "`.`table_cages` (`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`,`cageno`,`cagecontents`,`cagelocation_room`,`cagerole_assignment`) VALUES " . $xInsertValues . ";";
 	//insert into printing list
 	$printlist = "Insert INTO `" . $dbname . "`.`CagesForPrinting` (`cageid`) VALUES " . $PrintCages . ";";
-	//clear cages
-	$sqltextclear = "DELETE FROM `" . $dbname . "`.`temp_cage1`;DELETE FROM `" . $dbname . "`.`temp_cage2`;
-DELETE FROM `" . $dbname . "`.`temp_cage3`;DELETE FROM `" . $dbname . "`.`temp_cage4`;";
+	//staged animals live in the session (P3 Option A); cleared on success below, not via SQL.
 	//merge queries
 
-	$sqltext = $insertTableCages . $c1updates . $c2updates . $c3updates . $c4updates . $sqltextclear . $printlist;
+	$sqltext = $insertTableCages . $c1updates . $c2updates . $c3updates . $c4updates . $printlist;
 
 	//commit-time collision guard: since this page was rendered, a concurrent transfer — or another of
 	//this user's own open manage-cages windows (the top-of-request purge is keyed by user, so a newer
@@ -457,6 +402,8 @@ DELETE FROM `" . $dbname . "`.`temp_cage3`;DELETE FROM `" . $dbname . "`.`temp_c
 	} else if ($conn->multi_query($sqltext) === TRUE) {
 		//flush the mysql submission
 		while (mysqli_next_result($conn));
+		//P3 Option A: committed — clear this session's staged sets.
+		mb_stage_clear_all($dbname);
 		$sqlstatus = 'successful - ' . $sqltext;
 		//micro-window hardening: the cages now exist in table_cages, so release this user's reservation
 		//for the committed line+category. Scoped to line+category so other open windows keep theirs.
@@ -593,83 +540,91 @@ $line_listbox .= '</select>';
 $lineassign_listbox .= '</select>';
 $conn->close();
 
-//temp_cage1 contents
+//temp_cage1 contents (P3 Option A: rendered from the session slot)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage1`.`animalautono` FROM `table_animals` JOIN `temp_cage1` ON `table_animals`.`animalautono`=`temp_cage1`.`animalautono` order by `sex` desc, `line`, `idno`;";
-$results = $conn->query($sqltext);
-$cage1size = mysqli_num_rows($results);
-$cage1_listbox = '<select id="cage1_selection" name="cage1_selection" size=6 class="largelistbox onchange="">;';
-//loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
-	if ($row['animalautono'] === $cage1_selection) {
-		$cage1_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
-	} else {
-		$cage1_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+$cage1_in = mb_stage_in_csv(mb_stage_slot($dbname, 1));
+$cage1size = 0;
+$animalc1 = array();
+$cage1_listbox = '<select id="cage1_selection" name="cage1_selection" size=6 class="largelistbox">';
+if ($cage1_in !== '') {
+	$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`animalautono` FROM `table_animals` WHERE `animalautono` IN (" . $cage1_in . ") order by `sex` desc, `line`, `idno`;";
+	$results = $conn->query($sqltext);
+	if ($results instanceof mysqli_result) {
+		$cage1size = mysqli_num_rows($results);
+		while ($row = mysqli_fetch_array($results)) {
+			$sel = ($row['animalautono'] === $cage1_selection) ? ' selected' : '';
+			$cage1_listbox .= '<option value="' . $row['animalautono'] . '"' . $sel . '>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+			$animalc1[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
+		}
 	}
-	$animalc1[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
-$cage1contents = implode(', ', $animalc1 ?? []);
-//close the table
+$cage1contents = implode(', ', $animalc1);
 $cage1_listbox .= '</select>';
 $conn->close();
 
-//temp_cage2 contents
+//temp_cage2 contents (P3 Option A: rendered from the session slot)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage2`.`animalautono` FROM `table_animals` JOIN `temp_cage2` ON `table_animals`.`animalautono`=`temp_cage2`.`animalautono` order by `sex` desc, `line`, `idno`;";
-$results = $conn->query($sqltext);
-$cage2size = mysqli_num_rows($results);
-$cage2_listbox = '<select id="cage2_selection" name="cage2_selection" size=6 class="largelistbox onchange="">;';
-//loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
-	if ($row['animalautono'] === $cage2_selection) {
-		$cage2_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
-	} else {
-		$cage2_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+$cage2_in = mb_stage_in_csv(mb_stage_slot($dbname, 2));
+$cage2size = 0;
+$animalc2 = array();
+$cage2_listbox = '<select id="cage2_selection" name="cage2_selection" size=6 class="largelistbox">';
+if ($cage2_in !== '') {
+	$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`animalautono` FROM `table_animals` WHERE `animalautono` IN (" . $cage2_in . ") order by `sex` desc, `line`, `idno`;";
+	$results = $conn->query($sqltext);
+	if ($results instanceof mysqli_result) {
+		$cage2size = mysqli_num_rows($results);
+		while ($row = mysqli_fetch_array($results)) {
+			$sel = ($row['animalautono'] === $cage2_selection) ? ' selected' : '';
+			$cage2_listbox .= '<option value="' . $row['animalautono'] . '"' . $sel . '>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+			$animalc2[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
+		}
 	}
-	$animalc2[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
-$cage2contents = implode(', ', $animalc2 ?? []);
-//close the table
+$cage2contents = implode(', ', $animalc2);
 $cage2_listbox .= '</select>';
 $conn->close();
 
-//temp_cage3 contents
+//temp_cage3 contents (P3 Option A: rendered from the session slot)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage3`.`animalautono` FROM `table_animals` JOIN `temp_cage3` ON `table_animals`.`animalautono`=`temp_cage3`.`animalautono` order by `sex` desc, `line`, `idno`;";
-$results = $conn->query($sqltext);
-$cage3size = mysqli_num_rows($results);
-$cage3_listbox = '<select id="cage3_selection" name="cage3_selection" size=6 class="largelistbox onchange="">;';
-//loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
-	if ($row['animalautono'] === $cage3_selection) {
-		$cage3_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
-	} else {
-		$cage3_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+$cage3_in = mb_stage_in_csv(mb_stage_slot($dbname, 3));
+$cage3size = 0;
+$animalc3 = array();
+$cage3_listbox = '<select id="cage3_selection" name="cage3_selection" size=6 class="largelistbox">';
+if ($cage3_in !== '') {
+	$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`animalautono` FROM `table_animals` WHERE `animalautono` IN (" . $cage3_in . ") order by `sex` desc, `line`, `idno`;";
+	$results = $conn->query($sqltext);
+	if ($results instanceof mysqli_result) {
+		$cage3size = mysqli_num_rows($results);
+		while ($row = mysqli_fetch_array($results)) {
+			$sel = ($row['animalautono'] === $cage3_selection) ? ' selected' : '';
+			$cage3_listbox .= '<option value="' . $row['animalautono'] . '"' . $sel . '>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+			$animalc3[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
+		}
 	}
-	$animalc3[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
-$cage3contents = implode(', ', $animalc3 ?? []);
-//close the table
+$cage3contents = implode(', ', $animalc3);
 $cage3_listbox .= '</select>';
 $conn->close();
 
-//temp_cage4 contents
+//temp_cage4 contents (P3 Option A: rendered from the session slot)
 $conn = new mysqli($host, $accessun, $accesspw, $dbname);
-$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`temp_cage4`.`animalautono` FROM `table_animals` JOIN `temp_cage4` ON `table_animals`.`animalautono`=`temp_cage4`.`animalautono` order by `sex` desc, `line`, `idno`;";
-$results = $conn->query($sqltext);
-$cage4size = mysqli_num_rows($results);
-$cage4_listbox = '<select id="cage4_selection" name="cage4_selection" size=6 class="largelistbox onchange="">;';
-//loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
-	if ($row['animalautono'] === $cage4_selection) {
-		$cage4_listbox .= '<option value="' . $row['animalautono'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
-	} else {
-		$cage4_listbox .= '<option value="' . $row['animalautono'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+$cage4_in = mb_stage_in_csv(mb_stage_slot($dbname, 4));
+$cage4size = 0;
+$animalc4 = array();
+$cage4_listbox = '<select id="cage4_selection" name="cage4_selection" size=6 class="largelistbox">';
+if ($cage4_in !== '') {
+	$sqltext = "SELECT `line`,`idno`,`sex`,`dob`,`currentcage`,`animalautono` FROM `table_animals` WHERE `animalautono` IN (" . $cage4_in . ") order by `sex` desc, `line`, `idno`;";
+	$results = $conn->query($sqltext);
+	if ($results instanceof mysqli_result) {
+		$cage4size = mysqli_num_rows($results);
+		while ($row = mysqli_fetch_array($results)) {
+			$sel = ($row['animalautono'] === $cage4_selection) ? ' selected' : '';
+			$cage4_listbox .= '<option value="' . $row['animalautono'] . '"' . $sel . '>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
+			$animalc4[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
+		}
 	}
-	$animalc4[] = $row['line'] . '-' . $row['idno'] . '(' . $row['sex'] . ')';
 }
-$cage4contents = implode(', ', $animalc4 ?? []);
-//close the table
+$cage4contents = implode(', ', $animalc4);
 $cage4_listbox .= '</select>';
 $conn->close();
 
@@ -686,9 +641,12 @@ if (!in_array('Limbo', $loc_assign_values, true)) {
 $role_assign_values = role_assign_options($conn);
 foreach (array(1, 2, 3, 4) as $cn) {
 	$firstcur = '';
-	$fr = $conn->query("SELECT currentcage FROM table_animals JOIN temp_cage$cn ON table_animals.animalautono=temp_cage$cn.animalautono ORDER BY sex desc, line, idno LIMIT 1;");
-	if ($fr && ($frow = mysqli_fetch_array($fr))) {
-		$firstcur = $frow['currentcage'];
+	$slot_in = mb_stage_in_csv(mb_stage_slot($dbname, $cn));
+	if ($slot_in !== '') {
+		$fr = $conn->query("SELECT currentcage FROM table_animals WHERE animalautono IN (" . $slot_in . ") ORDER BY sex desc, line, idno LIMIT 1;");
+		if ($fr && ($frow = mysqli_fetch_array($fr))) {
+			$firstcur = $frow['currentcage'];
+		}
 	}
 	$deflorm = 'Limbo';
 	if ($firstcur !== '' && $firstcur !== null) {
@@ -769,10 +727,11 @@ $sql_where_text = substr($lf . $gf . $mf . $sf . $locf . $rolef, 0, -4);        
 if (strlen($sql_where_text) > 0) {
 	$sql_where_text = ' and ' . $sql_where_text;
 }
-$sqltext = "SELECT `currentcage` FROM `table_animals` left join temp_cage1 on table_animals.animalautono=temp_cage1.animalautono 
-left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left join temp_cage3 on table_animals.animalautono=temp_cage3.animalautono 
-left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and
-temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null" . $sql_where_text . " GROUP BY `currentcage`;";
+// P3 Option A: exclude the union of all four session-staged slots from both source lists.
+// Computed once here (before the first consumer) so it is defined regardless of which slots hold animals.
+$stage_excl = mb_stage_in_csv(mb_stage_union($dbname));
+$excl_clause = ($stage_excl !== '') ? (' and table_animals.animalautono NOT IN (' . $stage_excl . ')') : '';
+$sqltext = "SELECT `currentcage` FROM `table_animals` where dod is null" . $excl_clause . $sql_where_text . " GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
 //echo $sqltext;
 $sourcecage_listbox = '<select id="sourcecage_selection" name="sourcecage_selection" size=14 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
@@ -818,23 +777,24 @@ if ($source_category_selection === "all") {
 if ($sourcecage_selection == "" or $sourcecage_selection === "all") {
 	$cf = '';
 } else {
-	$cf = '`currentcage`="' . $sourcecage_selection . '" and ';
+	// P2 residual: escape sourcecage before interpolation.
+	$cf = '`currentcage`="' . $conn->real_escape_string($sourcecage_selection) . '" and ';
 }
 
 $sql_where_text = substr($lf . $gf . $mf . $sf . $cf . $locf . $rolef, 0, -4);  // 649
 if (strlen($sql_where_text) > 0) {
 	$sql_where_text = ' and ' . $sql_where_text;
 }
-$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` left join temp_cage1 on table_animals.animalautono=temp_cage1.animalautono 
-left join temp_cage2 on table_animals.animalautono=temp_cage2.animalautono left join temp_cage3 on table_animals.animalautono=temp_cage3.animalautono 
-left join temp_cage4 on table_animals.animalautono=temp_cage4.animalautono where dod is null and 
-temp_cage1.animalautono is null and temp_cage2.animalautono is null and temp_cage3.animalautono is null and temp_cage4.animalautono is null" . $sql_where_text . " ;";
+// $excl_clause was computed once above (before the source-cage query) and is reused here unchanged.
+$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null" . $excl_clause . $sql_where_text . " ;";
 $results = $conn->query($sqltext);
 $animals_results = $results;
-$animals_listbox = '<select id="animals_selection" name="animals_selection" size=15 class="largelistbox onchange="submitForm()">;';
+// P3 #21: multi-select source list (no onchange auto-submit — pick a subset, then click add).
+$animals_sel_set = array_map('strval', is_array($animals_selection) ? $animals_selection : array((string)$animals_selection));
+$animals_listbox = '<select id="animals_selection" name="animals_selection[]" multiple size=15 class="largelistbox">';
 //loop and prepare table
 while ($row = mysqli_fetch_array($results)) {
-	if ($row['man'] === $animals_selection) {
+	if (in_array((string)$row['man'], $animals_sel_set, true)) {
 		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
 		$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
