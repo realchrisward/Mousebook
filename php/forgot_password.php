@@ -70,7 +70,7 @@ if (isset($_POST['button_forgot'])) {
                               . 'If you did not request this, you can ignore this email.</p>';
                         $mailerr = '';
                         // Best-effort; failures are logged, never surfaced (no enumeration).
-                        if (!mb_send_mail($config, $email, $subject, $body, $mailerr)) {
+                        if (!mb_send_relay_mail($config, $email, $subject, $body, $mailerr)) {
                             error_log('forgot_password mail failed: ' . $mailerr);
                         }
                     }

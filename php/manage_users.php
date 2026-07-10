@@ -69,7 +69,7 @@ $send_link = function (string $to, string $subject, string $intro, string $link,
           . '<p>This link expires in ' . htmlspecialchars($expiry, ENT_QUOTES)
           . ' and can be used once.</p>';
     $err = '';
-    if (!mb_send_mail($config, $to, $subject, $body, $err)) {
+    if (!mb_send_relay_mail($config, $to, $subject, $body, $err)) {
         error_log('manage_users mail failed: ' . $err);
     }
 };

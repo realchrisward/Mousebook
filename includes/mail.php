@@ -20,7 +20,7 @@
 //
 // Usage:
 //   require_once __DIR__ . '/mail.php';
-//   $ok = mb_send_mail($config, $to, $subject, $html_body, $err);
+//   $ok = mb_send_relay_mail($config, $to, $subject, $html_body, $err);
 //   if (!$ok) { error_log("mail failed: $err"); }
 //
 // Returns true on success, false on failure. On failure the human
@@ -35,7 +35,7 @@ require_once __DIR__ . '/vendor/PHPMailer/Exception.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception as PHPMailerException;
 
-if (!function_exists('mb_send_mail')) {
+if (!function_exists('mb_send_relay_mail')) {
 
     /**
      * Send one message through the configured SMTP relay.
@@ -47,7 +47,7 @@ if (!function_exists('mb_send_mail')) {
      * @param string &$error  out: human-readable failure reason on false
      * @return bool           true on success
      */
-    function mb_send_mail(array $config, string $to, string $subject, string $html, string &$error = ''): bool {
+    function mb_send_relay_mail(array $config, string $to, string $subject, string $html, string &$error = ''): bool {
         $error = '';
 
         if (empty($config['smtp_host'])) {
