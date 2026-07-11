@@ -135,10 +135,27 @@ $sqlstatus='failed - no line selected';
 } elseif (trim($addallele)===''){
 $sqlstatus='failed - no allele group selected';
 } else {
+// M1-B (#25): key_allelebyline has no natural unique key on (line, allelegroup)
+// (only the surrogate `id`), so a repeated/re-added assignment silently created
+// duplicate rows. Guard the app path here; migration_unique_allelebyline.sql
+// adds a UNIQUE index as the backstop and dedupes any pre-existing duplicates.
+$dupchk=$conn->prepare("SELECT 1 FROM `key_allelebyline` WHERE `line`=? AND `allelegroup`=? LIMIT 1");
+$already=false;
+if ($dupchk){
+$dupchk->bind_param('ss',$line,$addallele);
+$dupchk->execute();
+$dupchk->store_result();
+$already=($dupchk->num_rows>0);
+$dupchk->close();
+}
+if ($already){
+$sqlstatus='skipped - allele group already assigned to this line';
+} else {
 $sqltext="INSERT INTO `".$dbname."`.`key_allelebyline` (`line`, `allelegroup`) VALUES ('".$line."', '".$addallele."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus='successful';} else {
 $sqlstatus='failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 }
