@@ -125,6 +125,23 @@ if (isset($_POST['roleB_selection'])) {
 	$roleB_selection = 'Limbo';
 }
 
+// M1-D (#26): apply the cage->role mutation BEFORE the display queries below, so a
+// single POST both assigns the role and shows fresh state (no manual REFRESH). The
+// inputs ($cage_selection, $roleB_selection) are already parsed above.
+if (isset($_POST['addcage_single'])) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$cage_selection = ($_POST['cage_selection'] ?? '');
+	$cageselection = '("' . implode('","', $cage_selection) . '")';
+	$sqltext = "UPDATE `" . $dbname . "`.`table_cages` SET `cagerole_assignment`='" . $roleB_selection . "' WHERE `cageid` in " . $cageselection . ";";
+	if ($conn->query($sqltext) === TRUE) {
+		$sqlstatus = 'successful' . '...' . $sqltext;
+	} else {
+		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
+	}
+	echo $sqlstatus;
+	$conn->close();
+}
+
 //sex filter
 $sex_options = array('all', 'M', 'F', 'unk');
 $sex_listbox = '<select id="sex_filter" name="sex_filter" onchange="submitForm()">';
@@ -258,19 +275,9 @@ $conn->close();
 
 $cage_batchlist = '("' . implode('"),("', $cage_batchlist) . '")';
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-// PATCHED: replaced hardcoded `animalbook`.`table_cages` with `$dbname`.`table_cages`
-if (isset($_POST['addcage_single'])) {
-	$cage_selection = ($_POST['cage_selection'] ?? '');
-	$cageselection = '("' . implode('","', $cage_selection) . '")';
-	$sqltext = "UPDATE `" . $dbname . "`.`table_cages` SET `cagerole_assignment`='" . $roleB_selection . "' WHERE `cageid` in " . $cageselection . ";";
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful' . '...' . $sqltext;
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
-	echo $sqlstatus;
-}
+// M1-D (#26): the addcage_single role mutation now runs above (before the display
+// queries), so the listboxes reflect it in the same POST. The manual REFRESH button
+// that used to work around the one-cycle lag has been removed.
 ?>
 
 <head>
@@ -363,7 +370,6 @@ if (isset($_POST['addcage_single'])) {
 					<td colspan=2><?php echo $cage_listbox; ?></td>
 				</tr>
 			</table>
-			<INPUT type="submit" id="REFRESH" name="REFRESH" value="REFRESH">
 		</form>
 	</div>
 	<div id="footer">

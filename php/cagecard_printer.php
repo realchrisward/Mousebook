@@ -283,6 +283,40 @@ if (isset($_POST['remcage_color'])) {
 	}
 	echo $sqlstatus;
 }
+
+// M1-D (#26): rebuild the queue + source listboxes AFTER the handlers above, so add/
+// remove/clear operations are reflected in the same POST (previously they lagged one
+// cycle and needed a manual re-submit). $cage_batchlist was captured pre-handler, so
+// batch-add still targets the source set the user saw; $sql_where_text (built above)
+// is reused for the fresh source query.
+if ($conn instanceof mysqli) { $conn->close(); }
+$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$results = $conn->query("SELECT `cageid` FROM `CagesForPrinting`;");
+$cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox onchange="">;';
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
+	if ($row['cageid'] === $cagelist_selection) {
+		$cage_listbox .= '<option value="' . $row['cageid'] . '" selected>' . $row['cageid'] . '</option>';
+	} else {
+		$cage_listbox .= '<option value="' . $row['cageid'] . '">' . $row['cageid'] . '</option>';
+	}
+}
+$cage_listbox .= '</select>';
+$conn->close();
+
+$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$sqltext = "SELECT `currentcage` FROM `table_animals` left join CagesForPrinting on table_animals.currentcage=CagesForPrinting.cageid where dod is null and
+CagesForPrinting.cageid is null " . $sql_where_text . " GROUP BY `currentcage`;";
+$results = $conn->query($sqltext);
+$sourcecage_listbox = '<select id="cage_selection" name="cage_selection[]" size=14 class="largelistbox" multiple="multiple" >';
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
+	if ($row['currentcage'] === $cage_selection) {
+		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
+	} else {
+		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '">' . $row['currentcage'] . '</option>';
+	}
+}
+$sourcecage_listbox .= '</select>';
+$conn->close();
 //echo $sqltext;
 //submit cages
 //if (isset($_POST['submit_cages'])){

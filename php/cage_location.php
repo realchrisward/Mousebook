@@ -220,6 +220,27 @@ if (isset($_POST['button_restorelocation'])) {
 	$conn->close();
 }
 
+// M1-D (#26): apply the cage->room move BEFORE the location/cage listboxes below,
+// so a single POST both moves the cages and shows fresh state (no manual REFRESH).
+// Inputs ($cage_selection, $locationB_selection) are parsed above.
+// NOTE (P6, carried): this mutation posts as `addcage_single`, not `button_*`, so
+// mb_guard_write() does not neutralise it for read-only users — still flagged for
+// the non-button_* mutation-path audit.
+if ($dbconnected && isset($_POST['addcage_single'])) {
+	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$cage_selection = ($_POST['cage_selection'] ?? '');
+	$cageselection = '("' . implode('","', $cage_selection) . '")';
+	$sqlaction = 'move cages:' . $cageselection;
+	$sqltext = "UPDATE `" . $dbname . "`.`table_cages` SET `cagelocation_room`='" . $locationB_selection . "' WHERE `cageid` in " . $cageselection . ";";
+	if ($conn->query($sqltext) === TRUE) {
+		$sqlstatus = 'successful' . '...' . $sqltext;
+	} else {
+		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
+	}
+	echo $sqlstatus;
+	$conn->close();
+}
+
 //location dropdowns via shared library:
 //  A = FILTER — any room that currently holds a cage with a live animal
 //      (issue #22: retired-but-in-use rooms included; empty/dead-only excluded)
@@ -339,32 +360,9 @@ $sourcecage_listbox .= '</select>';
 $cage_batchlist = '("' . implode('"),("', $cage_batchlist) . '")';
 
 //functions and form controls
-// -------------------------------------------------------
-// PATCHED: replaced hardcoded `animalbook`.`table_cages`
-// with `$dbname`.`table_cages` in the UPDATE statement.
-// This was the primary cause of cage-move failures on
-// installations using a different database name.
-// -------------------------------------------------------
-// issue #22: only run the move when connected, and open the connection inside
-// the handler so a disconnected/absent session can't fatal on ->query().
-// NOTE (P6): this mutation posts as `addcage_single`, not `button_*`, so the
-// Phase F mb_guard_write() tier gate does not currently neutralise it for
-// read-only users — flagged for the non-button_* mutation-path audit.
-if ($dbconnected && isset($_POST['addcage_single'])) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-	$cage_selection = ($_POST['cage_selection'] ?? '');
-	$cageselection = '("' . implode('","', $cage_selection) . '")';
-	$sqlaction = 'move cages:' . $cageselection;
-	$sqltext = "UPDATE `" . $dbname . "`.`table_cages` SET `cagelocation_room`='" . $locationB_selection . "' WHERE `cageid` in " . $cageselection . ";";
-
-	if ($conn->query($sqltext) === TRUE) {
-		$sqlstatus = 'successful' . '...' . $sqltext;
-	} else {
-		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
-	}
-	echo $sqlstatus;
-	$conn->close();
-}
+// M1-D (#26): the addcage_single cage-move now runs above, before the location and
+// cage listboxes, so the "cages already in destination" list reflects it in the same
+// POST. The manual REFRESH button has been removed.
 
 
 ?>
@@ -493,8 +491,6 @@ if ($dbconnected && isset($_POST['addcage_single'])) {
 					<td colspan=2><?php echo $locRestore_listbox; ?> <input type=submit name="button_restorelocation" value="Restore"></td>
 				</tr>
 			</table>
-
-			<INPUT type="submit" id="REFRESH" name="REFRESH" value="REFRESH">
 
 		</form>
 
