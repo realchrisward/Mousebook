@@ -1,0 +1,69 @@
+diff --git a/php/add_animals.php b/php/add_animals.php
+index 45bae3a..75a0226 100644
+--- a/php/add_animals.php
++++ b/php/add_animals.php
+@@ -109,6 +109,17 @@ if (isset($_POST['generate_animals'])) {
+ 	$xnumberunknown = (int)($_POST['numberunknown'] ?? 0);
+ 	$xtotalnumber = $xnumbermale + $xnumberfemale + $xnumberunknown;
+ 
++	// M1-B (#25): DOB is mandatory. Reject the batch at the generate step when the
++	// DOB is empty or not a real Y-m-d date, so we neither reserve autonumbers nor
++	// build a preview with a malformed "FOUNDER-<line> - " cage name. For an
++	// uncertain DOB the user enters an approximate date and adds a per-animal
++	// comment at creation time (the Comments/bulkcomments field).
++	$xdob_dt = DateTime::createFromFormat('Y-m-d', (string)$xdob);
++	$xdob_ok = ($xdob !== '') && $xdob_dt && ($xdob_dt->format('Y-m-d') === $xdob);
++	if (!$xdob_ok) {
++		$sqlreport .= '-animals cannot be created without a date of birth; please enter a DOB (for an uncertain DOB use an approximate date and add a comment to the affected animals)...';
++	} else {
++
+ 	//maxanimalautono
+ 	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+ 	$sqltext = "SELECT max(animalautono) as maxanimalautono FROM `" . $dbname . "`.`table_animals`;";
+@@ -400,7 +411,7 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
+ 	<option value="other" >other</option>
+ 	</select>
+ 	</td>
+-<td ><input class="smalllistbox" type=date name="dob' . $ck . '" id="dob' . $ck . '" value="' . $xdob . '">
++<td ><input class="smalllistbox" type=date name="dob' . $ck . '" id="dob' . $ck . '" value="' . $xdob . '" required>
+ 	</td>
+ ' . str_replace("[]", "$ck", $xgsgeno[$ck]) . '
+ <td ><input class="smalllistbox" type=text name="currentcage' . $ck . '" id="currentcage' . $ck . '" readonly="readonly" value="' . $xcurrcage . '" >
+@@ -421,6 +432,7 @@ WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
+ <input type=submit id="confirm_animals" name="confirm_animals" value="confirm animals">';
+ 	$minauto = min($xautonos);
+ 	$maxauto = max($xautonos);
++	} // M1-B (#25): end DOB-required guard for the generate step
+ }
+ //--------------------confirm animals and add to db------------------------------------
+ 
+@@ -459,6 +471,20 @@ if (isset($_POST['confirm_animals'])) {
+ 	$st_comment= $conn->prepare('INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (?,curdate(),?)');
+ 	$st_geno   = $conn->prepare('INSERT INTO `table_genotypes` (`allelegroup`,`allele`,`animalautono`) VALUES (?,?,?)');
+ 	if (!$st_cage || !$st_animal || !$st_comment || !$st_geno) { $ins_error = 'prepare failed: ' . $conn->error; }
++	// M1-B (#25): DOB is mandatory — authoritative server-side gate. Setting
++	// $ins_error before the loop makes every guarded execute() below a no-op, so
++	// no animal, cage, comment or genotype row is written for the batch. For an
++	// uncertain DOB the user enters an approximate date and adds a comment.
++	if ($ins_error === '') {
++		foreach (range($xminauto, $xmaxauto, 1) as $i) {
++			$d_raw = (string)($_POST['dob' . $i] ?? '');
++			$d_obj = DateTime::createFromFormat('Y-m-d', $d_raw);
++			if ($d_raw === '' || !$d_obj || $d_obj->format('Y-m-d') !== $d_raw) {
++				$ins_error = 'animals cannot be created without a date of birth (row ' . $i . '); enter a DOB for every animal (use an approximate date and add a comment for uncertain cases)';
++				break;
++			}
++		}
++	}
+ 	foreach (range($xminauto, $xmaxauto, 1) as $i) {
+ 		$man[$i] = ($_POST['animalautono' . $i] ?? '');
+ 		$line[$i] = ($_POST['line' . $i] ?? '');
+@@ -841,7 +867,7 @@ $conn->close();
+ 					<th>DOB:</th>
+ 				</tr>
+ 				<tr>
+-					<td><input type=date id="dob" name="dob" value="<?php echo $dob; ?>"></td>
++					<td><input type=date id="dob" name="dob" value="<?php echo $dob; ?>" required></td>
+ 				</tr>
+ 				<tr>
+ 					<th>Comments:</th>
