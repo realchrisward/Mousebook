@@ -108,3 +108,15 @@ compact `--irreversible-delete` variant was rejected by `git apply`
   from clip sheets, that's a one-line filter change — flag if wanted.
 - P6 carry-over from the prior scope (pre-existing parse error in
   `autoclipsheet.php` L11) is moot — the file was fully rewritten here.
+
+## Closed open items (recorded 2026-07-11, M1-A session)
+
+- **`manage_cages.php:573` unguarded `mysqli_fetch_array()` — CLOSED under T0.3.**
+  The pre-Track-0 open item (flagged in `HANDOFF_smtp_fix_2026-07-10.md` and the
+  scope's "confirm before next session" list) is already resolved: the T0.3 sweep
+  guarded all 12 fetch sites in `manage_cages.php` (7 pre-guarded + 5 hardened, 0
+  unguarded — see `AUDIT_T0.3_fetch_guards.md`). Re-verified at HEAD `231e7d1`:
+  the former L573 fetch now sits inside an `if ($results instanceof mysqli_result)`
+  guard (block at L571), and every other fetch in the file is guarded by an
+  `instanceof` wrapper or a truthy `$checkRes`/`$fr`/`$lr` short-circuit. No further
+  action needed; do not re-open.

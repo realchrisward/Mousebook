@@ -262,6 +262,27 @@ if (isset($_POST['remcage_batch'])) {
 		$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
 	}
 }
+
+//Remove from cage list by card color (M1-A #30: used after a color's print run
+//is done). Scoped to the currently selected color; 'all' is intentionally blocked
+//so it can never clear the whole queue by accident (that is the bulk-remove button).
+if (isset($_POST['remcage_color'])) {
+	$colorlist = array('white', 'grey', 'pink', 'peach', 'yellow', 'green', 'blue', 'lavender');
+	$remcolor = $_POST['colorfilt'] ?? 'all';
+	if (in_array($remcolor, $colorlist, true)) {
+		$sqlaction = 'rem cages by color:' . $remcolor;
+		$sqltext = "DELETE `cfp` FROM `" . $dbname . "`.`CagesForPrinting` AS `cfp` INNER JOIN `" . $dbname . "`.`table_cages` AS `tc` ON `cfp`.`cageid`=`tc`.`cageid` INNER JOIN `" . $dbname . "`.`table_lines` AS `tl` ON `tc`.`lineassignment`=`tl`.`line` WHERE `tl`.`card_color`='" . $conn->real_escape_string($remcolor) . "';";
+		if ($conn->query($sqltext) === TRUE) {
+			$sqlstatus = 'successful';
+		} else {
+			$sqlstatus = 'failed ' . $conn->error . '...' . $sqltext;
+		}
+	} else {
+		$sqlaction = 'rem cages by color: blocked';
+		$sqlstatus = "Unable to remove by color 'all'. You may clear the entire queue using the bulk-remove cages button";
+	}
+	echo $sqlstatus;
+}
 //echo $sqltext;
 //submit cages
 //if (isset($_POST['submit_cages'])){
@@ -303,7 +324,7 @@ while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($result
 $conn->close();
 
 
-$sqltext = "Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`animalautono`,`x`.`sex`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_animals`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_animals`.`animalautono`,`sex`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_animals` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` join `table_genotypes` on `table_animals`.`animalautono`=`table_genotypes`.`animalautono` group by `table_animals`.`animalautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`animalautono`";
+$sqltext = "Select `x`.`cageid`, `x`.`cagetype`, `x`.`lineassignment`,`x`.`setupdate`,`x`.`color_assignment`,`x`.`card_color`,`x`.`line`, `x`.`idno`, `x`.`dob`,`x`.`eartag`, `x`.`animalautono`,`x`.`sex`, `x`.`dod`, `x`.`genorxn`, `x`.`genotype`, `conversion_geno`.`genoshort` from (Select `table_cages`.`cageid`,`cagetype`,`lineassignment`, Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`, `color_assignment`,`card_color`,`table_animals`.`line`,`idno`, Date_Format(`dob`,'%m/%d/%y') as `dob`,`eartag`, `table_animals`.`animalautono`,`sex`,Date_Format(`dod`,'%m/%d/%y') as 'dod', GROUP_CONCAT(`table_genotypes`.`allelegroup` ORDER BY `table_genotypes`.`allelegroup` ASC SEPARATOR '; ') AS `genorxn`, GROUP_CONCAT(`table_genotypes`.`allele` ORDER BY `table_genotypes`.`allelegroup` ASC             SEPARATOR '; ') AS `genotype` from `table_animals` join ((`table_cages` join `table_lines` on `lineassignment`=`table_lines`.`line`) join `CagesForPrinting` on `table_cages`.`cageid`=`CagesForPrinting`.`cageid`) on `currentcage`=`CagesForPrinting`.`cageid` left join `table_genotypes` on `table_animals`.`animalautono`=`table_genotypes`.`animalautono` group by `table_animals`.`animalautono` having `dod` is null) as `x` LEFT JOIN `conversion_geno` ON (((`x`.`genorxn` = CONVERT( `conversion_geno`.`allelegroupscombo` USING UTF8)) AND (`x`.`genotype` = CONVERT( `conversion_geno`.`genotype` USING UTF8)))) order by `x`.`animalautono`";
 
 /* old query
 "Select `table_cages`.`cageid`,`cagetype`,`lineassignment`,Date_Format(`setupdate`,'%m/%d/%y') as `setupdate`,`color_assignment`,`card_color`,`table_animals`.`line`,`idno`,Date_Format(`dob`,'%m/%d/%y')  `dob`,`eartag`,`animalautono`,`sex` ";
@@ -363,6 +384,20 @@ foreach ($animals as $man => $mdata) {
 
 $sqlaction = 'submit cages for printing';
 
+// M1-A (#30): snapshot the card colors present in the FULL print queue BEFORE the
+// filter below prunes $cages, so the on-page summary can list every queued color
+// (with counts) even while a single color is selected for printing. $cages here
+// keys all queued cages (dod-null, in CagesForPrinting).
+$queue_color_counts = array();
+foreach ($cages as $qc) {
+	$pc = ($qc['papercolor'] ?? '');
+	if ($pc === '' || $pc === null) {
+		$pc = '(unset)';
+	}
+	$queue_color_counts[$pc] = ($queue_color_counts[$pc] ?? 0) + 1;
+}
+ksort($queue_color_counts);
+
 //get color cages
 $colorfilt = $_POST['colorfilt'] ?? '';
 $colorlist = array('white', 'grey', 'pink', 'peach', 'yellow', 'green', 'blue', 'lavender');
@@ -391,6 +426,33 @@ $colorfilt_listbox .= '<option value="green" >green</option>';
 $colorfilt_listbox .= '<option value="blue" >blue</option>';
 $colorfilt_listbox .= '<option value="lavender" >lavender</option>';
 $colorfilt_listbox .= '</select>';
+
+// M1-A (#30): colors-in-queue summary line (from the pre-prune snapshot above,
+// with per-color counts).
+if (!empty($queue_color_counts)) {
+	$qcs_parts = array();
+	foreach ($queue_color_counts as $cname => $cnt) {
+		$qcs_parts[] = htmlspecialchars($cname) . ' (' . (int) $cnt . ')';
+	}
+	$queue_color_summary = 'In queue: ' . implode(', ', $qcs_parts);
+} else {
+	$queue_color_summary = 'In queue: (none)';
+}
+
+// M1-A (#30): "show cages of selected color" read-only readout. After the prune
+// above, $cages already holds exactly the cages matching $colorfilt (or the whole
+// queue when 'all'), so its keys are the ids to list; only shown on demand.
+$showcage_readout = '';
+if (isset($_POST['showcage_color'])) {
+	$matchids = array_keys($cages);
+	sort($matchids);
+	$lbl = ($colorfilt === 'all') ? 'all colors' : ("color '" . $colorfilt . "'");
+	if (!empty($matchids)) {
+		$showcage_readout = 'Cages in queue for ' . htmlspecialchars($lbl) . ' (' . count($matchids) . '): ' . htmlspecialchars(implode(', ', $matchids));
+	} else {
+		$showcage_readout = 'No cages in queue for ' . htmlspecialchars($lbl) . '.';
+	}
+}
 
 ?>
 
@@ -465,13 +527,11 @@ $colorfilt_listbox .= '</select>';
 					<th>Line Filter:</th>
 					<th>Sex Filter:</th>
 					<th>Source Cage Category:</th>
-					<th>Card Color Filter:</th>
 				</tr>
 				<tr>
 					<td><?php echo $line_listbox; ?></td>
 					<td><?php echo $sex_listbox; ?></td>
 					<td><?php echo $source_category_listbox; ?></td>
-					<td><?php echo $colorfilt_listbox; ?></td>
 				</tr>
 			</table>
 
@@ -502,6 +562,24 @@ $colorfilt_listbox .= '</select>';
 			<br />
 			<textarea name='contactinfo1' id='contactinfo1'><?php echo $contact1; ?></textarea>
 			<textarea name='contactinfo2' id='contactinfo2'><?php echo $contact2; ?></textarea>
+
+			<!-- M1-A (#30): card-color print controls, relocated next to the generate
+			     buttons. The color filter scopes the print run (as before); the two
+			     buttons let the user inspect and, after printing, clear a color. -->
+			<div id="colorcontrols" class="centertext">
+				<p><?php echo $queue_color_summary; ?></p>
+				<table>
+					<tr>
+						<th>Card Color Filter:</th>
+						<td><?php echo $colorfilt_listbox; ?></td>
+						<td><input type="submit" id="showcage_color" name="showcage_color" value="Show cages of color"></td>
+						<td><input type="submit" id="remcage_color" name="remcage_color" value="Remove cages of color"></td>
+					</tr>
+				</table>
+				<?php if ($showcage_readout !== '') {
+					echo '<p>' . $showcage_readout . '</p>';
+				} ?>
+			</div>
 		</form>
 		<form id="cagecard_gen" action="../php/cagecard_gen5rs.php" method="POST" target="_blank">
 
