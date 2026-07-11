@@ -10,16 +10,13 @@ $sqlaction = null; $line = null; $sqlstatus = null; $currcardcolor = null; $curr
 $currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null; $buttonmessage = null;
 	//setup sql variables
 	$xusername=($_POST['xusername'] ?? '');
-	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
 		$xusername=($_POST['xusername'] ?? '');
-		$xpassword=($_POST['xpassword'] ?? '');
 		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
-		$xpassword='';
 		$xloginstatus='red';
 		}
 		
@@ -188,7 +185,7 @@ $results=$conn->query("call get_allelegroups()");
 //set up static portion of table
 $allele_table= '<select id="allele_selection" name="allele_selection" size=10, class="largelistbox">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 $allele_table .= '<option value="'.$row["allelegroup"].'">'.$row["allelegroup"].'</option>';
 }
@@ -203,7 +200,7 @@ $results=$conn->query("call get_lines()");
 //set up static portion of table
 $line_table= '<select id="line_selection" name="line_selection" size=10 class="mediumlistbox" onchange="showLine(this.value)">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current line - used for additional fields
 if($row['line']===$currline){
@@ -231,7 +228,7 @@ $results=$conn->query("call get_strains");
 $strain_table= '<select id="strain_selection" name="strain_selection" size=1 class="mediumlistbox"><option value="" selected></option>';
 $currstrain_table='<select id="curr_strain_selection" name="curr_strain_selection" size=1 class="mediumlistbox"><option value=""></option>';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //check for current strain
 if($row['strains']===$currstrain){
@@ -256,7 +253,7 @@ $results=$conn->query($allelebylinequery);
 //set up static portion of table
 $allelebyline_table= '<select id="allelebyline_selection" name="allelebyline_selection" size=5, class="mediumlistbox">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 $allelebyline_table .= '<option value="'.$row["allelegroup"].'">'.$row["allelegroup"].'</option>';
 }
@@ -349,7 +346,7 @@ $currstripecolor_list= '<select id="currstripecolor_list" name="currstripecolor_
 						<tr>
 						<th>user:</th>
 						<th><input type="text" name="xusername" 
-						value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+						value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 						</tr>
 						<tr>
 						<td>pass:</td>

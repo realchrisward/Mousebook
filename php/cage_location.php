@@ -5,7 +5,7 @@
 <!--php code: login-->
 <?php
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
-$xusername = ''; $xpassword = '';
+$xusername = '';
 $host = $accessun = $accesspw = null;
 $locationA_selection = null; $locationB_selection = null; $line_filter = null; $sex_filter = null; $source_category_selection = null; $lf = null;
 $gf = null; $sf = null; $locf = null; $loc_addstatus = null; $contact1 = null; $contact2 = null;
@@ -26,23 +26,18 @@ $cage_batchlist = array();
 if (isset($_POST['xusername'])) {
 	$xusername = ($_POST['xusername'] ?? '');
 }
-if (isset($_POST['xpassword'])) {
-	$xpassword = ($_POST['xpassword'] ?? '');
-}
 if (isset($_POST['loginstatus'])) {
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	if (isset($_POST['loginstatus'])) {
 		$xloginstatus = ($_POST['loginstatus'] ?? '');
 	}
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -403,7 +398,7 @@ if ($dbconnected && isset($_POST['addcage_single'])) {
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

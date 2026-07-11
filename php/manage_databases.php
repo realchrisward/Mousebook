@@ -129,7 +129,6 @@ if (!$conn->connect_error) {
     $conn->close();
 }
 
-$denied = $GLOBALS['mb_denied_notice'] ?? '';
 $hdb = htmlspecialchars($dbname, ENT_QUOTES);
 
 // Small helper to print an editable cell input.
@@ -169,9 +168,6 @@ function mb_dbcell($name, $val) {
     <?php require_once __DIR__ . '/../includes/nav.php'; mb_render_nav($dbname); ?>
 
     <div id="main">
-        <?php if ($denied !== ''): ?>
-            <p class="centertext" style="color:#a00;"><?php echo htmlspecialchars($denied, ENT_QUOTES); ?></p>
-        <?php endif; ?>
         <?php if ($sqlstatus !== ''): ?>
             <p class="centertext"><em><?php echo htmlspecialchars($sqlstatus, ENT_QUOTES); ?></em></p>
         <?php endif; ?>

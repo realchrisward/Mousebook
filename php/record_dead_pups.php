@@ -9,16 +9,13 @@ $host = $accessun = $accesspw = null;
 $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = null;
 	//setup sql variables
 	$xusername=($_POST['xusername'] ?? '');
-	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
 		$xusername=($_POST['xusername'] ?? '');
-		$xpassword=($_POST['xpassword'] ?? '');
 		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
-		$xpassword='';
 		$xloginstatus='red';
 		}
 		
@@ -161,7 +158,7 @@ $results=$conn->query($sqltext);
 //set up static portion of table
 $line_listbox= '<select id="line_selection" name="line_selection" size=1 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current line - used for additional fields
 if($row['line']===$line_selection){
@@ -191,7 +188,7 @@ GROUP BY `currentcage`;";
 $results=$conn->query($sqltext);
 $source_listbox='<select id="source_selection" name="source_selection" size=12 class="mediumlistbox" onchange="submitForm()">';
 
-while($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 $cage[]=$row['currentcage'];
 }
 foreach($cage as $source) {
@@ -215,7 +212,7 @@ $results=$conn->query($sqltext);
 $animals_results=$results;
 $animals_listbox='<select id="animals_selection" name="animals_selection" size=6 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
-while($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 $animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['sex'].'</option>';
 }
 //close the table
@@ -231,7 +228,7 @@ $results=$conn->query($sqltext);
 $animals_results=$results;
 
 //loop and prepare table
-while($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 $animals_string=$source_selection.' | '.$row['cagecontents'];
 $animals_string_display=$source_selection.' <br> '.$row['cagecontents'];
 }
@@ -270,7 +267,7 @@ $conn->close();
 						<tr>
 						<th>user:</th>
 						<th><input type="text" name="xusername" 
-						value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+						value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 						</tr>
 						<tr>
 						<td>pass:</td>

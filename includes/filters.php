@@ -496,8 +496,10 @@ if (!function_exists('mb_filters_loaded')) {
      * `NOT IN (...)`. Because every value is an int by construction, these
      * fragments are injection-safe without escaping.
      *
-     * NOTE: the legacy temp_cage1..4 tables are intentionally left in the
-     * schema (now unused). See handoff — schedule an orphaned-table sweep.
+     * NOTE: the legacy temp_cage1..4 tables and their helper procedures
+     * (clear_cages1234, get_cage1..4) have been dropped from the install
+     * schema (Track 0 T0.4). For colony DBs created before that sweep,
+     * run migration_drop_temp_cages.sql to remove the orphaned objects.
      * ===================================================================== */
 
     /** Return the staged int list for one destination cage (1..4), or []. */

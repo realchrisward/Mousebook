@@ -3,7 +3,7 @@
 <!--php code: login-->
 <?php
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
-$xusername = ''; $xpassword = '';
+$xusername = '';
 $host = $accessun = $accesspw = null;
 // PATCHED: Removed stale $host="{server ip}".
 // Initial userbook connection now uses $config['server_host'].
@@ -11,23 +11,18 @@ $host = $accessun = $accesspw = null;
 if (isset($_POST['xusername'])) {
 	$xusername = ($_POST['xusername'] ?? '');
 }
-if (isset($_POST['xpassword'])) {
-	$xpassword = ($_POST['xpassword'] ?? '');
-}
 if (isset($_POST['loginstatus'])) {
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	if (isset($_POST['loginstatus'])) {
 		$xloginstatus = ($_POST['loginstatus'] ?? '');
 	}
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -122,7 +117,7 @@ $currcontact = '';
 $currnotes = '';
 
 $s_table = '<select id="role_selection" name="role_selection" size=12 class="largelistbox" onclick="showRole(this.value)">';
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['roleassignment_option'] === $currrole) {
 		$currstatus = $row['roleassignment_statuslist'];
 		$curractive = $row['active'];
@@ -154,7 +149,7 @@ $conn->close();
 			<table style="color:white;font-size:10px;position:absolute;top:0px;right:60px;">
 				<tr>
 					<th>user:</th>
-					<th><input type="text" name="xusername" value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+					<th><input type="text" name="xusername" value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

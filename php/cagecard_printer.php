@@ -6,16 +6,13 @@
 <?php
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -124,7 +121,7 @@ $results = $conn->query($sqltext);
 $line_listbox = '<select id="line_filter" name="line_filter" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
 $lineassign_listbox = '<select id="line_assignment" name="line_assignment" size=1 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	//catch results of each row
 	//get results matched to current line - used for additional fields
 	if ($row['line'] === $line_filter) {
@@ -155,7 +152,7 @@ $sqltext = "SELECT `cageid` FROM `CagesForPrinting`;";
 $results = $conn->query($sqltext);
 $cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox onchange="">;';
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	//echo $row['cageid'];
 	if ($row['cageid'] === $cagelist_selection) {
 		$cage_listbox .= '<option value="' . $row['cageid'] . '" selected>' . $row['cageid'] . '</option>';
@@ -200,7 +197,7 @@ CagesForPrinting.cageid is null " . $sql_where_text . " GROUP BY `currentcage`;"
 $results = $conn->query($sqltext);
 $sourcecage_listbox = '<select id="cage_selection" name="cage_selection[]" size=14 class="largelistbox" multiple="multiple" >';
 $cage_batchlist = array();
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['currentcage'] === $cage_selection) {
 		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
 	} else {
@@ -295,7 +292,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $results = $conn->query($sqlallelegroups);
 
 //loop and grab data
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if (array_key_exists($row['line'], $cagegenokey)) {
 		$cagegenokey[$row['line']] .= $row['allelegroup'];
 	} else {
@@ -322,7 +319,7 @@ $results = $conn->query($sqltext);
 $cages = array();
 $animals = array();
 
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 
 	$cages[$row['cageid']] = array(
 		'type' => $row['cagetype'],
@@ -351,7 +348,7 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqlgenotypes);
 $geno_results=$results;
 //loop and grab data
-while ($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$animals[$row['animalautono']]['geno'].=$row['allele']."; ";
 }
 // need geno short hand table???
@@ -429,7 +426,7 @@ $colorfilt_listbox .= '</select>';
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

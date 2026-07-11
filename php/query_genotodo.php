@@ -8,16 +8,13 @@
 $host = $accessun = $accesspw = null;
 	//setup sql variables
 	$xusername=($_POST['xusername'] ?? '');
-	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
 		$xusername=($_POST['xusername'] ?? '');
-		$xpassword=($_POST['xpassword'] ?? '');
 		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
-		$xpassword='';
 		$xloginstatus='red';
 		}
 		
@@ -79,7 +76,7 @@ $animals_results=$results;
 $table=[];
 $lineidtab=[];
 $genelist=[];
-while($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 
 $table[$row['line'].'-'.$row['idno']][$row['generxn']]=$row['allele'];
 $lineidtab[$row['line'].'-'.$row['idno']]=array('line'=>$row['line'],'idno'=>$row['idno'],'dob'=>$row['dob']);
@@ -152,7 +149,7 @@ $temptable.='</table>';
 						<tr>
 						<th>user:</th>
 						<th><input type="text" name="xusername" 
-						value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+						value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 						</tr>
 						<tr>
 						<td>pass:</td>

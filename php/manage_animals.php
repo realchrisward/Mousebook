@@ -10,16 +10,13 @@ $lf = null; $gf = null; $doaf = null; $sf = null; $bbf = null; $baf = null;
 $locf = null; $rolef = null; $cf = null;
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -98,7 +95,7 @@ if (isset($_POST['get_tempanimals'])) {
 
 	$i = 0;
 	$arrayman = [];
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$i = $i + 1;
 		$arrayman[$i] = $row['man'];
 		$arrayline[$arrayman[$i]] = $row['line'];
@@ -134,7 +131,7 @@ if (isset($_POST['get_tempanimals'])) {
 	$arraygeno = [];
 	$genelist = [];
 	$genoheader = '';
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$arraygeno[$row['allelegroup']][$row['man']] = "<option value='" . $row['allele'] . "' selected>" . $row['allele'] . "</option>";
 		//echo $row['allelegroup'];
 	}
@@ -154,7 +151,7 @@ if (isset($_POST['get_tempanimals'])) {
 		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
 		$results = $conn->query($sqltext);
 		$aglist = [];
-		while ($row = mysqli_fetch_array($results)) {
+		while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 			$aglist[$row["allelegroup"]][$row["sexspecific"]] .= '<option value="' . $row['allele'] . '">' . $row['allele'] . '</option>';
 		}
 		$conn->close();
@@ -204,7 +201,7 @@ if (isset($_POST['get_tempanimals'])) {
 	$results = $conn->query($sqldatacomments);
 	$animals_results = $results;
 	//loop and grab data
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$arraybkc[$row['man']] .= '|[' . $row['commentdate'] . ' : ' . $row['general_comment'] . ']|';
 	}
 
@@ -455,7 +452,7 @@ if ($line_filter === "all") {
 	$line_listbox .= '<option value="all">all</option>';
 }
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	//catch results of each row
 	//get results matched to current line - used for additional fields
 	if ($row['line'] === $line_filter) {
@@ -485,7 +482,7 @@ $sqltext = "SELECT `currentcage` FROM `table_animals` where " . $sql_where_text 
 //echo $sqltext;
 $results = $conn->query($sqltext);
 $sourcecage_listbox = '<select id="sourcecage_selection" name="sourcecage_selection" size=8 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['currentcage'] === $sourcecage_selection) {
 		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
 	} else {
@@ -511,7 +508,7 @@ $results = $conn->query($sqltext);
 $animals_results = $results;
 $animals_listbox = '<select id="animals_selection" name="animals_selection" size=8 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['man'] === $animals_selection) {
 		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
@@ -561,7 +558,7 @@ $conn->close();
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

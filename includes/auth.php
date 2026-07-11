@@ -87,7 +87,8 @@ function mb_authenticate(array $config, string $username, string $password, stri
     );
     $stmt->bind_param('ss', $username, $dbname);
     $stmt->execute();
-    $row = $stmt->get_result()->fetch_assoc();
+    $authres = $stmt->get_result();
+    $row = ($authres instanceof mysqli_result) ? $authres->fetch_assoc() : null;
     $stmt->close();
     $conn->close();
 
@@ -179,7 +180,7 @@ function mb_get_user_databases(array $config, string $username, string $password
     $stmt->execute();
     $result = $stmt->get_result();
     $rows = [];
-    while ($row = $result->fetch_assoc()) {
+    while (($result instanceof mysqli_result) && ($row = $result->fetch_assoc())) {
         $rows[] = $row;
     }
     $stmt->close();

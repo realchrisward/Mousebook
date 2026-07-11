@@ -9,16 +9,13 @@ $host = $accessun = $accesspw = null;
 $animals_string_display = null; $line_tip = null; $sqlreport = null;
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -424,7 +421,7 @@ $conn->close();
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

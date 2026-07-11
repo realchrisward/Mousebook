@@ -83,7 +83,7 @@ $guide1url     = $mb['guide1_url'];
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>
@@ -316,6 +316,15 @@ ORDER BY age DESC, a.currentcage ASC;
 						<input type=submit class="button" name=""
 							style="background-color:#217190; color:lightgrey;"
 							value="Litter Log" />
+					</form>
+				</td>
+				<td>
+					<form action="./php/autoclipsheet.php" method=post target="_blank">
+						<input type=hidden name="dbname" value="<?php echo htmlspecialchars($dbname); ?>" />
+						<input type=hidden name="button_login" value="connect" />
+						<input type=submit class="button" name=""
+							style="background-color:#217190; color:lightgrey;"
+							value="Clip Sheet" />
 					</form>
 				</td>
 			</tr>

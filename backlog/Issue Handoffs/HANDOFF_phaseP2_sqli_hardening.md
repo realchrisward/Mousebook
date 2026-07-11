@@ -49,8 +49,11 @@ New block inside the existing `if (!function_exists('mb_filters_loaded'))` guard
 - **2b temp_cage staging:** 8 single add/remove ops now use `(int)$animals_selection`; 4 batch adds source their VALUES from `mb_int_values_list()` (digits only) with an empty-guard. This closes a **serious live vector** — `animals_batchlist` was raw client SQL concatenated into `INSERT … VALUES`.
 - **HTTP-tested:** single payload `1001); DROP …` → stored as int `1001`; batch `(1),(2)); DROP …` → stored as ints `1,2`; `table_animals` survives.
 
-### `php/cage_location.php`, `php/cagerole.php`, `php/cagecard_printer.php` — Family-2 fragment hardening
-- The three common raw filter interpolations escaped on each; plus `$locationA_selection` (cage_location) and `$roleA_selection` (cagerole). `$conn` confirmed open before each escape point. `php -l` clean. (Structurally identical to the HTTP-validated manage_animals escaping; not individually HTTP-driven.)
+### `php/cage_location.php`, `php/cagerole.php`, `php/cagecard_printer.php` — Family-2 fragment hardening (+ two white-screen fixes)
+- The three common raw filter interpolations escaped on each; plus `$locationA_selection` (cage_location) and `$roleA_selection` (cagerole).
+- **cage_location.php — closed-connection fix (regression from the escaping edit):** the connection is `->close()`d above the filter-build region and only reopened later for the query, so `$conn->real_escape_string()` fatally hit an already-closed mysqli whenever a filter was selected ("mysqli object is already closed"). Fixed by reopening `$conn` immediately before the filter build.
+- **cagerole.php — empty-result fix (pre-existing #22-class bug):** `$cage_batchlist` was only ever assigned inside the result loop, so a filter combination yielding no rows left it undefined and the downstream `implode()` fataled. Fixed by initializing `$cage_batchlist = array()` (mirroring cage_location's line 18) and guarding the loop with `if ($results instanceof mysqli_result)`.
+- **HTTP-tested (both):** every filter type on cage_location (line/sex/source-category/location) and no-result **and** result-yielding combos on cagerole now return **0 fatals**; injection payloads remain inert; `table_animals` intact. `cagecard_printer.php` was also swept (0 fatals; it carries unrelated pre-existing undefined-variable *warnings* at lines 410/551/553 that do not white-screen and were left untouched).
 
 ---
 

@@ -11,16 +11,13 @@ $animals_string = null; $testtable = null; $line_tip = null; $minauto = null; $m
 $genepost = null;
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -117,7 +114,7 @@ if (isset($_POST['generate_animals'])) {
 	$sqltext = "SELECT max(animalautono) as maxanimalautono FROM `" . $dbname . "`.`table_animals`;";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$maxanimalautono1 = $row['maxanimalautono'];
 	}
 	if ($maxanimalautono1 == "") {
@@ -128,7 +125,7 @@ if (isset($_POST['generate_animals'])) {
 	$sqltext = "SELECT max(maxautono) as maxanimalautono FROM `" . $dbname . "`.`reservations_animals`;";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$maxanimalautono2 = $row['maxanimalautono'];
 	}
 	if ($maxanimalautono2 == "") {
@@ -142,7 +139,7 @@ if (isset($_POST['generate_animals'])) {
 	$sqltext = "SELECT max(cast(`idno` as unsigned)) as maxanimalinline FROM `" . $dbname . "`.`table_animals` where `line`='" . $line_selection . "' ;";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$maxanimalinline1 = $row['maxanimalinline'];
 	}
 	if ($maxanimalinline1 == "") {
@@ -154,7 +151,7 @@ if (isset($_POST['generate_animals'])) {
 	$sqltext = "SELECT max(maxidno) as maxanimalinline FROM `" . $dbname . "`.`reservations_animals` where `line`='" . $line_selection . "';";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
-	while ($row = mysqli_fetch_array($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$maxanimalinline2 = $row['maxanimalinline'];
 	}
 	if ($maxanimalinline2 == "") {
@@ -545,7 +542,7 @@ $results = $conn->query($sqltext);
 //set up static portion of table
 $line_listbox = '<select id="line_selection" name="line_selection" size=1 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	//catch results of each row
 	//get results matched to current line - used for additional fields
 	if ($row['line'] === $line_selection) {
@@ -592,7 +589,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(animalautono) as maxanimalautono FROM `" . $dbname . "`.`table_animals`;";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$maxanimalautono1 = $row['maxanimalautono'];
 }
 if ($maxanimalautono1 == "") {
@@ -603,7 +600,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(maxautono) as maxanimalautono FROM `" . $dbname . "`.`reservations_animals`;";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$maxanimalautono2 = $row['maxanimalautono'];
 }
 if ($maxanimalautono2 == "") {
@@ -617,7 +614,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(cast(`idno` as unsigned)) as maxanimalinline FROM `" . $dbname . "`.`table_animals` where `line`='" . $line_selection . "' ;";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$maxanimalinline1 = $row['maxanimalinline'];
 }
 if ($maxanimalinline1 == "") {
@@ -629,7 +626,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(maxidno) as maxanimalinline FROM `" . $dbname . "`.`reservations_animals` where `line`='" . $line_selection . "';";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$maxanimalinline2 = $row['maxanimalinline'];
 }
 if ($maxanimalinline2 == "") {
@@ -661,7 +658,7 @@ GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
 $source_listbox = '<select id="source_selection" name="source_selection" size=10 class="largelistbox2" onchange="submitForm()">';
 
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$cage[] = $row['currentcage'];
 	$cgcont[$row['currentcage']] = $row['cagecontents'];
 }
@@ -688,7 +685,7 @@ $animals_results = $results;
 $curparents = "";
 $animals_listbox = '<select id="animals_selection" name="animals_selection" size=5 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$animals_listbox .= '<option value="' . $row['man'] . '">' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . '</option>';
 	$curparents .= $row['line'] . "-" . $row['idno'] . " (" . $row['sex'] . "),";
 }
@@ -704,7 +701,7 @@ $sqltext = "SELECT table_cages.cagecontents FROM `table_cages` where `cageid`='"
 $results = $conn->query($sqltext);
 $animals_results = $results;
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	$animals_string = $source_selection . ' | ' . $row['cagecontents'] . ' | [' . $curparents . ']';
 	$animals_string_display = $source_selection . ' <br> ' . $row['cagecontents'] . ' <br>[' . $curparents . ']';
 }
@@ -776,7 +773,7 @@ $conn->close();
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

@@ -49,7 +49,7 @@ if (!function_exists('mb_render_nav')) {
         'change_password.php'          => 'Change Password',
         // Intentionally NOT in the global menu (see BACKUP/HANDOFF notes):
         //   cagecard_gen5rs.php / cagecard_gen5rs-blindgeno.php  (reached from Card Printer)
-        //   autoclipsheet.php                                    (orphan; feeds Phase E clipping-logs PDF)
+        //   autoclipsheet.php   (reached from the index.php "Clip Sheet" button; genotyping/ear-clip worksheet PDF)
     ];
 
     /**
@@ -127,5 +127,21 @@ if (!function_exists('mb_render_nav')) {
         }
 
         echo '</div>' . "\n";
+
+        // Phase F (T0.6): surface any tier-denial notice set by
+        // mb_guard_write()/mb_guard_admin() so a neutralised mutation gives
+        // the user visible feedback instead of a silent no-op. Rendered once
+        // here so every page that draws the nav inherits it (fixed banner,
+        // top-centre). Unset after emitting so a page can't double-render it.
+        if (!empty($GLOBALS['mb_denied_notice'])) {
+            echo '<div class="mb-denied-notice" role="alert" style="'
+               . 'position:fixed;top:8px;left:50%;transform:translateX(-50%);'
+               . 'z-index:9999;background:#b00020;color:#fff;padding:8px 16px;'
+               . 'border-radius:6px;font-size:13px;font-weight:bold;'
+               . 'box-shadow:0 2px 6px rgba(0,0,0,0.35);max-width:70%;">'
+               . htmlspecialchars($GLOBALS['mb_denied_notice'], ENT_QUOTES)
+               . '</div>' . "\n";
+            unset($GLOBALS['mb_denied_notice']);
+        }
     }
 }

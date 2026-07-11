@@ -5,7 +5,7 @@
 <!--php code: login-->
 <?php
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
-$xusername = ''; $xpassword = '';
+$xusername = '';
 $host = $accessun = $accesspw = null;
 $roleB_selection = null; $line_filter = null; $sex_filter = null; $source_category_selection = null; $roleA_selection = null; $lf = null;
 $gf = null; $sf = null; $locf = null;
@@ -23,23 +23,18 @@ $gf = null; $sf = null; $locf = null;
 if (isset($_POST['xusername'])) {
 	$xusername = ($_POST['xusername'] ?? '');
 }
-if (isset($_POST['xpassword'])) {
-	$xpassword = ($_POST['xpassword'] ?? '');
-}
 if (isset($_POST['loginstatus'])) {
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	if (isset($_POST['loginstatus'])) {
 		$xloginstatus = ($_POST['loginstatus'] ?? '');
 	}
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -159,7 +154,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $sqltext = "call get_lines();";
 $results = $conn->query($sqltext);
 $line_listbox = '<select id="line_filter" name="line_filter" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['line'] === $line_filter) {
 		$line_listbox .= '<option value="' . $row["line"] . '" selected>' . $row["line"] . '</option>';
 	} else {
@@ -175,7 +170,7 @@ $sqltext = "SELECT * FROM `" . $dbname . "`.`list_cage_role_assignments`";
 $results = $conn->query($sqltext);
 $locA_listbox = '<select id="roleA_selection" name="roleA_selection" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
 $locB_listbox = '<select id="roleB_selection" name="roleB_selection" size=1 class="mediumlistbox" onchange="submitForm()">';
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['roleassignment_option'] === $roleA_selection) {
 		$locA_listbox .= '<option value="' . $row["roleassignment_option"] . '" selected>' . $row["roleassignment_option"] . '</option>';
 	} else {
@@ -197,7 +192,7 @@ $sqltext = "SELECT `cageid` FROM `table_cages` where cagerole_assignment ='" . $
 $results = $conn->query($sqltext);
 // PATCHED: fixed malformed HTML attribute (missing closing quote on onchange)
 $cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox" onchange="">';
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['cageid'] === $cagelist_selection) {
 		$cage_listbox .= '<option value="' . $row['cageid'] . '" selected>' . $row['cageid'] . '</option>';
 	} else {
@@ -300,7 +295,7 @@ if (isset($_POST['addcage_single'])) {
 			<table class="logintable" style="color:white;font-size:10px;position:absolute;top:0px;right:60px;">
 				<tr>
 					<th>user:</th>
-					<th><input type="text" name="xusername" value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+					<th><input type="text" name="xusername" value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

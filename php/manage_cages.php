@@ -16,16 +16,13 @@ $cf = null;
 $sqlstatusclear = null;
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -517,7 +514,7 @@ $results = $conn->query($sqltext);
 $line_listbox = '<select id="line_filter" name="line_filter" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
 $lineassign_listbox = '<select id="line_assignment" name="line_assignment" size=1 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	//catch results of each row
 	//get results matched to current line - used for additional fields
 	if ($row['line'] === $line_filter) {
@@ -735,7 +732,7 @@ $sqltext = "SELECT `currentcage` FROM `table_animals` where dod is null" . $excl
 $results = $conn->query($sqltext);
 //echo $sqltext;
 $sourcecage_listbox = '<select id="sourcecage_selection" name="sourcecage_selection" size=14 class="largelistbox" onchange="submitForm()"><option value="all">all</option>';
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if ($row['currentcage'] === $sourcecage_selection) {
 		$sourcecage_listbox .= '<option value="' . $row['currentcage'] . '" selected>' . $row['currentcage'] . '</option>';
 	} else {
@@ -793,7 +790,7 @@ $animals_results = $results;
 $animals_sel_set = array_map('strval', is_array($animals_selection) ? $animals_selection : array((string)$animals_selection));
 $animals_listbox = '<select id="animals_selection" name="animals_selection[]" multiple size=15 class="largelistbox">';
 //loop and prepare table
-while ($row = mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 	if (in_array((string)$row['man'], $animals_sel_set, true)) {
 		$animals_listbox .= '<option value="' . $row['man'] . '" selected>' . $row['line'] . '-' . $row['idno'] . ' | ' . $row['sex'] . ' | ' . $row['dob'] . ' | ' . $row['currentcage'] . '</option>';
 	} else {
@@ -817,14 +814,14 @@ $esc_type = $conn->real_escape_string($category_selection ?? '');
 //highest committed cageno for this line+category
 $sqltext = "SELECT MAX(`cageno`) as maxcageno from `" . $dbname . "`.`table_cages` where `lineassignment`='" . $esc_line . "' and `cagetype`='" . $esc_type . "';";
 $results = $conn->query($sqltext);
-$row = mysqli_fetch_array($results);
+$row = ($results instanceof mysqli_result) ? mysqli_fetch_array($results) : false;
 $realmaxcageno = ($row && $row[0] !== null) ? (int)$row[0] : 0;
 //highest reserved cageno for this line+category (other users' in-flight transfers); degrade gracefully if table absent
 $resmaxcageno = 0;
 try {
 	$sqltext = "SELECT MAX(`maxcageno`) as maxcageno from `" . $dbname . "`.`reservations_cages` where `lineassignment`='" . $esc_line . "' and `cagetype`='" . $esc_type . "';";
 	$results = $conn->query($sqltext);
-	$row = mysqli_fetch_array($results);
+	$row = ($results instanceof mysqli_result) ? mysqli_fetch_array($results) : false;
 	$resmaxcageno = ($row && $row[0] !== null) ? (int)$row[0] : 0;
 } catch (\Throwable $e) {
 	$resmaxcageno = 0;
@@ -894,7 +891,7 @@ $conn->close();
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>

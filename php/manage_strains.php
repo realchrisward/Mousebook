@@ -9,16 +9,13 @@ $host = $accessun = $accesspw = null;
 $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
 	//setup sql variables
 	$xusername=($_POST['xusername'] ?? '');
-	$xpassword=($_POST['xpassword'] ?? '');
 	
 	if (isset($_POST['button_login'])){
 		$xusername=($_POST['xusername'] ?? '');
-		$xpassword=($_POST['xpassword'] ?? '');
 		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
-		$xpassword='';
 		$xloginstatus='red';
 		}
 		
@@ -133,7 +130,7 @@ $results=$conn->query("call get_strains()");
 //set up static portion of table
 $s_table= '<select id="strain_selection" size=20, class="mediumlistbox" onclick="showStrain(this.value)">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 $s_table .= '<option value="'.$row["strains"].'">'.$row['strains'].'</option>';
 }
@@ -175,7 +172,7 @@ $conn->close();
 						<tr>
 						<th>user:</th>
 						<th><input type="text" name="xusername" 
-						value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+						value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 						</tr>
 						<tr>
 						<td>pass:</td>

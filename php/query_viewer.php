@@ -8,16 +8,13 @@ $host = $accessun = $accesspw = null;
 $xquerytorun = null; $temptable = null;
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
-$xpassword = ($_POST['xpassword'] ?? '');
 
 if (isset($_POST['button_login'])) {
 	$xusername = ($_POST['xusername'] ?? '');
-	$xpassword = ($_POST['xpassword'] ?? '');
 	$xloginstatus = ($_POST['loginstatus'] ?? '');
 }
 if (isset($_POST['button_disco'])) {
 	$xusername = '';
-	$xpassword = '';
 	$xloginstatus = 'red';
 }
 
@@ -96,7 +93,7 @@ if (isset($_POST['Download'])) {
 
 	$output = fopen("php://output", "wb");
 	$rowdata = array();
-	while ($row = mysqli_fetch_assoc($results)) {
+	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_assoc($results))) {
 		$rowdata[] = $row;
 	}
 
@@ -124,7 +121,7 @@ $conn = new mysqli($host, $accessun, $accesspw, $dbname);
 $results = $conn->query($sqltext);
 
 $rowdata = array();
-while ($row = mysqli_fetch_assoc($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_assoc($results))) {
 	$rowdata[] = $row;
 }
 $sqlerror = $conn->error;
@@ -182,7 +179,7 @@ if (!empty($rowdata)) {
 				<tr>
 					<th>user:</th>
 					<th><input type="text" name="xusername"
-							value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+							value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 				</tr>
 				<tr>
 					<td>pass:</td>
