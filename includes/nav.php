@@ -32,6 +32,7 @@ if (!function_exists('mb_render_nav')) {
     $GLOBALS['MB_NAV_ITEMS'] = [
         'index.php'                    => 'Home',
         'manage_alleles.php'           => 'Manage Alleles',
+        'genotype_backfill.php'        => 'Genotype Backfill',
         'manage_strains.php'           => 'Manage Strains',
         'manage_lines.php'             => 'Manage Lines',
         'manage_roles.php'             => 'Manage Roles',

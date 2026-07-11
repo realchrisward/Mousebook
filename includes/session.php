@@ -244,6 +244,34 @@ function mb_is_readonly(?string $db = null): bool {
 }
 
 /**
+ * True if a submitted POST key names a state-mutating action that a tier guard
+ * should neutralise for an under-privileged session.
+ *
+ * Historically the app assumed every mutation submit is named `button_*`, but a
+ * mutation-path audit (P6 / M1-E) found several that are not, which therefore
+ * slipped past mb_guard_write()/mb_guard_admin():
+ *   - cage queue / assignment mutations: addcage*, remcage*, clear_cages
+ *     (cagerole, cage_location, cagecard_printer, manage_cages)
+ *   - commit actions: confirm_* (confirm_animals, confirm_changes, confirm_litter)
+ *   - admin-only allele/gene library edits named with a trailing `button`
+ *     (addgenebutton, addallelebutton, …) in manage_alleles — recognised only in
+ *     admin scope, where those keys live.
+ * button_login / button_disco are session actions, never mutations.
+ */
+function mb_is_mutation_key(string $k, bool $admin_scope = false): bool {
+    if ($k === 'button_login' || $k === 'button_disco') {
+        return false;
+    }
+    if (strncmp($k, 'button_', 7) === 0)  { return true; }
+    if (strncmp($k, 'addcage', 7) === 0)  { return true; }
+    if (strncmp($k, 'remcage', 7) === 0)  { return true; }
+    if ($k === 'clear_cages')             { return true; }
+    if (strncmp($k, 'confirm_', 8) === 0) { return true; }
+    if ($admin_scope && substr($k, -6) === 'button') { return true; }
+    return false;
+}
+
+/**
  * Guard a page whose actions require write access. Call at the top of
  * a page (right after bootstrap) BEFORE any mutating action handler.
  * If the current tier can't write, mutating buttons are neutralised so
@@ -258,8 +286,7 @@ function mb_guard_write(): bool {
     // Only complain if this request actually tried to mutate.
     $tried = false;
     foreach (array_keys($_POST) as $k) {
-        if (strpos($k, 'button_') === 0
-            && $k !== 'button_login' && $k !== 'button_disco') {
+        if (mb_is_mutation_key($k, false)) {
             unset($_POST[$k]);        // neutralise the action
             $tried = true;
         }
@@ -281,8 +308,7 @@ function mb_guard_admin(): bool {
     }
     $tried = false;
     foreach (array_keys($_POST) as $k) {
-        if (strpos($k, 'button_') === 0
-            && $k !== 'button_login' && $k !== 'button_disco') {
+        if (mb_is_mutation_key($k, true)) {
             unset($_POST[$k]);
             $tried = true;
         }
