@@ -1,0 +1,275 @@
+diff --git a/DB_ENGINE_SUPPORT.md b/DB_ENGINE_SUPPORT.md
+new file mode 100644
+index 0000000..7f15e06
+--- /dev/null
++++ b/DB_ENGINE_SUPPORT.md
+@@ -0,0 +1,148 @@
++# Database Engine Support (MySQL / MariaDB)
++
++**Issue:** #37 (M1-G) — DB-engine portability
++**Status:** Mousebook runs on **both MySQL 8.x and MariaDB 10.11+**.
++**Recommended default for fresh installs:** **MariaDB 10.11 LTS.**
++**Existing MySQL deployments:** keep MySQL. Nothing forces you to switch.
++
++---
++
++## 0. Summary for administrators
++
++| Question | Answer |
++|---|---|
++| Which engine should I install? | **MariaDB 10.11+** on a new server (incl. Raspberry Pi). |
++| I already run MySQL 8. Must I migrate? | **No.** Mousebook fully supports MySQL 8.x. |
++| Can I install both on one host? | **No** (see §4). The OS packages conflict. |
++| Can I move a MySQL colony to MariaDB later? | **Yes — but only after applying the migration in §3.** |
++| Does MySQL 8.0 going EOL break Mousebook? | No. It is a *support* concern, not a compatibility one. |
++
++Why MariaDB is the default for new installs: MySQL 8.0 reached end of life in
++April 2026 (8.0.46 was the final release), and there is **no native MySQL 8
++package for arm64 Raspberry Pi OS** — which the Raspberry Pi 5 reference
++environment requires. MariaDB is packaged natively everywhere Mousebook targets.
++
++---
++
++## 1. Verified support matrix
++
++Both engines were tested by loading the shipped schemas and exercising the app's
++real queries (views, cage-card genotype joins, reservation locking, procedures).
++
++| Engine | Version tested | Install schema | 13 views | 10 procedures | Result |
++|---|---|---|---|---|---|
++| MySQL | 8.0.46 | loads | queryable | callable | **Supported** |
++| MariaDB | 10.11.14 LTS | loads | queryable | callable | **Supported** |
++
++Both engines produce **identical results** on the same seed data (view row
++counts, genotype-conversion joins, reservation joins).
++
++### What was audited and found portable
++
++- **Version-gated dump syntax** (`/*!50001`, `/*!50003`, `/*!50503`) — executes correctly on MariaDB.
++- **No MySQL-8-only SQL** anywhere in the app: no window functions, CTEs, `JSON_TABLE`, `ANY_VALUE`, `REGEXP_LIKE`.
++- **Storage engines** — 37 MyISAM + 2 InnoDB tables: supported on both.
++- **`LOCK TABLES … WRITE`** (the reservation system in `add_animals.php` / `manage_cages.php`): identical semantics on both.
++- **Mixed charsets** (`latin1` / `utf8mb3` / `utf8mb4`) and `CONVERT(… USING utf8mb3)` in the cage-card join: behave identically on both.
++- **No `DEFINER=` clauses** in the shipped dumps, so imports do not depend on a specific DB user existing.
++- **Auth plugins** — MySQL 8 defaults to `caching_sha2_password`, MariaDB to `mysql_native_password`. PHP 8.3's `mysqli` supports **both**; no config change needed.
++
++---
++
++## 2. The one incompatibility (fixed)
++
++MySQL 8 introduced the collation **`utf8mb4_0900_ai_ci`**, which **does not exist
++in MariaDB**. It appeared in 13 places in `mousebook_install_schema.sql`: the two
++InnoDB reservation tables and 11 view definitions.
++
++Loading the old schema on MariaDB failed hard:
++
++```
++ERROR 1273 (HY000): Unknown collation: 'utf8mb4_0900_ai_ci'
++```
++
++This failure is **dangerous, not merely noisy**: the import aborts partway, leaving
++a database with tables but **no views and no stored procedures** — a colony DB that
++looks present but is silently broken.
++
++**Fix:** the schema now uses **`utf8mb4_unicode_ci`**, which exists on both engines
++and sorts equivalently for Mousebook's data. No PHP code changes were required.
++
++---
++
++## 3. Migrating an existing MySQL colony database
++
++**You only need this if your database was created before this change** — i.e. if it
++was built from a schema containing `utf8mb4_0900_ai_ci`.
++
++Your database keeps working on MySQL either way. But the collation is baked into
++the stored metadata of your tables *and* views, so a `mysqldump` of an un-migrated
++database re-emits `utf8mb4_0900_ai_ci` — **and that backup cannot be restored onto
++MariaDB.** Applying the migration makes your existing backups portable.
++
++Check whether you're affected (run against each colony database):
++
++```sql
++SELECT TABLE_NAME, TABLE_COLLATION FROM information_schema.TABLES
++  WHERE TABLE_SCHEMA = DATABASE() AND TABLE_COLLATION LIKE '%0900%';
++SELECT TABLE_NAME FROM information_schema.VIEWS
++  WHERE TABLE_SCHEMA = DATABASE() AND COLLATION_CONNECTION LIKE '%0900%';
++```
++
++Any rows returned → apply the migration:
++
++```bash
++mysql -u <admin> -p <colony_db> < migration_m1g_collation_portability.sql
++```
++
++The migration is **idempotent** (safe to re-run), touches **no data**, and applies
++to **colony (animalbook) databases only** — the userbook schema was never affected.
++
++### Verified migration path (MySQL → MariaDB)
++
++| Scenario | Result on MariaDB |
++|---|---|
++| Backup of an **un-migrated** MySQL colony | **Fails** — error 1273; only 25 of 37 tables, 0 views, 0 procedures |
++| Backup of a **migrated** MySQL colony | **Succeeds** — 37 tables, 13 views, 10 procedures, all working |
++
++Use the documented backup command from `BACKUP.md` (`--routines --triggers
++--events`); a plain `mysqldump` omits the 10 stored procedures.
++
++---
++
++## 4. MySQL and MariaDB cannot coexist on one host
++
++The OS packages conflict — installing one **removes** the other:
++
++```
++# apt-get install mysql-server   (with MariaDB present)
++The following packages will be REMOVED:
++  mariadb-server mariadb-server-core ...
++```
++
++This is why Mousebook is portable rather than tied to one engine: on a shared or
++institutional host that already runs MySQL for other applications, Mousebook must
++use the engine that is already there. **Do not uninstall a working MySQL to install
++MariaDB.** If you truly need both engines on one machine, run one of them in a
++container or as a second instance on a different port — do not attempt a second
++native install.
++
++Note that MariaDB provides `mysql`, `mysqld`, and `mysqldump` as compatibility
++command names (`/usr/sbin/mysqld` is a symlink to `mariadbd`), so existing scripts
++and habits continue to work.
++
++---
++
++## 5. Known limitation (not an engine issue)
++
++`mousebook_install_schema.sql` hardcodes its target database:
++
++```sql
++CREATE DATABASE IF NOT EXISTS `animalbook`;
++USE `animalbook`;
++```
++
++Piping it into a differently-named database (`mysql -u root -p my_colony <
++mousebook_install_schema.sql`) **silently writes to `animalbook` instead**. To
++create a colony database under another name, edit those two lines first. Tracked
++for the installation work (#36).
+diff --git a/mousebook_install_schema.sql b/mousebook_install_schema.sql
+index 85ba4b5..04e8a9c 100644
+--- a/mousebook_install_schema.sql
++++ b/mousebook_install_schema.sql
+@@ -465,7 +465,7 @@ CREATE TABLE `reservations_animals` (
+   `timestamp` datetime DEFAULT NULL,
+   PRIMARY KEY (`maxautono`),
+   UNIQUE KEY `maxautono_UNIQUE` (`maxautono`)
+-) ENGINE=InnoDB AUTO_INCREMENT=3098 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
++) ENGINE=InnoDB AUTO_INCREMENT=3098 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ /*!40101 SET character_set_client = @saved_cs_client */;
+ 
+ --
+@@ -484,7 +484,7 @@ CREATE TABLE `reservations_cages` (
+   `timestamp` datetime DEFAULT NULL,
+   PRIMARY KEY (`reservationno`),
+   UNIQUE KEY `reservationno_UNIQUE` (`reservationno`)
+-) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
++) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ /*!40101 SET character_set_client = @saved_cs_client */;
+ 
+ --
+@@ -1310,7 +1310,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_activeanimals` AS select `y`.`cageno` AS `cageno`,`y`.`cagetype` AS `cagetype`,`y`.`lineassignment` AS `lineassignment`,`y`.`line` AS `line`,`y`.`idno` AS `idno`,`y`.`sex` AS `sex`,`y`.`eartag` AS `eartag`,`y`.`dob` AS `dob`,`y`.`genorxn` AS `genorxn`,`y`.`genotype` AS `genotype`,`conversion_geno`.`genoshort` AS `genoshort`,`y`.`matingcage` AS `matingcage`,`y`.`cagelocation` AS `location` from (`view_activeanimals_sub2` `y` left join `conversion_geno` on(((`y`.`genorxn` = convert(`conversion_geno`.`allelegroupscombo` using utf8mb3)) and (`y`.`genotype` = convert(`conversion_geno`.`genotype` using utf8mb3))))) order by `y`.`lineassignment`,field(`y`.`cagetype`,'holding','rearrange','experimental','mating','litter','sac'),`y`.`cageno`,`y`.`line`,`y`.`idno` */;
+@@ -1328,7 +1328,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_activeanimals_sub1` AS select `table_animals`.`animalautono` AS `animalautono`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`sex` AS `sex`,`table_animals`.`eartag` AS `eartag`,`table_animals`.`matingcage` AS `matingcage`,`table_animals`.`currentcage` AS `currentcage`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_genotypes`.`allele` AS `allele` from (`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) order by `table_animals`.`animalautono`,`table_genotypes`.`allelegroup` */;
+@@ -1346,7 +1346,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_activeanimals_sub2` AS select `table_cages`.`cageno` AS `cageno`,`table_cages`.`cagetype` AS `cagetype`,`table_cages`.`cagelocation_room` AS `cagelocation`,`table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,`x`.`line` AS `line`,`x`.`idno` AS `idno`,`x`.`sex` AS `sex`,`x`.`eartag` AS `eartag`,`x`.`dob` AS `dob`,group_concat(`x`.`allelegroup` order by `x`.`allelegroup` ASC separator '; ') AS `genorxn`,group_concat(`x`.`allele` order by `x`.`allelegroup` ASC separator '; ') AS `genotype`,`x`.`matingcage` AS `matingcage` from (`view_activeanimals_sub1` `x` join `table_cages` on((`x`.`currentcage` = `table_cages`.`cageid`))) where ((`x`.`dod` is null) and (`x`.`dob` is not null)) group by `x`.`line`,`x`.`idno`,`x`.`sex`,`x`.`eartag`,`x`.`dob`,`x`.`matingcage`,`table_cages`.`cageno`,`table_cages`.`cagetype`,`table_cages`.`cagelocation_room`,`table_cages`.`lineassignment`,`table_cages`.`cageid` */;
+@@ -1364,7 +1364,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_cagestatus` AS select `activcages`.`lineassignment` AS `lineassignment`,sum(if((`activcages`.`cagetype` = 'Mating'),1,0)) AS `mating count`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter')),1,0)) AS `holding Total`,sum(if((`activcages`.`cagetype` = 'Litter'),1,0)) AS `litter count`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` <= 1)),1,0)) AS `holding count 1Mo`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` = 2)),1,0)) AS `holding count 2Mo`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` = 3)),1,0)) AS `holding count 3Mo`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` = 4)),1,0)) AS `holding count 4Mo`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` = 5)),1,0)) AS `holding count 5Mo`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` = 6)),1,0)) AS `holding count 6Mo`,sum(if(((`activcages`.`cagetype` <> 'Mating') and (`activcages`.`cagetype` <> 'Litter') and (`activcages`.`agemonth` > 6)),1,0)) AS `holding count >6Mo` from `view_cagestatus_sub1` `activcages` group by `activcages`.`lineassignment` */;
+@@ -1382,7 +1382,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_cagestatus_sub1` AS select round((avg((to_days(curdate()) - to_days(`table_animals`.`dob`))) / 28),0) AS `agemonth`,`table_animals`.`currentcage` AS `currentcage`,`table_cages`.`cagetype` AS `cagetype`,`table_cages`.`lineassignment` AS `lineassignment` from (`table_animals` join `table_cages` on((`table_cages`.`cageid` = `table_animals`.`currentcage`))) where ((`table_animals`.`dob` is not null) and (`table_animals`.`dod` is null)) group by `table_cages`.`lineassignment`,`table_cages`.`cagetype`,`table_animals`.`currentcage` */;
+@@ -1400,7 +1400,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_goodanimals` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`sex` AS `sex`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) where (`table_animals`.`dod` is null) having ((`goodgeno` = `table_genotypes`.`allele`) and ((`cagetype` = 'H') or (`cagetype` = 'L'))) */;
+@@ -1418,7 +1418,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_goodanimals_all` AS select `table_genotypes`.`allele` AS `allele`,`table_genotypes`.`allelegroup` AS `allelegroup`,`table_animals`.`line` AS `line`,`table_animals`.`idno` AS `idno`,`table_animals`.`animalautono` AS `animalautono`,`table_animals`.`dob` AS `dob`,`table_animals`.`dod` AS `dod`,`table_animals`.`sex` AS `sex`,left(`table_animals`.`currentcage`,1) AS `cagetype`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele1`),`good_genos`.`geno1`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele2`),`good_genos`.`geno2`,if((`table_genotypes`.`allelegroup` = `good_genos`.`allele3`),`good_genos`.`geno3`,''))) AS `goodgeno`,`good_genos`.`alleles_needed` AS `numalleles`,(to_days(curdate()) - to_days(`table_animals`.`dob`)) AS `curagedays`,floor(((to_days(curdate()) - to_days(`table_animals`.`dob`)) / 30)) AS `curagemo`,if(((to_days(curdate()) - to_days(`table_animals`.`dob`)) > 120),'121orMore','120orLess') AS `curagegrp` from ((`table_animals` join `table_genotypes` on((`table_animals`.`animalautono` = `table_genotypes`.`animalautono`))) join `good_genos` on((`table_animals`.`line` = `good_genos`.`line`))) having (`goodgeno` = `table_genotypes`.`allele`) */;
+@@ -1436,7 +1436,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_goodanimals_filtered` AS select `v`.`line` AS `line`,`v`.`idno` AS `idno`,`v`.`animalautono` AS `animalautono`,`v`.`numalleles` AS `numalleles`,`v`.`curagegrp` AS `curagegrp`,`v`.`curagedays` AS `curagedays`,`v`.`curagemo` AS `curagemo` from `view_goodanimals` `v` group by `v`.`line`,`v`.`idno`,`v`.`animalautono`,`v`.`numalleles`,`v`.`curagegrp`,`v`.`curagedays`,`v`.`curagemo` having (count(0) = `v`.`numalleles`) */;
+@@ -1454,7 +1454,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_goodanimals_filtered_all` AS select `v`.`line` AS `line`,`v`.`idno` AS `idno`,`v`.`animalautono` AS `animalautono`,`v`.`numalleles` AS `numalleles`,`v`.`curagegrp` AS `curagegrp`,`v`.`curagedays` AS `curagedays`,`v`.`curagemo` AS `curagemo` from `view_goodanimals_all` `v` group by `v`.`line`,`v`.`idno`,`v`.`animalautono`,`v`.`numalleles`,`v`.`curagegrp`,`v`.`curagedays`,`v`.`curagemo` having (count(0) = `v`.`numalleles`) */;
+@@ -1472,7 +1472,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_linestatus` AS select `table_lines`.`line` AS `line`,sum(if((`view_goodanimals_filtered`.`curagemo` <= 3),1,0)) AS `animals_0-3mo`,sum(if(((`view_goodanimals_filtered`.`curagemo` > 3) and (`view_goodanimals_filtered`.`curagemo` <= 6)),1,0)) AS `animals_4-6mo`,sum(if((`view_goodanimals_filtered`.`curagemo` > 6),1,0)) AS `animals_7+`,`view_matingcount`.`matings_0-3mo` AS `matings_0-3mo`,`view_matingcount`.`matings_4+mo` AS `matings_4+mo` from ((`table_lines` left join `view_goodanimals_filtered` on((`table_lines`.`line` = `view_goodanimals_filtered`.`line`))) left join `view_matingcount` on((`table_lines`.`line` = convert(`view_matingcount`.`lineassignment` using utf8mb3)))) group by `table_lines`.`line`,`view_matingcount`.`matings_0-3mo`,`view_matingcount`.`matings_4+mo` */;
+@@ -1508,7 +1508,7 @@ DELIMITER ;
+ /*!50001 SET @saved_col_connection     = @@collation_connection */;
+ /*!50001 SET character_set_client      = utf8mb4 */;
+ /*!50001 SET character_set_results     = utf8mb4 */;
+-/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
++/*!50001 SET collation_connection      = utf8mb4_unicode_ci */;
+ /*!50001 CREATE ALGORITHM=UNDEFINED */
+ /*!50013 SQL SECURITY INVOKER */
+ /*!50001 VIEW `view_matingstatus` AS select `table_cages`.`lineassignment` AS `lineassignment`,`table_cages`.`cageid` AS `cageid`,(to_days(curdate()) - to_days(`table_cages`.`setupdate`)) AS `MatingAgeDays`,floor(((to_days(curdate()) - to_days(`table_cages`.`setupdate`)) / 30)) AS `MatingAgeMos`,count(distinct `table_pups`.`idno`) AS `pupsmade`,count(distinct `view_goodanimals_filtered_all`.`idno`) AS `goodpupsmade`,count(distinct `table_pups`.`dob`) AS `Litters`,count(distinct `table_deadpups`.`dob`) AS `Dead Litters`,max(`table_pups`.`dob`) AS `LastLitterDOB`,max(`table_deadpups`.`dob`) AS `LastDeadLitterDOB` from (((`table_cages` left join `table_animals` on((`table_cages`.`cageid` = `table_animals`.`currentcage`))) left join (`table_animals` `table_pups` left join `view_goodanimals_filtered_all` on((`table_pups`.`animalautono` = `view_goodanimals_filtered_all`.`animalautono`))) on((`table_cages`.`cageid` = `table_pups`.`matingcage`))) left join `table_deadpups` on((`table_cages`.`cageid` = `table_deadpups`.`cageid`))) where ((`table_cages`.`cagetype` = 'Mating') and (`table_animals`.`sex` = 'F') and (`table_animals`.`dod` is null)) group by `table_cages`.`cageid` order by `table_cages`.`lineassignment`,`table_cages`.`cageno` */;
