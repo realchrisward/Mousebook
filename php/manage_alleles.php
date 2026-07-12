@@ -4,24 +4,25 @@
 
 <!--php code: login-->
 	<?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$host = $accessun = $accesspw = null;
+$sqlaction = null; $sqlstatus = null; $sqlreport = null; $currallelegrpref = null; $currgenorxncomments = null; $currgenorxncycle = null;
+$currprimerseq = null; $currprimercom = null;
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
-		$xpassword='';
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -37,20 +38,19 @@
 	$ubpass=$config['server_pass'];	
 
 		//query userbook for accessable databases
-		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl from ".
-		"(userpass join userdbaccess on userpass.user_idno=userdbaccess.user_idno) ".
-		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
-		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
-	
-		$conn=new mysqli($host,$ubname,$ubpass,"userbook");
-		$results=$conn->query($sql);
-		$conn->close();
-		while($row=mysqli_fetch_array($results)){
-			$accessun=$row['db_accessun'];
-			$accesspw=$row['db_accesspw'];
-			$host=$row['db_host'];
-		
-		}
+		// [mb_auth_patched]
+		require_once __DIR__ . '/../includes/auth.php';
+		require_once __DIR__ . '/../includes/session.php';
+		$mb           = mb_session_bootstrap($config);
+		$xusername    = $mb['username'];
+		$dbname       = $mb['dbname'];
+		$host         = $mb['host'];
+		$accessun     = $mb['accessun'];
+		$accesspw     = $mb['accesspw'];
+		$xloginstatus = $mb['loginstatus'];
+		// Phase F tier gate: neutralise mutating actions for insufficient access.
+		mb_guard_admin();
+
 		
 	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
 	//check connection
@@ -67,8 +67,11 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 //add gene
 
 if (isset($_POST['addgenebutton'])){
-$textgene=$_POST['textgene'];
+$textgene=($_POST['textgene'] ?? '');
 $sqlaction='add gene:'.$textgene;
+if (trim($textgene)===''){
+$sqlstatus='-failed - gene name cannot be blank';
+} else {
 $sqltext="INSERT INTO `list_gene` (`gene`) VALUES ('".$textgene."');";
 if ($conn->query($sqltext) === TRUE) {
 $sqlstatus= '-successful';} 
@@ -76,11 +79,15 @@ else {
 $sqlstatus= '-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove gene - need checks/abort for deletion of genes already in use
 if (isset($_POST['remgenebutton'])){
-$textgene=$_POST['textgene'];
+$textgene=($_POST['textgene'] ?? '');
 $sqlaction='delete gene:'.$textgene;
+if (trim($textgene)===''){
+$sqlstatus='-failed - no gene specified to delete';
+} else {
 //remove records from line and allele by line tables
 $sqltext="DELETE FROM `list_gene` WHERE `gene`='".$textgene."';";
 if ($conn->query($sqltext) === TRUE) {
@@ -89,15 +96,21 @@ else {
 $sqlstatus= '-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //edit gene - not currently implemented
 
 //add allelegroup
 if (isset($_POST['addallelegroupbutton'])){
-$gene_selection=$_POST['gene_selection'];
-$textallelegroup=$_POST['textallelegroup'];
-$textallelegroupref=$_POST['textallelegroupref'];
+$gene_selection=($_POST['gene_selection'] ?? '');
+$textallelegroup=($_POST['textallelegroup'] ?? '');
+$textallelegroupref=($_POST['textallelegroupref'] ?? '');
 $sqlaction='add allelegroup:'.$textallelegroup;
+if (trim($textallelegroup)===''){
+$sqlstatus='-failed - allele group name cannot be blank';
+} elseif (trim($gene_selection)===''){
+$sqlstatus='-failed - no gene selected';
+} else {
 $sqltext="INSERT INTO `list_allelegroup` (`allelegroup`,`gene`,`reference`) VALUES('".$textallelegroup."','".$gene_selection."','".$textallelegroupref."');";
 if ($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -105,11 +118,15 @@ else{
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove allelegroup
 if (isset($_POST['remallelegroupbutton'])){
-$textallelegroup=$_POST['textallelegroup'];
+$textallelegroup=($_POST['textallelegroup'] ?? '');
 $sqlaction='delete allelegroup:'.$textallelegroup;
+if (trim($textallelegroup)===''){
+$sqlstatus='-failed - no allele group specified to delete';
+} else {
 $sqltext="DELETE FROM `list_allelegroup` WHERE `allelegroup`='".$textallelegroup."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -117,12 +134,16 @@ else{
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //edit allelegroup
 if (isset($_POST['editallelegroupbutton'])){
-$texteditallelegroup=$_POST['texteditallelegroup'];
-$texteditallelegroupref=$_POST['texteditallelegroupref'];
+$texteditallelegroup=($_POST['texteditallelegroup'] ?? '');
+$texteditallelegroupref=($_POST['texteditallelegroupref'] ?? '');
 $sqlaction='edit allelegroup:'.$texteditallelegroup;
+if (trim($texteditallelegroup)===''){
+$sqlstatus='-failed - no allele group selected to edit';
+} else {
 $sqltext="UPDATE `list_allelegroup` SET `reference`='".$texteditallelegroupref."' WHERE `allelegroup`='".$texteditallelegroup."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -130,26 +151,38 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //add allele
 if (isset($_POST['addallelebutton'])){
-$alleleXgendspec=$_POST['allelegendspec'];
-$textallele=$_POST['textallele'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$alleleXgendspec=($_POST['allelegendspec'] ?? '');
+$textallele=($_POST['textallele'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='add allele:'.$textallele.' to '.$allelegrp_selection;
-$sqltext="INSERT INTO `list_allele` (`allelegroup`,`allele`,`genderspecific`) VALUES ('".$allelegrp_selection."','".$textallele."','".$alleleXgendspec."');";
+if (trim($textallele)===''){
+$sqlstatus='-failed - allele name cannot be blank';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
+$sqltext="INSERT INTO `list_allele` (`allelegroup`,`allele`,`sexspecific`) VALUES ('".$allelegrp_selection."','".$textallele."','".$alleleXgendspec."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove allele
 if (isset($_POST['remallelebutton'])){
-$textallele=$_POST['textallele'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$textallele=($_POST['textallele'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='delete allele:'.$textallele.' from '.$allelegrp_selection;
+if (trim($textallele)===''){
+$sqlstatus='-failed - allele name cannot be blank';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="DELETE FROM `list_allele` WHERE (`allelegroup`='".$allelegrp_selection."' and `allele`='".$textallele."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -157,14 +190,18 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 //edit allele - not currently included
 
 //add genotyping rxn
 if (isset($_POST['addgenorxnbutton'])){
-$textgenorxn=$_POST['textgenorxn'];
-$textgenorxncom=$_POST['textgenorxncom'];
-$textgenorxncyc=$_POST['textgenorxncyc'];
+$textgenorxn=($_POST['textgenorxn'] ?? '');
+$textgenorxncom=($_POST['textgenorxncom'] ?? '');
+$textgenorxncyc=($_POST['textgenorxncyc'] ?? '');
 $sqlaction='add genorxn:'.$textgenorxn;
+if (trim($textgenorxn)===''){
+$sqlstatus='-failed - genotyping reaction name cannot be blank';
+} else {
 $sqltext="INSERT INTO `list_genotypingrxns` (`genotypingrxn`,`comments`,`recommendedcycle`) 
 VALUES ('".$textgenorxn."','".$textgenorxncom."','".$textgenorxncyc."');";
 if($conn->query($sqltext)===TRUE){
@@ -173,11 +210,15 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove genotyping rxn
 if (isset($_POST['remgenorxnbutton'])){
-$textgenorxn=$_POST['textgenorxn'];
+$textgenorxn=($_POST['textgenorxn'] ?? '');
 $sqlaction='delete genorxn:'.$textgenorxn;
+if (trim($textgenorxn)===''){
+$sqlstatus='-failed - no genotyping reaction specified to delete';
+} else {
 $sqltext="DELETE FROM `list_genotypingrxns` WHERE `genotypingrxn`='".$textgenorxn."';";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -185,13 +226,17 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //edit genotyping rxn
 if (isset($_POST['editgenorxnbutton'])){
-$texteditgenorxn=$_POST['texteditgenorxn'];
-$texteditgenorxncom=$_POST['texteditgenorxncom'];
-$texteditgenorxncyc=$_POST['texteditgenorxncyc'];
+$texteditgenorxn=($_POST['texteditgenorxn'] ?? '');
+$texteditgenorxncom=($_POST['texteditgenorxncom'] ?? '');
+$texteditgenorxncyc=($_POST['texteditgenorxncyc'] ?? '');
 $sqlaction='edit:'.$texteditgenorxn;
+if (trim($texteditgenorxn)===''){
+$sqlstatus='-failed - no genotyping reaction selected to edit';
+} else {
 $sqltext="UPDATE `list_genotypingrxns` SET `comments`='".$texteditgenorxncom."', 
 `recommendedcycle`='".$texteditgenorxncyc."' WHERE `genotypingrxn`='".$texteditgenorxn."';";
 if($conn->query($sqltext)===TRUE){
@@ -200,14 +245,20 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //add primer
 if(isset($_POST['addprimerbutton'])){
-$textprimer=$_POST['textprimer'];
-$textprimerseq=$_POST['textprimerseq'];
-$textprimercom=$_POST['textprimercom'];
-$genorxn_selection=$_POST['genorxn_selection'];
+$textprimer=($_POST['textprimer'] ?? '');
+$textprimerseq=($_POST['textprimerseq'] ?? '');
+$textprimercom=($_POST['textprimercom'] ?? '');
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
 $sqlaction='add primer:'.$textprimer;
+if (trim($textprimer)===''){
+$sqlstatus='-failed - primer name cannot be blank';
+} elseif (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} else {
 $sqltext="INSERT INTO `list_genotypingprimers` (`primerseq`,`primername`,`genotypingrxn`,`comments`) 
 VALUES  ('".$textprimerseq."','".$textprimer."','".$genorxn_selection."','".$textprimercom."');";
 if($conn->query($sqltext)===TRUE){
@@ -216,11 +267,17 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 //remove primer
 if(isset($_POST['remprimerbutton'])){
-$textprimer=$_POST['textprimer'];
-$genorxn_selection=$_POST['genorxn_selection'];
+$textprimer=($_POST['textprimer'] ?? '');
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
 $sqlaction='delete primer:'.$textprimer;
+if (trim($textprimer)===''){
+$sqlstatus='-failed - primer name cannot be blank';
+} elseif (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} else {
 $sqltext="DELETE FROM `list_genotypingprimers` WHERE (`primername`='".$textprimer."' and `genotypingrxn`='".$genorxn_selection."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
@@ -228,14 +285,20 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //edit primer
 if(isset($_POST['editprimerbutton'])){
-$texteditprimer=$_POST['texteditprimer'];
-$texteditprimerseq=$_POST['texteditprimerseq'];
-$texteditprimercom=$_POST['texteditprimercom'];
-$genorxn_selection=$_POST['genorxn_selection'];
+$texteditprimer=($_POST['texteditprimer'] ?? '');
+$texteditprimerseq=($_POST['texteditprimerseq'] ?? '');
+$texteditprimercom=($_POST['texteditprimercom'] ?? '');
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
 $sqlaction='edit primer:'.$texteditprimer;
+if (trim($texteditprimer)===''){
+$sqlstatus='-failed - no primer selected to edit';
+} elseif (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} else {
 $sqltext="UPDATE `list_genotypingprimers` 
 SET `primerseq`='".$texteditprimerseq."',`comments`='".$texteditprimercom."' 
 WHERE (`primername`='".$texteditprimer."' and `genotypingrxn`='".$genorxn_selection."');";
@@ -245,12 +308,18 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //add genorxn by allelegroup pair
 if(isset($_POST['assigngenorxnbutton'])){
-$genorxn_selection=$_POST['genorxn_selection'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$genorxn_selection=($_POST['genorxn_selection'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='add rxn:'.$genorxn_selection.' to allele group:'.$allelegrp_selection;
+if (trim($genorxn_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="INSERT INTO key_allelegroupbygenotypingrxn (`allelegroup`,`genotypingrxn`) 
 VALUES ('".$allelegrp_selection."','".$genorxn_selection."');";
 if($conn->query($sqltext)===TRUE){
@@ -259,18 +328,25 @@ else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
 }
 }
+}
 
 //remove genorxn by allelegroup pair
 if(isset($_POST['deassigngenorxnbutton'])){
-$genorxnbyallelegrp_selection=$_POST['genorxnbyallelegrp_selection'];
-$allelegrp_selection=$_POST['allelegrp_selection'];
+$genorxnbyallelegrp_selection=($_POST['genorxnbyallelegrp_selection'] ?? '');
+$allelegrp_selection=($_POST['allelegrp_selection'] ?? '');
 $sqlaction='remove rxn:'.$genorxn_selection.' from allele group:'.$allelegrp_selection;
+if (trim($genorxnbyallelegrp_selection)===''){
+$sqlstatus='-failed - no genotyping reaction selected';
+} elseif (trim($allelegrp_selection)===''){
+$sqlstatus='-failed - no allele group selected';
+} else {
 $sqltext="DELETE FROM key_allelegroupbygenotypingrxn 
 WHERE (`allelegroup`='".$allelegrp_selection."' and `genotypingrxn`='".$genorxnbyallelegrp_selection."');";
 if($conn->query($sqltext)===TRUE){
 $sqlstatus='-successful';}
 else {
 $sqlstatus='-failed '.$conn->error.'...'.$sqltext;
+}
 }
 }
 
@@ -281,11 +357,11 @@ $sqlreport=$sqlaction.' - '.$sqlstatus
 <?php
 
 //get posted variables
-$currgene=$_POST['gene_selection'];
-$currallelegrp=$_POST['allelegrp_selection'];
-$currgenorxn=$_POST['genorxn_selection'];
-$currgenorxnfromag=$_POST['genorxnbyallelegrp_selection'];
-$currprimer=$_POST['primer_selection'];
+$currgene=($_POST['gene_selection'] ?? '');
+$currallelegrp=($_POST['allelegrp_selection'] ?? '');
+$currgenorxn=($_POST['genorxn_selection'] ?? '');
+$currgenorxnfromag=($_POST['genorxnbyallelegrp_selection'] ?? '');
+$currprimer=($_POST['primer_selection'] ?? '');
 
 //gene table
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
@@ -293,7 +369,7 @@ $results=$conn->query("call get_genes();");
 //set up static portion of table
 $gene_table= '<select id="gene_selection" name="gene_selection" size=8class="smalllistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current line - used for additional fields
 if($row['gene']===$currgene){
@@ -315,7 +391,7 @@ $results=$conn->query($sqltext);
 //set up static portion of table
 $allelegrp_table= '<select id="allelegrp_selection" name="allelegrp_selection" size=8 class="largelistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current line - used for additional fields
 if($row['allelegroup']===$currallelegrp){
@@ -338,9 +414,9 @@ $results=$conn->query($sqltext);
 //set up static portion of table
 $allele_table= '<select id="allele_selection" name="allele_selection" size=8 class="smalllistbox" onchange="">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
-$allele_table .= '<option value="'.$row["allele"].'">'.$row["allele"].' | '.$row["genderspecific"].'</option>';
+$allele_table .= '<option value="'.$row["allele"].'">'.$row["allele"].' | '.$row["sexspecific"].'</option>';
 }
 //close the table
 $allele_table .= '</select>';
@@ -353,7 +429,7 @@ $results=$conn->query($sqltext);
 //set up static portion of table
 $genorxnbyallelegrp_table= '<select id="genorxnbyallelegrp_selection" name="genorxnbyallelegrp_selection" size=5 class="mediumlistbox" onchange="">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current line - used for additional fields
 if($row['genotypingrxn']===$currgenorxn){
@@ -373,7 +449,7 @@ $results=$conn->query("call get_genorxns();");
 //set up static portion of table
 $genorxn_table= '<select id="genorxn_selection" name="genorxn_selection" size=5 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 if($row['genotypingrxn']===$currgenorxn){
 $currgenorxncomments=$row['comments'];
@@ -396,7 +472,7 @@ $primer_list='<table id="primer_list_table" name="primer_list_table"><tr><th>pri
 $primer_table= '<select id="primer_selection" name="primer_selection" size=5 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
 
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current primer - used for additional fields
 if($row['primername']===$currprimer){
@@ -446,12 +522,12 @@ $conn->close()
 						<tr>
 						<th>user:</th>
 						<th><input type="text" name="username" 
-						value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+						value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 						</tr>
 						<tr>
 						<td>pass:</td>
 						<td><input type="password" name="password" 
-						value="<?php echo $xpassword; ?>" style="width:100px;font-size:10px;" /></td>
+						value="" style="width:100px;font-size:10px;" /></td>
 						</tr>
 						</table>
 						<input type=submit id="loginbutton" name="button_login"
@@ -469,105 +545,8 @@ $conn->close()
 					</form>
 			</div>
 
-			<div id="left_navmenu">
-					 
-					 <form action="../index.php" method=post>
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  style="background-color:#217190; color:lightgrey;"
-					  value="Home" />
-					  <br>
-					  </form>
-					 <form action="../php/manage_alleles.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Alleles" />
-					 </form>					 
-					 <form action="../php/manage_strains.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Strains" />
-					 </form>					 
-					 <form action="../php/manage_lines.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Lines" />
-					 </form>
-					
-					 </form>					 
-					 <form action="../php/add_animals.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Add animals" />
-					 </form>
-					  <form action="../php/record_dead_pups.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Record Dead Pups" />
-					 </form>
-					 </form>					 
-					 <form action="../php/manage_animals.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage animals" />
-					 </form>
-					 </form>					 
-					 <form action="../php/manage_cages.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Cages" />
-					 </form>
-					 
-					 <form action="../php/query_genotodo.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Plan Genotyping" />
-					 </form>
-					 <form action="../php/query_viewer.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="View Database Queries" />
-					 </form>
-					 <form action="../php/query_animals.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="View animals" />
-					 </form>
-					  
-			</div>
+				<?php require_once __DIR__ . '/../includes/nav.php';
+	      mb_render_nav($dbname); ?>
 
 
 <!--CONTENT SECTION-->
@@ -591,9 +570,7 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 
 			<form id="allele_management_form" name="allele_management_form" method=post>
 
-					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 			<table id="gene_and_allele_management" name="gene_and_allele_management">
@@ -629,7 +606,7 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			</tr>
 			<tr>
 				<td><input type="text" id="textallelegroup" name="textallelegroup" style="width:100%;"></td>
-				<td colspan=2><input type="text" id="textallelegroupref" name="textallelegroupref" style="width:100%;"</td>
+				<td colspan=2><input type="text" id="textallelegroupref" name="textallelegroupref" style="width:100%;"></td>
 			</tr>
 			
 			<tr><td colspan=3 style="background-color:#217190;"></td></tr>
@@ -640,7 +617,7 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			</tr>
 			<tr>
 				<td><input type="text" id="texteditallelegroup" name="texteditallelegroup"  value="<?php echo $currallelegrp; ?>" style="width:100%;" readonly="readonly"></td>
-				<td colspan=2><input type="text" id="texteditallelegroupref" name="texteditallelegroupref" value="<?php echo $currallelegrpref; ?>" style="width:100%;"</td>
+				<td colspan=2><input type="text" id="texteditallelegroupref" name="texteditallelegroupref" value="<?php echo $currallelegrpref; ?>" style="width:100%;"></td>
 			</tr>
 			
 			<tr><td colspan=3 style="background-color:#217190;">-</td></tr>
@@ -739,5 +716,6 @@ remgenorxn, editgenorxn, addprimer, remprimer, editprimer-->
 			</div>
 
 
+<script src="../mousebook.js"></script>
 </body>
 </html>

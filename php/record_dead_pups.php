@@ -4,22 +4,22 @@
 
 <!--php code: login-->
 	<?php
+/* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
+$host = $accessun = $accesspw = null;
+$cage = null; $animals_string_display = null; $testtable = null; $sqlreport = null;
 	//setup sql variables
-	$xusername=$_POST['xusername'];
-	$xpassword=$_POST['xpassword'];
+	$xusername=($_POST['xusername'] ?? '');
 	
 	if (isset($_POST['button_login'])){
-		$xusername=$_POST['xusername'];
-		$xpassword=$_POST['xpassword'];
-		$xloginstatus=$_POST['loginstatus'];
+		$xusername=($_POST['xusername'] ?? '');
+		$xloginstatus=($_POST['loginstatus'] ?? '');
 		}
 	if (isset($_POST['button_disco'])){
 		$xusername='';
-		$xpassword='';
 		$xloginstatus='red';
 		}
 		
-	$dbname=$_POST['dbname'];
+	$dbname=($_POST['dbname'] ?? '');
 
 		
 	//test login
@@ -35,20 +35,20 @@
 	$ubpass=$config['server_pass'];	
 
 		//query userbook for accessable databases
-		$sql="select dbaccess.db_name,db_host,db_accessun,db_accesspw,db_formurl from ".
-		"(userpass join userdbaccess on userpass.user_idno=userdbaccess.user_idno) ".
-		"join dbaccess on userdbaccess.db_name=dbaccess.db_name ".
-		"where user_name='".$xusername."' and user_pass='".$xpassword."' and dbaccess.db_name='".$dbname."';";
-	
-		$conn=new mysqli($host,$ubname,$ubpass,"userbook");
-		$results=$conn->query($sql);
-		$conn->close();
-		while($row=mysqli_fetch_array($results)){
-			$accessun=$row['db_accessun'];
-			$accesspw=$row['db_accesspw'];
-			$host=$row['db_host'];
-		
-		}
+		// [mb_auth_patched]
+		require_once __DIR__ . '/../includes/auth.php';
+		require_once __DIR__ . '/../includes/session.php';
+		$mb           = mb_session_bootstrap($config);
+		$xusername    = $mb['username'];
+		$dbname       = $mb['dbname'];
+		$host         = $mb['host'];
+		$accessun     = $mb['accessun'];
+		$accesspw     = $mb['accesspw'];
+		$xloginstatus = $mb['loginstatus'];
+		// Phase F tier gate: neutralise mutating actions for insufficient access.
+		mb_guard_write();
+		require_once __DIR__ . '/../includes/filters.php';
+
 		
 	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
 	//check connection
@@ -70,11 +70,11 @@ $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
 if (isset($_POST['generate_animals'])){
 //get deadpup info
-$xdob=$_POST['dob'];
-$xdod=$_POST['dod'];
-$xbulkcomments=$_POST['bulkcomments'];
-$xsource_selection=$_POST['source_selection'];
-$xdeath_type=$_POST['death_type'];
+$xdob=($_POST['dob'] ?? '');
+$xdod=($_POST['dod'] ?? '');
+$xbulkcomments=($_POST['bulkcomments'] ?? '');
+$xsource_selection=($_POST['source_selection'] ?? '');
+$xdeath_type=($_POST['death_type'] ?? '');
 
 //populate table
 
@@ -112,12 +112,12 @@ if (isset($_POST['confirm_animals'])){
 
 $sqltext='';
 
-$dob=$_POST['sqldob'];
-$dod=$_POST['sqldod'];
-$comments=$_POST['sqlcomments'];
+$dob=($_POST['sqldob'] ?? '');
+$dod=($_POST['sqldod'] ?? '');
+$comments=($_POST['sqlcomments'] ?? '');
 
-$death_type=$_POST['sqldeath_type'];
-$cageid=$_POST['sqlcage'];
+$death_type=($_POST['sqldeath_type'] ?? '');
+$cageid=($_POST['sqlcage'] ?? '');
 
 $sqltext='INSERT INTO `'.$dbname.'`.`table_deadpups` 
 (`cageid`,`dob`,`dod`,`comments`,`death_type`)
@@ -142,12 +142,13 @@ $conn->close();
 <?php
 //posted variables
 
-$line_selection=$_POST['line_selection'];
-$source_selection=$_POST['source_selection'];
-$bulkcomments=$_POST['bulkcomments'];
-$dob=$_POST['dob'];
-$dod=$_POST['dod'];
-$death_type=$_POST['death_type'];
+$line_selection=($_POST['line_selection'] ?? '');
+$location_selection=$_POST['location_selection'] ?? 'all';
+$source_selection=($_POST['source_selection'] ?? '');
+$bulkcomments=($_POST['bulkcomments'] ?? '');
+$dob=($_POST['dob'] ?? '');
+$dod=($_POST['dod'] ?? '');
+$death_type=($_POST['death_type'] ?? '');
 
 
 //line list
@@ -157,7 +158,7 @@ $results=$conn->query($sqltext);
 //set up static portion of table
 $line_listbox= '<select id="line_selection" name="line_selection" size=1 class="mediumlistbox" onchange="submitForm()">';
 //loop the result set and prepare table
-while($row=mysqli_fetch_array($results)) {
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 //catch results of each row
 //get results matched to current line - used for additional fields
 if($row['line']===$line_selection){
@@ -172,16 +173,22 @@ $line_listbox .= '<option value="'.$row["line"].'">'.$row["line"].'</option>';
 $line_listbox .= '</select>';
 $conn->close();
 
-//mating list filtered by line
+//location filter dropdown (filter mode)
+$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$location_listbox=filter_selectbox(location_filter_options($conn), $location_selection, 'location_selection', 'submitForm()', true);
+$conn->close();
+
+//mating list filtered by line (+ location)
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT `currentcage` 
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
-where dod is null and left(`currentcage`,1)='M' and (`line`='".$line_selection."' or `lineassignment`='".$line_selection."') 
+where dod is null and left(`currentcage`,1)='M' and (`line`='".$line_selection."' or `lineassignment`='".$line_selection."') "
+.location_where_join($conn, $location_selection)."
 GROUP BY `currentcage`;";
 $results=$conn->query($sqltext);
 $source_listbox='<select id="source_selection" name="source_selection" size=12 class="mediumlistbox" onchange="submitForm()">';
 
-while($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 $cage[]=$row['currentcage'];
 }
 foreach($cage as $source) {
@@ -200,13 +207,13 @@ $conn->close();
 //mating cage contents current
 $conn=new mysqli($host,$accessun,$accesspw,$dbname);
 
-$sqltext="SELECT table_animals.animalautono as 'man',line,idno,gender,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
+$sqltext="SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
 $results=$conn->query($sqltext);
 $animals_results=$results;
 $animals_listbox='<select id="animals_selection" name="animals_selection" size=6 class="mediumlistbox onchange="submitForm()">;';
 //loop and prepare table
-while($row=mysqli_fetch_array($results)){
-$animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['gender'].'</option>';
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
+$animals_listbox.='<option value="'.$row['man'].'">'.$row['line'].'-'.$row['idno'].' | '.$row['sex'].'</option>';
 }
 //close the table
 $animals_listbox.='</select>';
@@ -221,7 +228,7 @@ $results=$conn->query($sqltext);
 $animals_results=$results;
 
 //loop and prepare table
-while($row=mysqli_fetch_array($results)){
+while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 $animals_string=$source_selection.' | '.$row['cagecontents'];
 $animals_string_display=$source_selection.' <br> '.$row['cagecontents'];
 }
@@ -260,12 +267,12 @@ $conn->close();
 						<tr>
 						<th>user:</th>
 						<th><input type="text" name="xusername" 
-						value="<?php echo $xusername; ?>" style="width:100px;font-size:10px;" /></th>
+						value="<?php echo htmlspecialchars($xusername); ?>" style="width:100px;font-size:10px;" /></th>
 						</tr>
 						<tr>
 						<td>pass:</td>
 						<td><input type="password" name="xpassword" 
-						value="<?php echo $xpassword; ?>" style="width:100px;font-size:10px;" /></td>
+						value="" style="width:100px;font-size:10px;" /></td>
 						</tr>
 						</table>
 						<input type=submit id="loginbutton" name="button_login"
@@ -282,105 +289,8 @@ $conn->close();
 					</form>
 			</div>
 
-			<div id="left_navmenu">
-					 
-					 <form action="../index.php" method=post>
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  style="background-color:#217190; color:lightgrey;"
-					  value="Home" />
-					  <br>
-					  </form>
-					 <form action="../php/manage_alleles.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Alleles" />
-					 </form>					 
-					 <form action="../php/manage_strains.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Strains" />
-					 </form>					 
-					 <form action="../php/manage_lines.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Lines" />
-					 </form>
-					
-					 </form>					 
-					 <form action="../php/add_animals.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Add animals" />
-					 </form>
-					  <form action="../php/record_dead_pups.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Record Dead Pups" />
-					 </form>
-					 </form>					 
-					 <form action="../php/manage_animals.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage animals" />
-					 </form>
-					 </form>					 
-					 <form action="../php/manage_cages.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Manage Cages" />
-					 </form>
-					 
-					 <form action="../php/query_genotodo.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="Plan Genotyping" />
-					 </form>
-					 <form action="../php/query_viewer.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="View Database Queries" />
-					 </form>
-					 <form action="../php/query_animals.php" method=post target="_blank">
-					 <input type=hidden name="xusername" value="<?php echo $xusername; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $xpassword; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
-					 <input type=hidden name="button_login" value="connect" />
-					 <input type=submit class="button" name=""
-					  value="View animals" />
-					 </form>
-					  
-			</div>
+				<?php require_once __DIR__ . '/../includes/nav.php';
+	      mb_render_nav($dbname); ?>
 
 
 <!--CONTENT SECTION-->
@@ -388,9 +298,7 @@ $conn->close();
 			<form id="add_animals_form" name="add_animals_form" method=post>
 
 
-					 <input type=hidden name="xusername" value="<?php echo $_POST['xusername']; ?>" />
-					 <input type=hidden name="xpassword" value="<?php echo $_POST['xpassword']; ?>" />
-					 <input type=hidden name="dbname" value="<?php echo $_POST['dbname']; ?>" />
+					 <input type=hidden name="dbname" value="<?php echo ($_POST['dbname'] ?? ''); ?>" />
 					 <input type=hidden name="button_login" value="connect" />
 
 <!--javascript to autoupdate form based on select option choices (genes, allelegroups, genotyping rxns) -->
@@ -408,6 +316,7 @@ function submitForm()
 				</tr>
 				<tr>
 					<td><?php echo $line_listbox; ?>
+						<br>Location:<br><?php echo $location_listbox; ?>
 					</td>
 					<td rowspan=10><?php echo $source_listbox; ?></td>
 					<td rowspan=10>
@@ -471,5 +380,6 @@ function submitForm()
 			</div>
 
 
+<script src="../mousebook.js"></script>
 </body>
 </html>
