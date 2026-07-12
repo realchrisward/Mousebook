@@ -1,4 +1,5 @@
-![](assets/mousebook_logo.png)
+<img src="assets/mousebook_logo.png" width="50%" height="50%">
+
 # Mousebook
 
 A laboratory animal colony management system: a web application for tracking
