@@ -121,6 +121,9 @@ function mb_session_start(): void {
  */
 function mb_session_bootstrap(array $config): array {
     mb_session_start();
+    // Pin MB_USERBOOK_DB for nav.php, which decides whether to show the
+    // Manage Users / Manage Databases links and has no $config in scope.
+    mb_define_userbook_db($config);
 
     $out = [
         'authenticated' => false,

@@ -6,14 +6,14 @@
 -- (unlike animalbook) there were no DEFINER clauses to strip.
 --
 -- Made install-portable:
---   * CREATE DATABASE / USE header added
+--   * loads into a caller-named database (no CREATE DATABASE / USE header)
 --   * AUTO_INCREMENT initializers reset (a fresh auth db starts empty,
 --     so the first user_idno / db_no / link_number should begin at 1)
 --
 -- Replaces the stale repo file default_userbook.sql.
 -- No credentials or user rows are committed here - see BOOTSTRAP below.
 --
--- Load:  mysql -u <admin> -p < mousebook_userbook_install_schema.sql
+-- Load:  mysql -u <admin> -p userbook < mousebook_userbook_install_schema.sql
 -- =====================================================================
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
@@ -28,11 +28,29 @@
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
 --
--- Target database. Edit the name on BOTH lines if your install uses a
--- different db name than `userbook` (must match config.php).
+-- Target database: chosen by the CALLER, not by this file.
 --
-CREATE DATABASE IF NOT EXISTS `userbook` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
-USE `userbook`;
+-- No CREATE DATABASE / USE header: load this into the auth database by name.
+--
+-- The auth database is called `userbook` by default, but the name is
+-- CONFIGURABLE: set 'userbook_db' in config.php if your host will not give
+-- you that exact name (cPanel, for instance, forces an account prefix, so
+-- you get something like `myaccount_userbook` whether you want it or not).
+-- setup.sh asks for the name and writes it into config.php for you.
+--
+--   CREATE DATABASE `userbook`
+--     DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--
+--   mysql -u <admin> -p userbook < mousebook_userbook_install_schema.sql
+--
+-- Column widths worth knowing:
+--   db_name      varchar(64)  -- a database name's own maximum length
+--   db_accesspw  varchar(255) -- long/generated passwords are fine
+--   db_formurl   varchar(255) -- a full https:// URL fits
+--
+-- WARNING: begins with DROP TABLE IF EXISTS. Loading this into a live auth
+-- database DESTROYS every account, colony registration and access grant.
+--
 
 --
 -- Table structure for table `dbaccess`
@@ -44,10 +62,10 @@ DROP TABLE IF EXISTS `dbaccess`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `dbaccess` (
   `db_no` bigint NOT NULL AUTO_INCREMENT,
-  `db_name` varchar(45) NOT NULL,
+  `db_name` varchar(64) NOT NULL,
   `db_accessun` varchar(45) NOT NULL,
-  `db_accesspw` varchar(45) NOT NULL,
-  `db_formurl` varchar(45) NOT NULL,
+  `db_accesspw` varchar(255) NOT NULL,
+  `db_formurl` varchar(255) NOT NULL,
   `db_host` varchar(45) DEFAULT NULL,
   `db_subject_plural` varchar(45) DEFAULT NULL,
   `db_subject_single` varchar(45) DEFAULT NULL,
@@ -70,7 +88,7 @@ DROP TABLE IF EXISTS `userdbaccess`;
 CREATE TABLE `userdbaccess` (
   `user_idno` bigint NOT NULL,
   `link_number` bigint NOT NULL AUTO_INCREMENT,
-  `db_name` varchar(45) NOT NULL,
+  `db_name` varchar(64) NOT NULL,
   `db_accesstier` varchar(45) NOT NULL,
   PRIMARY KEY (`link_number`)
 ) ENGINE=MyISAM DEFAULT CHARSET=latin1;

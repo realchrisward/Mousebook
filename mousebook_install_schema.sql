@@ -5,13 +5,17 @@
 -- (MySQL 8.0.45, 2026-07-05), then made install-portable:
 --   * DEFINER clauses stripped; views set to SQL SECURITY INVOKER
 --     (no dependency on the `realchrisward`/`root` accounts)
---   * minimal seed data appended (see SEED DATA section near the end)
+--   * minimal seed data appended (see SEED DATA at the end of this file):
+--     one cage location (`Limbo`) and one cage role (`Community`), so that a
+--     freshly loaded colony can accept its first animal without any manual
+--     SQL. Add your own rooms and roles from the app (Cage Location Manager
+--     / Manage Roles) -- see ADMIN_GUIDE.md.
 --
 -- This replaces the incomplete repo file default_animalbook.sql
 -- (which was missing table_animals, conversion_geno, reservations_animals,
 --  list_cage_locations, list_cage_role_assignments and more).
 --
--- Load:  mysql -u <admin> -p < mousebook_install_schema.sql
+-- Load:  mysql -u <admin> -p <colony_db> < mousebook_install_schema.sql
 -- =====================================================================
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -26,11 +30,23 @@
 
 
 --
--- Target database. Edit the name on BOTH lines if your install uses a
--- different db name than `animalbook` (must match config.php).
+-- Target database: chosen by the CALLER, not by this file.
 --
-CREATE DATABASE IF NOT EXISTS `animalbook` /*!40100 DEFAULT CHARACTER SET utf8mb4 */;
-USE `animalbook`;
+-- This schema deliberately contains no CREATE DATABASE / USE header, so it
+-- loads into whatever database you point it at. That is what makes multiple
+-- colony databases on one host possible (and it is what `setup.sh` relies on).
+--
+-- Create the database first, then load into it by name:
+--
+--   CREATE DATABASE `mycolony`
+--     DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+--
+--   mysql -u <admin> -p mycolony < mousebook_install_schema.sql
+--
+-- WARNING: this file begins each object with DROP TABLE IF EXISTS. Loading it
+-- into a database that already holds a colony DESTROYS that colony's data.
+-- Only load it into a database you intend to be empty.
+--
 --
 -- Table structure for table `CagesForInfo`
 --
@@ -1533,6 +1549,37 @@ DELIMITER ;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
+--
+-- =====================================================================
+-- SEED DATA
+-- =====================================================================
+-- The two pick-lists below drive drop-downs on nearly every page. With both
+-- empty, a new colony cannot accept an animal at all: there is nowhere to put
+-- a cage and no role to give it. One safe, neutral default row each, so that a
+-- fresh install is usable out of the box.
+--
+-- INSERT IGNORE: re-running this file over a populated colony will not disturb
+-- rows an admin has already added or retired.
+--
+-- Both are ordinary entries. Rename, retire or add to them freely from
+-- Cage Location Manager and Manage Roles.
+--
+-- `Limbo` is also Mousebook's internal name for "not currently in a cage"
+-- (php/manage_cages.php offers it whether or not it is in this table);
+-- seeding it here simply makes it visible and manageable like any other
+-- location.
+--
+
+INSERT IGNORE INTO `list_cage_locations`
+    (`Location_Option`, `active`)
+VALUES
+    ('Limbo', 1);
+
+INSERT IGNORE INTO `list_cage_role_assignments`
+    (`roleassignment_option`, `roleassignment_statuslist`, `maincontact`, `notes`, `active`)
+VALUES
+    ('Community', NULL, NULL, 'Default cage role. Rename or add your own in Manage Roles.', 1);
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

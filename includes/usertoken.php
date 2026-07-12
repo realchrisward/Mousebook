@@ -20,11 +20,10 @@
 // All SQL here is parameterised (prepared statements).
 // =============================================================
 
-if (!defined('MB_USERBOOK_DB')) {
-    // The auth database name. Edit here (and in config/schema) if your
-    // install renamed it.
-    define('MB_USERBOOK_DB', 'userbook');
-}
+// The auth database name comes from config.php via mb_userbook_db() in
+// auth.php -- see the note there. auth.php is required explicitly because
+// forgot_password.php pulls in this file without it.
+require_once __DIR__ . '/auth.php';
 
 if (!function_exists('mb_userbook_conn')) {
 
@@ -44,10 +43,12 @@ if (!function_exists('mb_userbook_conn')) {
         $error = '';
         $host  = $config['server_host'] ?? $config['server_ip'] ?? 'localhost';
         $port  = (int)($config['server_port'] ?? 3306);
+        mb_define_userbook_db($config);
+        $ubdb  = mb_userbook_db($config);
 
         // Step 1: read connection (config account) to fetch write creds.
         $ro = @new mysqli($host, (string)$config['server_user'],
-                          (string)$config['server_pass'], MB_USERBOOK_DB, $port);
+                          (string)$config['server_pass'], $ubdb, $port);
         if ($ro->connect_error) {
             $error = 'userbook read connect failed: ' . $ro->connect_error;
             return null;
@@ -58,7 +59,7 @@ if (!function_exists('mb_userbook_conn')) {
                FROM dbaccess WHERE db_name = ? LIMIT 1"
         );
         if ($stmt) {
-            $ubname = MB_USERBOOK_DB;
+            $ubname = $ubdb;
             $stmt->bind_param('s', $ubname);
             $stmt->execute();
             $stmt->bind_result($h, $un, $pw);
@@ -71,14 +72,14 @@ if (!function_exists('mb_userbook_conn')) {
         $ro->close();
 
         if ($wr_un === null) {
-            $error = 'no dbaccess row for ' . MB_USERBOOK_DB
+            $error = 'no dbaccess row for ' . $ubdb
                    . ' (register it with write-capable credentials).';
             return null;
         }
 
         // Step 2: write connection with the userbook dbaccess credentials.
         $wr = @new mysqli($wr_host, (string)$wr_un, (string)$wr_pw,
-                          MB_USERBOOK_DB, $wr_port);
+                          $ubdb, $wr_port);
         if ($wr->connect_error) {
             $error = 'userbook write connect failed: ' . $wr->connect_error;
             return null;

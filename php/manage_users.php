@@ -18,7 +18,9 @@
 $xusername = ''; $xpassword = '';
 $host = $accessun = $accesspw = null;
 
-$dbname = ($_POST['dbname'] ?? 'userbook');
+// Resolved properly once config.php is loaded (the auth db name is
+// configurable -- see mb_userbook_db() in includes/auth.php).
+$dbname = ($_POST['dbname'] ?? '');
 
 $config = require '../config.php';
 if (($config['debug_mode'] ?? 'False') == 'True') {
@@ -33,7 +35,7 @@ require_once __DIR__ . '/../includes/mail.php';
 
 $mb           = mb_session_bootstrap($config);
 $xusername    = $mb['username'];
-$dbname       = $mb['dbname'] !== '' ? $mb['dbname'] : 'userbook';
+$dbname       = $mb['dbname'] !== '' ? $mb['dbname'] : mb_userbook_db($config);
 $host         = $mb['host'];
 $accessun     = $mb['accessun'];
 $accesspw     = $mb['accesspw'];

@@ -16,6 +16,46 @@
 // =============================================================
 
 
+// -------------------------------------------------------------
+// The auth database name.
+//
+// It defaults to `userbook`, but it is configurable, because some shared
+// hosts (cPanel in particular) force an account prefix onto every database
+// they create and will not let you have a database called exactly
+// `userbook` -- you get `myaccount_userbook` whether you like it or not.
+//
+// Set 'userbook_db' in config.php to whatever the host actually gave you.
+// Everything else -- the schema, setup.sh, the admin pages -- follows this
+// one value.
+//
+// mb_userbook_db()        resolves the name from config, with validation.
+// mb_define_userbook_db() pins it into MB_USERBOOK_DB for the code (nav.php,
+//                         usertoken.php) that needs it without a $config in
+//                         scope. Idempotent; safe to call on every request.
+// -------------------------------------------------------------
+
+if (!function_exists('mb_userbook_db')) {
+    function mb_userbook_db(array $config): string {
+        $name = trim((string)($config['userbook_db'] ?? ''));
+        // Anything that is not a plain identifier is rejected rather than
+        // interpolated: this value reaches a database name, and a database
+        // name cannot be bound as a parameter.
+        if ($name === '' || !preg_match('/^[A-Za-z0-9_]{1,64}$/', $name)) {
+            return 'userbook';
+        }
+        return $name;
+    }
+}
+
+if (!function_exists('mb_define_userbook_db')) {
+    function mb_define_userbook_db(array $config): void {
+        if (!defined('MB_USERBOOK_DB')) {
+            define('MB_USERBOOK_DB', mb_userbook_db($config));
+        }
+    }
+}
+
+
 /**
  * Verify credentials and return all db-access fields for a
  * specific colony database.
@@ -42,7 +82,8 @@ function mb_authenticate(array $config, string $username, string $password, stri
     $uname = $config['server_user'];
     $upass = $config['server_pass'];
 
-    $conn = new mysqli($host, $uname, $upass, 'userbook');
+    mb_define_userbook_db($config);
+    $conn = new mysqli($host, $uname, $upass, mb_userbook_db($config));
     if ($conn->connect_error) {
         return $fail;
     }
@@ -145,7 +186,8 @@ function mb_get_user_databases(array $config, string $username, string $password
     $uname = $config['server_user'];
     $upass = $config['server_pass'];
 
-    $conn = new mysqli($host, $uname, $upass, 'userbook');
+    mb_define_userbook_db($config);
+    $conn = new mysqli($host, $uname, $upass, mb_userbook_db($config));
     if ($conn->connect_error) {
         return [];
     }

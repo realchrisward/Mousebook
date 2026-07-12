@@ -28,7 +28,7 @@
 	$ubname = $config['server_user'];
 	$ubpass = $config['server_pass'];
 
-	$conn = new mysqli($host, $ubname, $ubpass, 'userbook');
+	$conn = new mysqli($host, $ubname, $ubpass, mb_userbook_db($config));
 	$xloginstatus = $conn->connect_error ? 'red' : 'green';
 	if (!$conn->connect_error) {
 		$conn->close();

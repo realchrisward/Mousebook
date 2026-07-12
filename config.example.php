@@ -21,6 +21,13 @@ return [
     'server_user' => '',
     'server_pass' => '',
 
+    // Name of the auth database. Leave as 'userbook' unless your host will
+    // not give you that exact name -- cPanel and similar panels force an
+    // account prefix onto every database, so you may have been handed
+    // something like 'myaccount_userbook'. Put whatever it actually is here.
+    // Letters, digits and underscores only.
+    'userbook_db' => 'userbook',
+
     // Set to 'True' to show PHP errors on-screen — NEVER in production
     'debug_mode'  => 'False',
 
