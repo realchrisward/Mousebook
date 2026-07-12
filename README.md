@@ -1,3 +1,4 @@
+(assets/mousebook_logo.png)
 # Mousebook
 
 A laboratory animal colony management system: a web application for tracking
