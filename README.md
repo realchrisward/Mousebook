@@ -20,12 +20,9 @@ install — see `docs/img/README.md`.*
 
 - **Animals** — add, edit, search and retire animals; DOB, sex, line, strain,
   genotype, ear tag, cage.
-- **Cages** — cage inventory, locations by room and rack, multi-select moves,
-  reservations that stop two people claiming the same cage ID.
+- **Cages** — cage inventory, locations by room.
 - **Litters** — litter log, wean tracking, dead-pup records.
-- **Genotypes** — per-line alleles, a genotyping to-do list, and an admin
-  repair tool that backfills genotypes when a line gains an allele after its
-  animals already exist.
+- **Genotypes** — per-line alleles, a genotyping to-do list.
 - **Cage cards & clip sheets** — printable PDFs sized for cage-card stock,
   including a blind-genotype variant for masked experiments.
 - **Users** — accounts, per-colony access tiers (read-only / editor / admin),
