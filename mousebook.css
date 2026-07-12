@@ -670,7 +670,7 @@ body.mb-login-page {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: var(--mb-vlight);
+  background: var(--mb-med);
   grid-template-areas: none;
   grid-template-columns: none;
   grid-template-rows: none;
