@@ -475,9 +475,27 @@ step "Step 9: Write config.php"
 
 CONFIG_PATH="$APP_DIR/config.php"
 if [ -f "$CONFIG_PATH" ]; then
-    BACKUP_CFG="${CONFIG_PATH}.bak.$(date +%Y%m%d%H%M%S)"
-    cp -p "$CONFIG_PATH" "$BACKUP_CFG"
-    warn "An existing config.php was backed up to $(basename "$BACKUP_CFG")"
+    # The backup must NOT live in the web root. A file called
+    # config.php.bak.<timestamp> does not end in .php, so Apache will not run
+    # it through PHP -- it will serve the raw bytes, database password and
+    # all. The bundled .htaccess blocks the whole config.php* family, but
+    # .htaccess is only honoured under AllowOverride All, and Debian ships
+    # AllowOverride None. So the backup goes somewhere the web cannot reach
+    # at all, and the .htaccess rule is the second line of defence.
+    BACKUP_OWNER="${SUDO_USER:-$(whoami)}"
+    BACKUP_HOME="$(getent passwd "$BACKUP_OWNER" | cut -d: -f6)"
+    BACKUP_DIR="${BACKUP_HOME:-/root}/mousebook-config-backups"
+    mkdir -p "$BACKUP_DIR" && chmod 700 "$BACKUP_DIR"
+    chown "$BACKUP_OWNER" "$BACKUP_DIR" 2>/dev/null
+    BACKUP_CFG="$BACKUP_DIR/config.php.$(date +%Y%m%d%H%M%S)"
+    if cp -p "$CONFIG_PATH" "$BACKUP_CFG" 2>/dev/null; then
+        chmod 600 "$BACKUP_CFG"
+        chown "$BACKUP_OWNER" "$BACKUP_CFG" 2>/dev/null
+        warn "Your existing config.php was backed up to ${BACKUP_CFG}"
+        warn "(outside the web root, mode 600 - it contains a database password)"
+    else
+        error "Could not back up the existing config.php. Refusing to overwrite it."
+    fi
 fi
 
 cat > "$CONFIG_PATH" <<CONFIGEOF
@@ -546,21 +564,43 @@ else
     note_failure
 fi
 
-# -- keep config.php off the web ------------------------------
+# -- keep config.php (and its backups, and .git) off the web ---
+# FilesMatch, not Files: `<Files "config.php">` matches that exact name only,
+# and would leave a config.php.bak.* backup served as plain text.
 HTACCESS="$APP_DIR/.htaccess"
-if [ -f "$HTACCESS" ] && grep -q "config.php" "$HTACCESS"; then
-    info ".htaccess already blocks config.php."
+if [ -f "$HTACCESS" ] && grep -q 'FilesMatch "\^config' "$HTACCESS"; then
+    info ".htaccess already blocks config.php and its backups."
 else
     cat >> "$HTACCESS" <<'HTEOF'
 
-# Block direct web access to config.php
-<Files "config.php">
+# Block direct web access to config.php AND every backup of it.
+<FilesMatch "^config\.php">
     Require all denied
-</Files>
+</FilesMatch>
+
+# Block repository metadata if this was deployed as a git checkout.
+RedirectMatch 404 /\.git(/|$)
 HTEOF
-    success ".htaccess now blocks direct access to config.php."
+    success ".htaccess now blocks config.php, its backups, and .git."
 fi
-warn "That .htaccess rule only takes effect if Apache is set to AllowOverride All for this directory (see INSTALL.md)."
+
+# Whether any of that is honoured depends on AllowOverride, so check, loudly.
+HTPROBE_OK=0
+if command -v apache2ctl >/dev/null 2>&1 || command -v httpd >/dev/null 2>&1; then
+    AO="$( (apache2ctl -t -D DUMP_INCLUDES >/dev/null 2>&1; grep -rhs "AllowOverride" \
+            /etc/apache2/apache2.conf /etc/httpd/conf/httpd.conf 2>/dev/null) | head -1 )"
+    case "$AO" in
+        *All*) HTPROBE_OK=1 ;;
+    esac
+fi
+if [ "$HTPROBE_OK" -eq 1 ]; then
+    success "Apache is set to AllowOverride All - the .htaccess rules will be honoured."
+else
+    warn "Apache may be set to 'AllowOverride None', in which case .htaccess is IGNORED"
+    warn "and config.php would be readable over the web. Verify with:"
+    warn "    curl -s -o /dev/null -w '%{http_code}\\n' ${BASE_URL}/config.php"
+    warn "You want 403. If you get 200, see INSTALL.md - 'Let Apache honour the .htaccess file'."
+fi
 
 # =============================================================
 step "Step 10: Register the databases and create the admin"

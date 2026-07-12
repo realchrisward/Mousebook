@@ -1,4 +1,17 @@
-# Block direct web access to config.php
-<Files "config.php">
+# Block direct web access to config.php AND to every backup of it.
+#
+# <Files "config.php"> matches that one exact filename and nothing else.
+# setup.sh keeps a timestamped backup when it rewrites the file, and a name
+# like config.php.bak.20260712120000 does NOT end in .php -- so Apache does
+# not hand it to PHP, it just serves the bytes, database password and all.
+# FilesMatch catches the whole family.
+<FilesMatch "^config\.php">
     Require all denied
-</Files>
+</FilesMatch>
+
+# Block the repository metadata if the app was deployed as a git checkout.
+# Apache blocks .ht* out of the box, but nothing else -- /.git/config and the
+# packfiles under /.git/objects are fetchable, and git history keeps whatever
+# was ever committed, including a config.php committed by mistake and removed
+# later. <Files>/<FilesMatch> cannot match a directory; RedirectMatch can.
+RedirectMatch 404 /\.git(/|$)

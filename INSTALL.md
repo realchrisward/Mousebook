@@ -104,10 +104,55 @@ You will need that root password once, in step A5.
 sudo apt install -y git
 cd /tmp
 git clone https://github.com/realchrisward/Mousebook.git
-sudo cp -r /tmp/Mousebook /var/www/html/mousebook
+sudo mkdir -p /var/www/html/mousebook
+sudo cp -rT /tmp/Mousebook /var/www/html/mousebook
 sudo rm -rf /var/www/html/mousebook/.git
 sudo chown -R "$USER":www-data /var/www/html/mousebook
 ```
+
+Three things in there are deliberate, and worth understanding before you copy
+them:
+
+**The lowercase `mousebook`.** The source folder is `Mousebook` (the repository
+name); the destination is `mousebook` (lowercase). That destination name becomes
+part of the address people type — `http://your-pi/mousebook` — and on Linux,
+URLs are case-sensitive. Lowercase is simply the convention, and it is what
+`setup.sh` offers as the default when it asks for the subdirectory. You can
+call it anything you like, but if you do, use that same name when `setup.sh`
+asks for the **subdirectory** and the **base URL**. The three must agree.
+
+**`cp -rT`, not `cp -r`.** With plain `cp -r`, if the destination directory
+already exists — which it will the second time you run this, after a false
+start — the source is copied *inside* it, and you end up with
+`/var/www/html/mousebook/Mousebook/index.php`. Nothing then works, for a reason
+that is very hard to see. `-T` means "treat the destination as the directory to
+fill", which does the right thing whether it exists or not.
+
+**Deleting `.git`.** The clone brings a `.git` folder with it, and you have just
+put it inside the folder Apache serves to the world. Apache blocks `.htaccess`
+by default but **nothing else** — `http://your-pi/mousebook/.git/config` returns
+`200`, and so do the packfiles under `.git/objects`. Anyone can reconstruct your
+entire repository from them, *including history*: if a `config.php` with a
+database password was ever committed and later removed, it is still in there.
+Deleting `.git` removes the problem outright, and you do not need it — nothing
+in Mousebook uses git at runtime.
+
+> **If you would rather keep `.git` so you can `git pull` updates:** don't
+> delete it, and instead make sure the bundled `.htaccess` is being honoured
+> (step A6 below) — it contains a `RedirectMatch 404 /\.git` rule for exactly
+> this. Verify with
+> `curl -s -o /dev/null -w '%{http_code}\n' http://localhost/mousebook/.git/config`,
+> which must return `404`. If it returns `200`, delete the folder. The safest
+> arrangement of all is to keep the clone *outside* the web root and copy from
+> it, which is what the commands above do.
+
+**`"$USER"` is not a placeholder.** Leave it exactly as written — it is a shell
+variable that your shell substitutes for your own username before `sudo` ever
+runs, so it becomes e.g. `chown -R pi:www-data`. (Check yours with
+`echo $USER`.) The point of the command is to leave the files owned by *you*
+while giving the group to Apache, so that you can edit them and Apache can read
+them. Do not use `root:root`, and do not use `www-data:www-data` — Apache should
+not own files it only ever needs to read.
 
 ### A5. Run the installer
 
@@ -141,7 +186,7 @@ the green [OK] verification lines and the "Setup complete" banner](docs/img/02-s
 ### A6. Let Apache honour the `.htaccess` file
 
 Mousebook ships an `.htaccess` file that blocks the web from reading
-`config.php` (which holds a database password). Debian's Apache ignores
+`config.php`, **any backup of it**, and `.git`. Debian's Apache ignores
 `.htaccess` files by default, so you must turn that on:
 
 ```bash
@@ -161,6 +206,15 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost/mousebook/config.php
 
 `403` is what you want. If you get `200`, the override is not in effect — see
 [Troubleshooting](#7-troubleshooting).
+
+> **Why this matters more than it looks.** `config.php` itself is *fairly* safe
+> even unprotected, because Apache hands `.php` files to PHP, which executes
+> them and prints nothing. But a file named `config.php.bak.20260712120000`
+> does **not** end in `.php`. Apache will not run it — it will serve the raw
+> text, database password included. `setup.sh` therefore keeps its backups
+> outside the web root entirely, and the `.htaccess` rule blocks the whole
+> `config.php*` family as a second line of defence. Both, because either one
+> alone can be defeated by a misconfiguration.
 
 ### A7. Open the firewall (only if you have one)
 
@@ -228,9 +282,14 @@ Either clone it over SSH:
 ```bash
 cd ~
 git clone https://github.com/realchrisward/Mousebook.git
-cp -r Mousebook public_html/mousebook
+mkdir -p public_html/mousebook
+cp -rT Mousebook public_html/mousebook
 rm -rf public_html/mousebook/.git
 ```
+
+(`-T` rather than plain `-r`, so that re-running this does not nest a second
+copy at `public_html/mousebook/Mousebook`. And `.git` goes, because it would
+otherwise be served — see the note in section A4.)
 
 ...or download the ZIP from GitHub and upload it through the panel's File
 Manager, into a `mousebook` folder inside your web root (`public_html`).
@@ -484,22 +543,26 @@ inside the file.
 - **Turn on HTTPS.** Passwords cross the network in the clear otherwise.
 - **Configure your rooms and cage roles** — [ADMIN_GUIDE.md](ADMIN_GUIDE.md).
 - **If you are migrating an existing MySQL colony** and want to be able to
-  restore your backups onto MariaDB later, apply
-  `migrations/migration_m1g_collation_portability.sql`. See
-  [DB_ENGINE_SUPPORT.md](DB_ENGINE_SUPPORT.md).
+  restore your backups onto MariaDB later, see
+  [DB_ENGINE_SUPPORT.md](DB_ENGINE_SUPPORT.md) for the collation migration.
 
 ### Upgrading an install that predates this version
 
 Fresh installs need none of this — `setup.sh` and the schemas already have it.
-On an **existing** install, apply the widening migration to your auth database:
+On an **existing** install, widen the auth database's columns:
 
-```bash
-mysql -u <admin> -p userbook < migrations/migration_m1i_userbook_columns.sql
+```sql
+ALTER TABLE `dbaccess`
+    MODIFY COLUMN `db_name`     varchar(64)  NOT NULL,
+    MODIFY COLUMN `db_accesspw` varchar(255) NOT NULL,
+    MODIFY COLUMN `db_formurl`  varchar(255) NOT NULL;
+
+ALTER TABLE `userdbaccess`
+    MODIFY COLUMN `db_name` varchar(64) NOT NULL;
 ```
 
-It widens `db_accesspw` (45 → 255), `db_formurl` (45 → 255) and `db_name`
-(45 → 64). Every change is a widening, so nothing can be truncated; it is safe
-to re-run, and it touches no data.
+Every change is a widening, so no existing value can be truncated; it is safe to
+re-run, and it rewrites no data.
 
 If your auth database is **not** named `userbook`, also add its real name to
 `config.php`:

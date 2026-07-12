@@ -1,0 +1,252 @@
+diff --git a/.htaccess b/.htaccess
+index c1cba8c..bc9e215 100644
+--- a/.htaccess
++++ b/.htaccess
+@@ -1,4 +1,17 @@
+-# Block direct web access to config.php
+-<Files "config.php">
++# Block direct web access to config.php AND to every backup of it.
++#
++# <Files "config.php"> matches that one exact filename and nothing else.
++# setup.sh keeps a timestamped backup when it rewrites the file, and a name
++# like config.php.bak.20260712120000 does NOT end in .php -- so Apache does
++# not hand it to PHP, it just serves the bytes, database password and all.
++# FilesMatch catches the whole family.
++<FilesMatch "^config\.php">
+     Require all denied
+-</Files>
++</FilesMatch>
++
++# Block the repository metadata if the app was deployed as a git checkout.
++# Apache blocks .ht* out of the box, but nothing else -- /.git/config and the
++# packfiles under /.git/objects are fetchable, and git history keeps whatever
++# was ever committed, including a config.php committed by mistake and removed
++# later. <Files>/<FilesMatch> cannot match a directory; RedirectMatch can.
++RedirectMatch 404 /\.git(/|$)
+diff --git a/INSTALL.md b/INSTALL.md
+index cea15cd..841ceea 100644
+--- a/INSTALL.md
++++ b/INSTALL.md
+@@ -104,11 +104,56 @@ You will need that root password once, in step A5.
+ sudo apt install -y git
+ cd /tmp
+ git clone https://github.com/realchrisward/Mousebook.git
+-sudo cp -r /tmp/Mousebook /var/www/html/mousebook
++sudo mkdir -p /var/www/html/mousebook
++sudo cp -rT /tmp/Mousebook /var/www/html/mousebook
+ sudo rm -rf /var/www/html/mousebook/.git
+ sudo chown -R "$USER":www-data /var/www/html/mousebook
+ ```
+ 
++Three things in there are deliberate, and worth understanding before you copy
++them:
++
++**The lowercase `mousebook`.** The source folder is `Mousebook` (the repository
++name); the destination is `mousebook` (lowercase). That destination name becomes
++part of the address people type — `http://your-pi/mousebook` — and on Linux,
++URLs are case-sensitive. Lowercase is simply the convention, and it is what
++`setup.sh` offers as the default when it asks for the subdirectory. You can
++call it anything you like, but if you do, use that same name when `setup.sh`
++asks for the **subdirectory** and the **base URL**. The three must agree.
++
++**`cp -rT`, not `cp -r`.** With plain `cp -r`, if the destination directory
++already exists — which it will the second time you run this, after a false
++start — the source is copied *inside* it, and you end up with
++`/var/www/html/mousebook/Mousebook/index.php`. Nothing then works, for a reason
++that is very hard to see. `-T` means "treat the destination as the directory to
++fill", which does the right thing whether it exists or not.
++
++**Deleting `.git`.** The clone brings a `.git` folder with it, and you have just
++put it inside the folder Apache serves to the world. Apache blocks `.htaccess`
++by default but **nothing else** — `http://your-pi/mousebook/.git/config` returns
++`200`, and so do the packfiles under `.git/objects`. Anyone can reconstruct your
++entire repository from them, *including history*: if a `config.php` with a
++database password was ever committed and later removed, it is still in there.
++Deleting `.git` removes the problem outright, and you do not need it — nothing
++in Mousebook uses git at runtime.
++
++> **If you would rather keep `.git` so you can `git pull` updates:** don't
++> delete it, and instead make sure the bundled `.htaccess` is being honoured
++> (step A6 below) — it contains a `RedirectMatch 404 /\.git` rule for exactly
++> this. Verify with
++> `curl -s -o /dev/null -w '%{http_code}\n' http://localhost/mousebook/.git/config`,
++> which must return `404`. If it returns `200`, delete the folder. The safest
++> arrangement of all is to keep the clone *outside* the web root and copy from
++> it, which is what the commands above do.
++
++**`"$USER"` is not a placeholder.** Leave it exactly as written — it is a shell
++variable that your shell substitutes for your own username before `sudo` ever
++runs, so it becomes e.g. `chown -R pi:www-data`. (Check yours with
++`echo $USER`.) The point of the command is to leave the files owned by *you*
++while giving the group to Apache, so that you can edit them and Apache can read
++them. Do not use `root:root`, and do not use `www-data:www-data` — Apache should
++not own files it only ever needs to read.
++
+ ### A5. Run the installer
+ 
+ ```bash
+@@ -141,7 +186,7 @@ the green [OK] verification lines and the "Setup complete" banner](docs/img/02-s
+ ### A6. Let Apache honour the `.htaccess` file
+ 
+ Mousebook ships an `.htaccess` file that blocks the web from reading
+-`config.php` (which holds a database password). Debian's Apache ignores
++`config.php`, **any backup of it**, and `.git`. Debian's Apache ignores
+ `.htaccess` files by default, so you must turn that on:
+ 
+ ```bash
+@@ -162,6 +207,15 @@ curl -s -o /dev/null -w '%{http_code}\n' http://localhost/mousebook/config.php
+ `403` is what you want. If you get `200`, the override is not in effect — see
+ [Troubleshooting](#7-troubleshooting).
+ 
++> **Why this matters more than it looks.** `config.php` itself is *fairly* safe
++> even unprotected, because Apache hands `.php` files to PHP, which executes
++> them and prints nothing. But a file named `config.php.bak.20260712120000`
++> does **not** end in `.php`. Apache will not run it — it will serve the raw
++> text, database password included. `setup.sh` therefore keeps its backups
++> outside the web root entirely, and the `.htaccess` rule blocks the whole
++> `config.php*` family as a second line of defence. Both, because either one
++> alone can be defeated by a misconfiguration.
++
+ ### A7. Open the firewall (only if you have one)
+ 
+ Raspberry Pi OS ships with no firewall enabled. If you have added `ufw`:
+@@ -228,10 +282,15 @@ Either clone it over SSH:
+ ```bash
+ cd ~
+ git clone https://github.com/realchrisward/Mousebook.git
+-cp -r Mousebook public_html/mousebook
++mkdir -p public_html/mousebook
++cp -rT Mousebook public_html/mousebook
+ rm -rf public_html/mousebook/.git
+ ```
+ 
++(`-T` rather than plain `-r`, so that re-running this does not nest a second
++copy at `public_html/mousebook/Mousebook`. And `.git` goes, because it would
++otherwise be served — see the note in section A4.)
++
+ ...or download the ZIP from GitHub and upload it through the panel's File
+ Manager, into a `mousebook` folder inside your web root (`public_html`).
+ 
+@@ -484,22 +543,26 @@ inside the file.
+ - **Turn on HTTPS.** Passwords cross the network in the clear otherwise.
+ - **Configure your rooms and cage roles** — [ADMIN_GUIDE.md](ADMIN_GUIDE.md).
+ - **If you are migrating an existing MySQL colony** and want to be able to
+-  restore your backups onto MariaDB later, apply
+-  `migrations/migration_m1g_collation_portability.sql`. See
+-  [DB_ENGINE_SUPPORT.md](DB_ENGINE_SUPPORT.md).
++  restore your backups onto MariaDB later, see
++  [DB_ENGINE_SUPPORT.md](DB_ENGINE_SUPPORT.md) for the collation migration.
+ 
+ ### Upgrading an install that predates this version
+ 
+ Fresh installs need none of this — `setup.sh` and the schemas already have it.
+-On an **existing** install, apply the widening migration to your auth database:
++On an **existing** install, widen the auth database's columns:
+ 
+-```bash
+-mysql -u <admin> -p userbook < migrations/migration_m1i_userbook_columns.sql
++```sql
++ALTER TABLE `dbaccess`
++    MODIFY COLUMN `db_name`     varchar(64)  NOT NULL,
++    MODIFY COLUMN `db_accesspw` varchar(255) NOT NULL,
++    MODIFY COLUMN `db_formurl`  varchar(255) NOT NULL;
++
++ALTER TABLE `userdbaccess`
++    MODIFY COLUMN `db_name` varchar(64) NOT NULL;
+ ```
+ 
+-It widens `db_accesspw` (45 → 255), `db_formurl` (45 → 255) and `db_name`
+-(45 → 64). Every change is a widening, so nothing can be truncated; it is safe
+-to re-run, and it touches no data.
++Every change is a widening, so no existing value can be truncated; it is safe to
++re-run, and it rewrites no data.
+ 
+ If your auth database is **not** named `userbook`, also add its real name to
+ `config.php`:
+diff --git a/setup.sh b/setup.sh
+index 48738d0..ab778f5 100644
+--- a/setup.sh
++++ b/setup.sh
+@@ -475,9 +475,27 @@ step "Step 9: Write config.php"
+ 
+ CONFIG_PATH="$APP_DIR/config.php"
+ if [ -f "$CONFIG_PATH" ]; then
+-    BACKUP_CFG="${CONFIG_PATH}.bak.$(date +%Y%m%d%H%M%S)"
+-    cp -p "$CONFIG_PATH" "$BACKUP_CFG"
+-    warn "An existing config.php was backed up to $(basename "$BACKUP_CFG")"
++    # The backup must NOT live in the web root. A file called
++    # config.php.bak.<timestamp> does not end in .php, so Apache will not run
++    # it through PHP -- it will serve the raw bytes, database password and
++    # all. The bundled .htaccess blocks the whole config.php* family, but
++    # .htaccess is only honoured under AllowOverride All, and Debian ships
++    # AllowOverride None. So the backup goes somewhere the web cannot reach
++    # at all, and the .htaccess rule is the second line of defence.
++    BACKUP_OWNER="${SUDO_USER:-$(whoami)}"
++    BACKUP_HOME="$(getent passwd "$BACKUP_OWNER" | cut -d: -f6)"
++    BACKUP_DIR="${BACKUP_HOME:-/root}/mousebook-config-backups"
++    mkdir -p "$BACKUP_DIR" && chmod 700 "$BACKUP_DIR"
++    chown "$BACKUP_OWNER" "$BACKUP_DIR" 2>/dev/null
++    BACKUP_CFG="$BACKUP_DIR/config.php.$(date +%Y%m%d%H%M%S)"
++    if cp -p "$CONFIG_PATH" "$BACKUP_CFG" 2>/dev/null; then
++        chmod 600 "$BACKUP_CFG"
++        chown "$BACKUP_OWNER" "$BACKUP_CFG" 2>/dev/null
++        warn "Your existing config.php was backed up to ${BACKUP_CFG}"
++        warn "(outside the web root, mode 600 - it contains a database password)"
++    else
++        error "Could not back up the existing config.php. Refusing to overwrite it."
++    fi
+ fi
+ 
+ cat > "$CONFIG_PATH" <<CONFIGEOF
+@@ -546,21 +564,43 @@ else
+     note_failure
+ fi
+ 
+-# -- keep config.php off the web ------------------------------
++# -- keep config.php (and its backups, and .git) off the web ---
++# FilesMatch, not Files: `<Files "config.php">` matches that exact name only,
++# and would leave a config.php.bak.* backup served as plain text.
+ HTACCESS="$APP_DIR/.htaccess"
+-if [ -f "$HTACCESS" ] && grep -q "config.php" "$HTACCESS"; then
+-    info ".htaccess already blocks config.php."
++if [ -f "$HTACCESS" ] && grep -q 'FilesMatch "\^config' "$HTACCESS"; then
++    info ".htaccess already blocks config.php and its backups."
+ else
+     cat >> "$HTACCESS" <<'HTEOF'
+ 
+-# Block direct web access to config.php
+-<Files "config.php">
++# Block direct web access to config.php AND every backup of it.
++<FilesMatch "^config\.php">
+     Require all denied
+-</Files>
++</FilesMatch>
++
++# Block repository metadata if this was deployed as a git checkout.
++RedirectMatch 404 /\.git(/|$)
+ HTEOF
+-    success ".htaccess now blocks direct access to config.php."
++    success ".htaccess now blocks config.php, its backups, and .git."
++fi
++
++# Whether any of that is honoured depends on AllowOverride, so check, loudly.
++HTPROBE_OK=0
++if command -v apache2ctl >/dev/null 2>&1 || command -v httpd >/dev/null 2>&1; then
++    AO="$( (apache2ctl -t -D DUMP_INCLUDES >/dev/null 2>&1; grep -rhs "AllowOverride" \
++            /etc/apache2/apache2.conf /etc/httpd/conf/httpd.conf 2>/dev/null) | head -1 )"
++    case "$AO" in
++        *All*) HTPROBE_OK=1 ;;
++    esac
++fi
++if [ "$HTPROBE_OK" -eq 1 ]; then
++    success "Apache is set to AllowOverride All - the .htaccess rules will be honoured."
++else
++    warn "Apache may be set to 'AllowOverride None', in which case .htaccess is IGNORED"
++    warn "and config.php would be readable over the web. Verify with:"
++    warn "    curl -s -o /dev/null -w '%{http_code}\\n' ${BASE_URL}/config.php"
++    warn "You want 403. If you get 200, see INSTALL.md - 'Let Apache honour the .htaccess file'."
+ fi
+-warn "That .htaccess rule only takes effect if Apache is set to AllowOverride All for this directory (see INSTALL.md)."
+ 
+ # =============================================================
+ step "Step 10: Register the databases and create the admin"

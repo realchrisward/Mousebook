@@ -39,8 +39,15 @@
 		$_SESSION = [];
 		if (ini_get('session.use_cookies')) {
 			$cp = session_get_cookie_params();
-			setcookie(session_name(), '', time() - 42000,
-				$cp['path'], $cp['domain'], $cp['secure'], $cp['httponly']);
+			setcookie(
+				session_name(),
+				'',
+				time() - 42000,
+				$cp['path'],
+				$cp['domain'],
+				$cp['secure'],
+				$cp['httponly']
+			);
 		}
 		session_destroy();
 		mb_session_start(); // fresh empty session for this render
@@ -95,7 +102,7 @@
 </head>
 
 <body>
-	<img class="logo" src="../images/logo.jpg" alt="Mouse Metabolism and Phenotyping Core" width="15%">
+	<img class="logo" src="../images/logo.png" alt="Mouse Metabolism and Phenotyping Core" width="15%">
 	<div class="content-center">
 
 		<h1 class="section">
