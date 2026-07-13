@@ -48,7 +48,17 @@ elif command -v mariadb >/dev/null 2>&1; then CLIENT=mariadb
 else echo "ERROR: no mysql/mariadb client found on PATH"; exit 1
 fi
 
-db() { "$CLIENT" -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" ${DB_PASS:+-p"$DB_PASS"} "$@" 2>&1; }
+# The password is passed via MYSQL_PWD, not -p on the command line. Two reasons,
+# and the second one is why CI reported nonsense on its first run:
+#   * the MySQL client prints "Using a password on the command line interface can
+#     be insecure" to stderr on EVERY invocation;
+#   * this function used to merge stderr into stdout, so that warning was
+#     captured as query DATA -- corrupting every count ("expected 37, found
+#     mysql:[Warning]...37") and every row of the schema snapshot.
+# Do not reintroduce `2>&1` here.
+db()  { MYSQL_PWD="$DB_PASS" "$CLIENT" --protocol=TCP -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" "$@"; }
+# Separate helper for the steps that WANT to show the server's error text.
+dbe() { MYSQL_PWD="$DB_PASS" "$CLIENT" --protocol=TCP -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" "$@" 2>&1; }
 
 fail() { echo; echo "::error::$*"; echo "FAILED: $*"; FAILURES=$((FAILURES + 1)); }
 
@@ -67,14 +77,14 @@ echo "--- [1/3] Loading schemas into non-default database names ---"
 db -e "DROP DATABASE IF EXISTS \`${COLONY_DB}\`;   CREATE DATABASE \`${COLONY_DB}\`;"   >/dev/null
 db -e "DROP DATABASE IF EXISTS \`${USERBOOK_DB}\`; CREATE DATABASE \`${USERBOOK_DB}\`;" >/dev/null
 
-if out=$(db "${COLONY_DB}" < mousebook_install_schema.sql); then
+if out=$(dbe "${COLONY_DB}" < mousebook_install_schema.sql); then
     echo "  OK   colony schema   -> ${COLONY_DB}"
 else
     fail "colony schema failed to load into ${COLONY_DB}"
     echo "$out" | head -20
 fi
 
-if out=$(db "${USERBOOK_DB}" < mousebook_userbook_install_schema.sql); then
+if out=$(dbe "${USERBOOK_DB}" < mousebook_userbook_install_schema.sql); then
     echo "  OK   userbook schema -> ${USERBOOK_DB}"
 else
     fail "userbook schema failed to load into ${USERBOOK_DB}"
@@ -118,21 +128,26 @@ check_count "userbook tables" "$EXPECT_USERBOOK_TABLES" \
 echo
 echo "--- [3/3] Engine + charset ratchet (vs ${BASELINE}) ---"
 
-# MariaDB and MySQL have historically spelled the 3-byte UTF-8 charset both
-# "utf8" and "utf8mb3". Normalise so the baseline is engine-independent.
+# The baseline must be ENGINE-INDEPENDENT. Two things differ between the servers,
+# and both must be normalised away or the check reports "drift" when nothing has
+# drifted:
+#   1. Charset spelling: "utf8" (older) vs "utf8mb3" (newer) for 3-byte UTF-8.
+#   2. SORT ORDER: information_schema.table_name collates case-INsensitively on
+#      MariaDB and case-SENSITIVELY on MySQL, so the `Study_*` tables land in a
+#      different position and every line after them appears to have moved.
+#      Never let the server sort. Sort here, with LC_ALL=C, so both engines
+#      produce byte-identical output.
 snapshot() {
     {
         db -N -e "SELECT 'colony', t.table_name, t.engine,
                          SUBSTRING_INDEX(t.table_collation, '_', 1)
                   FROM information_schema.tables t
-                  WHERE t.table_schema='${COLONY_DB}' AND t.table_type='BASE TABLE'
-                  ORDER BY t.table_name;"
+                  WHERE t.table_schema='${COLONY_DB}' AND t.table_type='BASE TABLE';"
         db -N -e "SELECT 'userbook', t.table_name, t.engine,
                          SUBSTRING_INDEX(t.table_collation, '_', 1)
                   FROM information_schema.tables t
-                  WHERE t.table_schema='${USERBOOK_DB}' AND t.table_type='BASE TABLE'
-                  ORDER BY t.table_name;"
-    } | sed 's/\butf8\b/utf8mb3/g'
+                  WHERE t.table_schema='${USERBOOK_DB}' AND t.table_type='BASE TABLE';"
+    } | sed 's/\butf8\b/utf8mb3/g' | LC_ALL=C sort
 }
 
 snapshot > /tmp/mb_schema_actual.tsv

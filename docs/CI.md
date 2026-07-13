@@ -80,7 +80,23 @@ intentional — the MyISAM → InnoDB migration, or a utf8mb4 conversion — you
 and commit it **in the same pull request**, so the change appears as a reviewable diff instead of a
 silent mutation.
 
-**What the current baseline reveals** (and it is not flattering — this is a finding, not a spec):
+**Why the baseline is engine-independent** (both of these were learned the hard way on the first CI
+run, and both look like "drift" when they are not):
+
+- **Charset spelling.** MariaDB and MySQL have variously spelled 3-byte UTF-8 as `utf8` and
+  `utf8mb3`. The check normalises them.
+- **Sort order.** `information_schema.table_name` collates **case-insensitively on MariaDB** and
+  **case-sensitively on MySQL** — so the `Study_*` tables land in a different position, and every
+  line after them appears to have moved. **Never let the server sort.** The snapshot is sorted in the
+  shell with `LC_ALL=C`, so both engines produce identical bytes.
+
+A related trap, in the same script: the MySQL client prints *"Using a password on the command line
+interface can be insecure"* to stderr on every invocation. If stderr is merged into stdout, that
+warning is captured as **query data** — producing gems like `expected 37, found
+mysql:[Warning]...37`. The password is therefore passed via `MYSQL_PWD`, and stderr is never merged
+into a data query.
+
+
 
 - The **userbook schema is 100% `latin1`** — all five tables.
 - The colony schema is **11 `latin1` + 24 `utf8mb3` + 2 `utf8mb4`**.
