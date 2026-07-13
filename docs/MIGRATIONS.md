@@ -54,7 +54,91 @@ pending. That is not an error state — it is the normal starting point.
 
 ---
 
-## The ledger
+## Applying to a live install — the runbook
+
+Do this on the host, from the repo root. It takes under a minute for a colony of any realistic size
+(a 5k-animal colony converts in **under 1 second**), but the backup step is not optional.
+
+```bash
+# 0. Set the connection once (same variables setup.sh uses)
+export DB_HOST=localhost DB_PORT=3306 DB_USER=youradminuser DB_PASS='...'
+
+# 1. BACK UP BOTH DATABASES. DDL cannot be rolled back; this is your only undo.
+mysqldump -h "$DB_HOST" -u "$DB_USER" -p mycolony  > mycolony-$(date +%F).sql
+mysqldump -h "$DB_HOST" -u "$DB_USER" -p userbook  > userbook-$(date +%F).sql
+
+# 2. PREFLIGHT — is a utf8mb4 conversion safe on this data? (see hazard below)
+DB_NAME=mycolony ./mb_charset_preflight.sh
+DB_NAME=userbook ./mb_charset_preflight.sh
+
+# 3. See what's pending (changes nothing)
+./mb_migrate.sh --db mycolony status
+./mb_migrate.sh --db userbook status
+
+# 4. Apply. Prompts for backup confirmation; converts engine -> charset -> indexes.
+./mb_migrate.sh --db mycolony apply
+./mb_migrate.sh --db userbook apply
+
+# 5. Confirm
+./mb_migrate.sh --db mycolony status     # pending: 0
+```
+
+**Run it against every Mousebook database — the colony DB *and* `userbook`.** They migrate
+independently and each keeps its own ledger. `userbook` is 100% latin1/MyISAM today, so it needs this
+just as much as the colony does.
+
+**No application changes are required first.** The migration is transparent to the current code: the
+existing `LOCK TABLES` paths work on InnoDB, and nothing in PHP names an engine. Migration can
+therefore run ahead of the Track B code work.
+
+---
+
+## The charset hazard — read before running preflight
+
+`ALTER TABLE ... CONVERT TO CHARACTER SET utf8mb4` converts the *characters* in a column, trusting
+that the bytes stored there really are in the charset the column is declared as.
+
+**Mousebook has never called `set_charset()`.** So a `latin1` column may well contain UTF-8 bytes,
+written through a connection nobody configured. Converting those "correctly" mangles them
+permanently:
+
+```
+stored in a latin1 column:   4D C3BC 6C6C6572          "Müller"  (UTF-8 bytes)
+after CONVERT TO utf8mb4:    4D C383C2BC 6C6C6572      "MÃ¼ller"  <-- corrupted, irreversibly
+```
+
+The correct treatment for that case is a **binary round-trip** (`MODIFY col VARBINARY`, then
+`MODIFY col VARCHAR ... CHARACTER SET utf8mb4`), which preserves the bytes and reinterprets them.
+
+**The danger is narrower than it looks:**
+
+- `utf8mb3` → `utf8mb4` is **always safe** — a strict superset.
+- A `latin1` column containing only **ASCII** is **always safe** — latin1, utf8mb3 and utf8mb4 are
+  byte-identical for ASCII.
+- The **only** hazard is a `latin1` column holding **non-ASCII** bytes.
+
+Colony data (line names, ear tags, cage IDs, genotypes) is usually pure ASCII, so most installs are
+in the safe case — but "usually" is not a basis for running DDL on someone's animal records.
+
+**So migration 001 checks rather than assumes.** Phase 0 scans every latin1 character column for
+non-ASCII bytes and **aborts before touching anything** if it finds any:
+
+```
+  !! conversion_geno.allelegroupscombo: 1 non-ASCII row(s)
+ABORTING: 1 latin1 column(s) contain non-ASCII bytes.
+Run ./mb_charset_preflight.sh for a full report...
+```
+
+Nothing is converted, nothing is recorded in the ledger, and the database is exactly as it was. Fix
+the cause (or choose the binary round-trip for those specific columns) and re-run — migrations are
+convergent, so re-running is always safe.
+
+`mb_charset_preflight.sh` gives the full report, including a hex dump of the offending values so you
+can tell double-encoded UTF-8 (`C3BC`) from genuine latin1 (`FC`).
+
+---
+
+
 
 ```sql
 CREATE TABLE `mb_schema_version` (

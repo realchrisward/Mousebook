@@ -28,6 +28,45 @@ x() { "$CLIENT" -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" ${DB_PASS:+-p"$DB_PASS
 
 TARGET_COLLATION="utf8mb4_unicode_ci"   # NOT utf8mb4_0900_ai_ci — MySQL-only, breaks MariaDB
 
+# --- phase 0: SAFETY GATE --------------------------------------------------
+# CONVERT TO CHARACTER SET assumes the bytes in a column really are in the
+# charset the column is declared as. Mousebook has never called set_charset(),
+# so a latin1 column may well be holding UTF-8 bytes written through an
+# unconfigured connection. Converting those "correctly" mangles them forever:
+#
+#     4D C3BC 6C6C6572  ("Müller")  ->  4D C383C2BC 6C6C6572  ("MÃ¼ller")
+#
+# utf8mb3 -> utf8mb4 is always safe (strict superset). Pure-ASCII latin1 is
+# always safe (identical bytes in all three charsets). The ONLY danger is a
+# latin1 column containing non-ASCII bytes — so that is exactly what we refuse
+# to convert blindly.
+nonascii=$(q "SELECT COUNT(*) FROM information_schema.columns
+              WHERE table_schema=DATABASE()
+                AND character_set_name='latin1'
+                AND data_type IN ('char','varchar','text','tinytext','mediumtext','longtext');")
+
+if [ "${nonascii:-0}" != "0" ]; then
+    risky=0
+    for entry in $(q "SELECT CONCAT(table_name,'|',column_name) FROM information_schema.columns
+                      WHERE table_schema=DATABASE() AND character_set_name='latin1'
+                        AND data_type IN ('char','varchar','text','tinytext','mediumtext','longtext');"); do
+        t="${entry%%|*}"; c="${entry##*|}"
+        n=$(q "SELECT COUNT(*) FROM \`${t}\` WHERE \`${c}\` REGEXP '[^\x00-\x7F]';" 2>/dev/null)
+        [ -n "$n" ] && [ "$n" != "0" ] && { echo "  !! ${t}.${c}: ${n} non-ASCII row(s)"; risky=$((risky+1)); }
+    done
+    if [ "$risky" -ne 0 ]; then
+        echo
+        echo "ABORTING: ${risky} latin1 column(s) contain non-ASCII bytes."
+        echo "Converting them blindly could double-encode the data irreversibly."
+        echo "Run ./mb_charset_preflight.sh for a full report and decide the"
+        echo "correct treatment per column before migrating."
+        exit 1
+    fi
+    echo "phase 0 (safety):  latin1 columns are pure ASCII — conversion is byte-safe"
+else
+    echo "phase 0 (safety):  no latin1 character columns — nothing at risk"
+fi
+
 # --- phase 1: engine -------------------------------------------------------
 engine_todo=$(q "SELECT table_name FROM information_schema.tables
                  WHERE table_schema=DATABASE() AND table_type='BASE TABLE'
