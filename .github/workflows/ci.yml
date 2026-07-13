@@ -1,0 +1,120 @@
+name: CI
+
+# ---------------------------------------------------------------------------
+# What triggers this workflow
+#
+#   push            - every push to master / dev / phase3_revisions, and to any
+#                     branch whose name starts with "phase" or "m1"/"m2".
+#   pull_request    - every PR that targets master or dev. This is the gate that
+#                     matters: a red PR check means "do not merge".
+#   workflow_dispatch - manual run from the Actions tab (pick a branch, press
+#                     "Run workflow"). Use this to re-run after fixing a flake,
+#                     or to check a branch that the filters above skip.
+#
+# Full documentation, including how to read the output: docs/CI.md
+# ---------------------------------------------------------------------------
+on:
+  push:
+    branches:
+      - master
+      - dev
+      - 'phase*'
+      - 'm1*'
+      - 'm2*'
+  pull_request:
+    branches:
+      - master
+      - dev
+  workflow_dispatch:
+
+# Cancel an in-progress run if the same branch is pushed again — the older run's
+# result is stale the moment new commits land.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+
+  # =========================================================================
+  # JOB 1 — lint
+  # Every .php file in the repo must parse under PHP 8.3 (the production
+  # runtime). This catches syntax errors before they reach a page that is only
+  # exercised by hand. Vendored libraries are linted too: a vendored file that
+  # does not parse is just as broken as one of ours.
+  # =========================================================================
+  lint:
+    name: PHP lint (8.3)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show PHP version
+        run: php -v
+
+      - name: php -l every PHP file
+        run: bash .github/ci/lint.sh
+
+  # =========================================================================
+  # JOB 2 — schema
+  # Loads BOTH install schemas against BOTH supported engines. This is the
+  # check that exists because of the utf8mb4_0900_ai_ci incident: a schema that
+  # loads on MySQL and not MariaDB (or vice versa) is a release blocker, and we
+  # used to find that out by hand.
+  #
+  # The database is deliberately given a NON-DEFAULT name. The installer lets
+  # the operator name the colony DB (M1-H), so CI proves the schema does not
+  # secretly depend on being called "animalbook".
+  # =========================================================================
+  schema:
+    name: Schema load — ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false   # if MariaDB fails, still find out whether MySQL does too
+      matrix:
+        include:
+          - label: MariaDB 10.11
+            image: mariadb:10.11
+            client: mariadb
+          - label: MySQL 8.0
+            image: mysql:8.0
+            client: mysql
+
+    services:
+      db:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_pw
+          MARIADB_ROOT_PASSWORD: ci_root_pw
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized || mysqladmin ping -h 127.0.0.1 -uroot -pci_root_pw"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq mysql-client
+
+      - name: Wait for database
+        run: |
+          for i in $(seq 1 30); do
+            mysql -h 127.0.0.1 -P 3306 -uroot -pci_root_pw -e "SELECT 1" >/dev/null 2>&1 && exit 0
+            sleep 2
+          done
+          echo "::error::database service never became reachable"
+          exit 1
+
+      - name: Load schemas and run conformance checks
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_USER: root
+          DB_PASS: ci_root_pw
+          DB_LABEL: ${{ matrix.label }}
+        run: bash .github/ci/check_schema.sh
