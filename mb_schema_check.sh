@@ -48,6 +48,9 @@ while [ $# -gt 0 ]; do
     --db) TARGET="${2:-}"; shift 2 ;;
     --kind) KIND="${2:-}"; shift 2 ;;
     --rebaseline) REBASELINE=1; shift ;;
+    --user) DB_USER="${2:-}"; shift 2 ;;
+    --password) DB_PASS="${2:-}"; shift 2 ;;
+    --ask-pass) printf "password for %s@%s: " "${DB_USER}" "${DB_HOST}"; read -rs DB_PASS; echo; shift ;;
     -h|--help) usage 0 ;;
     *) echo "unknown argument: $1"; echo; usage 2 ;;
   esac
@@ -56,6 +59,47 @@ done
 if command -v mysql >/dev/null 2>&1;     then CLIENT=mysql; DUMPER=mysqldump
 elif command -v mariadb >/dev/null 2>&1; then CLIENT=mariadb; DUMPER=mariadb-dump
 else echo "ERROR: no mysql/mariadb client on PATH"; exit 1; fi
+
+# ---------------------------------------------------------------------------
+# Connection. Environment (as in setup.sh) or flags; flags win.
+#   DB_HOST DB_PORT DB_USER DB_PASS
+#   --user <u>  --password <p>  --ask-pass
+# ---------------------------------------------------------------------------
+check_connection() {
+    local err
+    if err=$(MYSQL_PWD="$DB_PASS" "$CLIENT" --protocol=TCP -h "$DB_HOST" -P "$DB_PORT" \
+                 -u "$DB_USER" -e "SELECT 1;" 2>&1 >/dev/null); then
+        return 0
+    fi
+    echo "=============================================================="
+    echo " CANNOT CONNECT"
+    echo "=============================================================="
+    echo "   host     : ${DB_HOST}:${DB_PORT}"
+    echo "   user     : ${DB_USER}"
+    echo "   password : $([ -n "$DB_PASS" ] && echo 'set' || echo 'NOT SET')"
+    echo
+    echo "   server said: ${err}"
+    echo
+    if [ "$DB_USER" = "root" ] && [ -z "$DB_PASS" ]; then
+        echo " These are the built-in defaults, which means DB_USER / DB_PASS did not"
+        echo " reach this script. Common causes:"
+        echo "   * the 'export' happened in a different shell/session"
+        echo "   * you used sudo, which strips the environment -> use 'sudo -E', or no sudo"
+        echo
+    fi
+    echo " Set the connection either way:"
+    echo
+    echo "   export DB_HOST=localhost DB_USER=youruser DB_PASS='yourpassword'"
+    echo "   $(basename "$0") ..."
+    echo
+    echo " or pass it directly (and be prompted for the password):"
+    echo
+    echo "   $(basename "$0") --user youruser --ask-pass ..."
+    echo "=============================================================="
+    exit 1
+}
+
+check_connection
 
 sql()  { MYSQL_PWD="$DB_PASS" "$CLIENT" --protocol=TCP -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" "$@"; }
 # The ledger is excluded at the dump level, not filtered out afterwards: a
