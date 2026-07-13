@@ -118,3 +118,100 @@ jobs:
           DB_PASS: ci_root_pw
           DB_LABEL: ${{ matrix.label }}
         run: bash .github/ci/check_schema.sh
+
+  # =========================================================================
+  # JOB 3 — migrations
+  # Proves the property the whole migration design rests on:
+  #
+  #   a FRESH install (starter SQL) and an UPGRADED install (older starter SQL
+  #   + migrations) must end up with the SAME schema.
+  #
+  # If they drift apart, new installs and upgraded installs quietly become
+  # different products — a bug reproduces on one and not the other, and nobody
+  # can work out why. That is a slow, silent, miserable failure. This makes it
+  # loud, on every pull request.
+  #
+  # Also asserts idempotence: applying migrations twice must be a no-op the
+  # second time. Convergence is what makes it safe to re-run after a partial
+  # failure, so it is not optional.
+  # =========================================================================
+  migrations:
+    name: Migrations — ${{ matrix.label }}
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: MariaDB 10.11
+            image: mariadb:10.11
+          - label: MySQL 8.0
+            image: mysql:8.0
+
+    services:
+      db:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: ci_root_pw
+          MARIADB_ROOT_PASSWORD: ci_root_pw
+        ports:
+          - 3306:3306
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure a database client is present
+        run: |
+          if ! command -v mysql >/dev/null 2>&1; then
+            sudo apt-get update -qq && sudo apt-get install -y -qq mysql-client
+          fi
+          mysql --version
+
+      - name: Wait for ${{ matrix.label }}
+        env:
+          MYSQL_PWD: ci_root_pw
+        run: |
+          for i in $(seq 1 60); do
+            mysql --protocol=TCP -h 127.0.0.1 -P 3306 -uroot -e "SELECT VERSION();" 2>/dev/null && exit 0
+            sleep 2
+          done
+          echo "::error::${{ matrix.label }} never accepted connections"
+          docker ps -a || true
+          exit 1
+
+      - name: Migrate the frozen v0 schema forward, then verify it matches a fresh install
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USER: root
+          DB_PASS: ci_root_pw
+          MYSQL_PWD: ci_root_pw
+        run: |
+          set -e
+          for kind in colony userbook; do
+            case $kind in
+              colony)   fixture=tests/fixtures/schema_v0_colony.sql;   db=ci_mig_colony ;;
+              userbook) fixture=tests/fixtures/schema_v0_userbook.sql; db=ci_mig_userbook ;;
+            esac
+
+            echo "=== ${kind}: v0 fixture -> migrations -> compare against current starter ==="
+            mysql --protocol=TCP -h 127.0.0.1 -uroot -e "DROP DATABASE IF EXISTS $db; CREATE DATABASE $db;"
+            mysql --protocol=TCP -h 127.0.0.1 -uroot "$db" < "$fixture"
+
+            echo "--- apply migrations to the OLD schema ---"
+            ./mb_migrate.sh --db "$db" apply --yes
+
+            echo "--- idempotence: a second apply must be a no-op ---"
+            ./mb_migrate.sh --db "$db" apply --yes | tee /tmp/second.txt
+            grep -q "pending: 0" /tmp/second.txt || {
+              echo "::error::migrations are not idempotent on ${kind}"; exit 1; }
+
+            echo "--- convergence: migrated-old must equal fresh-install ---"
+            # mb_schema_check builds its reference from the CURRENT starter SQL
+            # plus migrations. So this compares:
+            #     (v0 + migrations)  vs  (current starter + migrations)
+            # If someone edits the starter schema and forgets the migration, these
+            # diverge and the build goes red. That is the entire point.
+            ./mb_schema_check.sh --db "$db" --kind "$kind"
+
+            mysql --protocol=TCP -h 127.0.0.1 -uroot -e "DROP DATABASE $db;"
+          done

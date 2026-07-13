@@ -22,17 +22,26 @@ The operator runs one command. The tooling works out the rest.
 
 ## Using it
 
+**`mb_migrate.sh` is the only migration script you run.** The files in `migrations/` are never
+invoked by hand — the runner executes them, in order, and records each in the ledger. Running one
+directly would leave the ledger lying about what happened to the database.
+
 ```bash
-# What state is this database in?
-./mb_migrate.sh --db mycolony status
-
-# Bring it up to date (prompts for backup confirmation first)
-./mb_migrate.sh --db mycolony apply
-
-# Fresh install only: the install schema already includes everything the
-# migrations would do, so record them as applied without running them.
-./mb_migrate.sh --db mycolony stamp
+./mb_migrate.sh --db mycolony preflight   # is a utf8mb4 conversion safe on this data?
+./mb_migrate.sh --db mycolony status      # what is applied, what is pending
+./mb_migrate.sh --db mycolony apply       # apply pending migrations
+./mb_migrate.sh --db mycolony stamp       # fresh installs only: record without running
 ```
+
+There are exactly two scripts in the repo root, and they do different jobs:
+
+| Script | Job |
+|---|---|
+| **`mb_migrate.sh`** | Runs migrations. The launcher. |
+| **`mb_schema_check.sh`** | Verifies a database *matches* the schema we ship. Also `--rebaseline`. |
+
+Everything under `migrations/` is data for the runner: numbered steps, plus `migrations/lib/` which
+holds shared code (the charset safety check) and is never executed as a step.
 
 Connection details come from the environment, same as `setup.sh`:
 `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASS`.
@@ -68,8 +77,8 @@ mysqldump -h "$DB_HOST" -u "$DB_USER" -p mycolony  > mycolony-$(date +%F).sql
 mysqldump -h "$DB_HOST" -u "$DB_USER" -p userbook  > userbook-$(date +%F).sql
 
 # 2. PREFLIGHT — is a utf8mb4 conversion safe on this data? (see hazard below)
-DB_NAME=mycolony ./mb_charset_preflight.sh
-DB_NAME=userbook ./mb_charset_preflight.sh
+./mb_migrate.sh --db mycolony preflight
+./mb_migrate.sh --db userbook preflight
 
 # 3. See what's pending (changes nothing)
 ./mb_migrate.sh --db mycolony status
@@ -79,8 +88,10 @@ DB_NAME=userbook ./mb_charset_preflight.sh
 ./mb_migrate.sh --db mycolony apply
 ./mb_migrate.sh --db userbook apply
 
-# 5. Confirm
-./mb_migrate.sh --db mycolony status     # pending: 0
+# 5. Confirm — twice over
+./mb_migrate.sh --db mycolony status                    # pending: 0
+./mb_schema_check.sh --db mycolony --kind colony        # COMPLIANT
+./mb_schema_check.sh --db userbook --kind userbook      # COMPLIANT
 ```
 
 **Run it against every Mousebook database — the colony DB *and* `userbook`.** They migrate
@@ -126,15 +137,18 @@ non-ASCII bytes and **aborts before touching anything** if it finds any:
 ```
   !! conversion_geno.allelegroupscombo: 1 non-ASCII row(s)
 ABORTING: 1 latin1 column(s) contain non-ASCII bytes.
-Run ./mb_charset_preflight.sh for a full report...
+Run ./mb_migrate.sh --db <name> preflight for a full report...
 ```
 
 Nothing is converted, nothing is recorded in the ledger, and the database is exactly as it was. Fix
 the cause (or choose the binary round-trip for those specific columns) and re-run — migrations are
 convergent, so re-running is always safe.
 
-`mb_charset_preflight.sh` gives the full report, including a hex dump of the offending values so you
-can tell double-encoded UTF-8 (`C3BC`) from genuine latin1 (`FC`).
+`./mb_migrate.sh --db <name> preflight` gives the full report, including a hex dump of the offending
+values so you can tell double-encoded UTF-8 (`C3BC`) from genuine latin1 (`FC`). It runs the same
+code as the migration's own gate — `migrations/lib/charset_guard.sh` — so the preflight answer and
+the gate's answer can never disagree. Two copies of a safety check drift apart, and the copy that
+drifts is the one guarding your data.
 
 ---
 
@@ -264,15 +278,57 @@ applies to both the same way.
 
 ---
 
-## Planned CI gate
+## Verifying a database: `mb_schema_check.sh`
 
-Once the install schema is regenerated post-conversion, CI should assert the property this whole
-design rests on:
+There are two ways to arrive at a Mousebook database:
 
-> Load the **old** schema, run every migration → dump it.
-> Load the **current install** schema → dump it.
-> **The two dumps must be identical.**
+- **fresh install** — load the starter SQL;
+- **upgraded install** — load an older starter SQL, then apply migrations.
 
-That single check catches the most common long-term failure of migration systems: the install schema
-and the migration chain silently drifting apart, so that new installs and upgraded installs are no
-longer the same product.
+**These must produce the same schema.** When they drift apart, new installs and upgraded installs
+quietly become different products: a bug reproduces on one and not the other, and nobody can work out
+why. It is a slow, silent, miserable failure — so it is worth a tool.
+
+```bash
+./mb_schema_check.sh --db mycolony --kind colony
+./mb_schema_check.sh --db userbook --kind userbook
+```
+
+It builds a reference database from the starter SQL **plus every migration**, dumps both structures,
+normalises away everything that legitimately differs (AUTO_INCREMENT counters, `utf8`/`utf8mb3`
+spelling, the ledger table, statement order), and diffs what remains. Anything left is a real
+structural difference.
+
+```
+ COMPLIANT — mycolony is structurally identical to the schema
+ a fresh install would produce (starter SQL + migrations).
+```
+
+A `DIVERGENT` result has three likely causes, and the script lists them in order of probability:
+migrations not applied; the starter SQL drifted from the migration chain; or someone hand-edited the
+database.
+
+### Frozen fixtures, and the CI gate
+
+`tests/fixtures/schema_v0_*.sql` are frozen snapshots of the install schemas from before any
+migration existed. **They are never edited.** CI loads them, migrates them forward, and asserts the
+result matches what a fresh install produces today:
+
+    (v0 fixture + migrations)  ==  (current starter SQL + migrations)
+
+If someone edits the starter schema and forgets to write the migration, those two diverge and the
+build goes red. That is the entire point, and it only works because the fixture stays frozen.
+
+CI also asserts **idempotence**: applying migrations a second time must be a no-op. Convergence is
+what makes it safe to re-run after a partial failure, so it is not optional.
+
+### Rebaselining
+
+```bash
+./mb_schema_check.sh --rebaseline
+```
+
+Regenerates the CI drift baseline (`.github/ci/schema-baseline.tsv`) from the starter SQL. Do this
+**only** when a schema change is intentional, and commit the result in the same pull request so the
+change is visible in review. Never rebaseline to make CI green — that turns a real signal into
+noise, and the next unintended drift sails straight through.

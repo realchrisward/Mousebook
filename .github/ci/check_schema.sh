@@ -170,7 +170,7 @@ else
         echo "  the baseline and commit it in the SAME pull request, so the engine/"
         echo "  charset change is visible in review:"
         echo
-        echo "      bash .github/ci/regen_baseline.sh"
+        echo "      ./mb_schema_check.sh --rebaseline"
         echo
         echo "  If it is NOT intentional, a schema edit changed an engine or charset"
         echo "  by accident. That is what this check exists to catch."

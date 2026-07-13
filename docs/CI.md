@@ -33,6 +33,7 @@ The workflow (`.github/workflows/ci.yml`) runs **three jobs in parallel**:
 | **PHP lint (8.3)** | `php -l` on every `.php` file in the repo — ours *and* vendored. A vendored file that doesn't parse is just as broken as one of ours. | ~20s |
 | **Schema load — MariaDB 10.11** | Starts a real MariaDB 10.11 server, loads both install schemas, verifies them. | ~90s |
 | **Schema load — MySQL 8.0** | The same, against MySQL 8.0. | ~90s |
+| **Migrations — MariaDB / MySQL** | Loads the frozen `tests/fixtures/schema_v0_*.sql`, migrates it forward, and asserts the result is identical to what a fresh install produces. Also asserts migrations are idempotent. | ~2min |
 
 The two schema jobs are configured `fail-fast: false` **on purpose**: if MariaDB fails, you still
 want to know whether MySQL failed too. Stopping at the first failure would hide half the answer.
@@ -234,7 +235,7 @@ your real databases — but it does *drop those two names* first, so don't use t
 
 ```bash
 DB_HOST=127.0.0.1 DB_PORT=3306 DB_USER=root DB_PASS=yourpassword \
-    bash .github/ci/regen_baseline.sh
+    ./mb_schema_check.sh --rebaseline
 
 git diff .github/ci/schema-baseline.tsv    # review it
 ```
