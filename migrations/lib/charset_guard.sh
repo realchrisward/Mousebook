@@ -29,9 +29,23 @@
 
 # Requires in the environment: CLIENT, DB_HOST, DB_PORT, DB_USER, DB_PASS, DB_NAME
 _cg_q() {
+    # -B (batch) as well as -N: without it the client draws +---+ table borders
+    # around every value, which is noise in a report and poison in a parsed count.
     MYSQL_PWD="$DB_PASS" "$CLIENT" --protocol=TCP -h "$DB_HOST" -P "$DB_PORT" \
-        -u "$DB_USER" "$DB_NAME" -N -e "$1" 2>/dev/null
+        -u "$DB_USER" "$DB_NAME" -N -B -e "$1" 2>/dev/null
 }
+
+# Predicate: "this value contains a byte outside ASCII".
+#
+# It is written against HEX(), NOT as a character class, and that is deliberate.
+# The obvious form -- REGEXP '[^\x00-\x7F]' -- is BROKEN: the backslash escapes
+# do not survive the shell -> SQL hop, so the class silently degrades to
+# [^x00-7F] ("any character not in {x,0-7,F}"), which matches almost any string.
+# It reported plain ASCII like "Mating : MN9 : 1" and "read-only" as non-ASCII.
+#
+# HEX() sidesteps escaping entirely: every byte becomes two hex digits, and a
+# byte is ASCII exactly when its first nibble is 0-7. So a value is pure ASCII
+# iff its hex matches ^([0-7][0-9A-F])*$ -- and anything else has a high byte.
 
 # Echoes "table|column|count" for every latin1 column holding non-ASCII bytes.
 # Empty output = safe to convert.
@@ -45,7 +59,7 @@ cg_scan() {
     [ -z "$cols" ] && return 0
     for entry in $cols; do
         t="${entry%%|*}"; c="${entry##*|}"
-        n=$(_cg_q "SELECT COUNT(*) FROM \`${t}\` WHERE \`${c}\` REGEXP '[^\x00-\x7F]';")
+        n=$(_cg_q "SELECT COUNT(*) FROM \`${t}\` WHERE NOT HEX(\`${c}\`) REGEXP '^([0-7][0-9A-F])*$';")
         [ -n "$n" ] && [ "$n" != "0" ] && echo "${t}|${c}|${n}"
     done
     return 0
@@ -56,7 +70,7 @@ cg_scan() {
 cg_samples() {
     local t="$1" c="$2"
     _cg_q "SELECT CONCAT('       ', HEX(\`${c}\`), '  =  ', \`${c}\`)
-           FROM \`${t}\` WHERE \`${c}\` REGEXP '[^\x00-\x7F]' LIMIT 3;"
+           FROM \`${t}\` WHERE NOT HEX(\`${c}\`) REGEXP '^([0-7][0-9A-F])*$' LIMIT 3;"
 }
 
 # Human-readable report. Returns 0 if safe, 1 if not.

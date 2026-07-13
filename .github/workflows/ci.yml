@@ -215,3 +215,42 @@ jobs:
 
             mysql --protocol=TCP -h 127.0.0.1 -uroot -e "DROP DATABASE $db;"
           done
+
+      - name: Charset guard regression test (seeded with REAL rows)
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_USER: root
+          DB_PASS: ci_root_pw
+          MYSQL_PWD: ci_root_pw
+        run: |
+          set -e
+          # This test exists because the guard once passed by testing NOTHING:
+          # the latin1 tables were empty, so COUNT(*) was 0 regardless of whether
+          # the predicate worked. It did not -- it flagged plain ASCII like
+          # "Mating : MN9 : 1" as non-ASCII. A guard must be tested WITH ROWS.
+          q() { mysql --protocol=TCP -h 127.0.0.1 -uroot -N -B "$@"; }
+
+          echo "--- case 1: latin1 columns holding ASCII (must be SAFE) ---"
+          q -e "DROP DATABASE IF EXISTS ci_cg_ok; CREATE DATABASE ci_cg_ok;"
+          q ci_cg_ok < mousebook_userbook_install_schema.sql
+          q ci_cg_ok -e "INSERT INTO userdetail (user_idno,user_email) VALUES (1,'ward.chris.s@gmail.com');"
+          q ci_cg_ok -e "INSERT INTO userpass (user_idno,user_name,user_pass) VALUES (1,'chris','\$2y\$10\$z.4gXw8N0zBtRUHd4ateQeTtFzq9kUjE4gm3hm8mpb4Xt58hyMiAS');"
+          rows=$(q ci_cg_ok -e "SELECT COUNT(*) FROM userdetail;")
+          [ "$rows" = "1" ] || { echo "::error::seed failed - the test would prove nothing"; exit 1; }
+          ./mb_migrate.sh --db ci_cg_ok preflight || {
+            echo "::error::FALSE POSITIVE - guard flagged pure-ASCII data as unsafe"; exit 1; }
+
+          echo "--- case 2: a genuinely double-encoded value (must be UNSAFE) ---"
+          q -e "DROP DATABASE IF EXISTS ci_cg_bad; CREATE DATABASE ci_cg_bad;"
+          q ci_cg_bad < mousebook_userbook_install_schema.sql
+          mysql --protocol=TCP -h 127.0.0.1 -uroot --default-character-set=latin1 ci_cg_bad \
+            -e "INSERT INTO userdetail (user_idno,user_email) VALUES (1, CONCAT(CHAR(77),CHAR(195),CHAR(188),CHAR(108)));"
+          hex=$(q ci_cg_bad -e "SELECT HEX(user_email) FROM userdetail;")
+          [ "$hex" = "4DC3BC6C" ] || { echo "::error::seed failed (hex=$hex)"; exit 1; }
+          if ./mb_migrate.sh --db ci_cg_bad preflight; then
+            echo "::error::FALSE NEGATIVE - guard missed double-encoded data"; exit 1
+          fi
+          echo "guard correctly refused the double-encoded database"
+
+          q -e "DROP DATABASE ci_cg_ok; DROP DATABASE ci_cg_bad;"
