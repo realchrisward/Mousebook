@@ -1,17 +1,47 @@
-# Block direct web access to config.php AND to every backup of it.
+# ---------------------------------------------------------------------------
+# Mousebook is commonly deployed as a git checkout directly in the webroot
+# (e.g. /var/www/html/mousebook). That means EVERY file in the repository is a
+# URL unless something says otherwise. Apache blocks .ht* out of the box and
+# nothing else: setup.sh, the schema dumps, the migration scripts and the
+# backup grant script are all served as plain text by default.
 #
+# This file is therefore deny-by-exception. Only what the application needs to
+# serve (PHP, CSS, JS, images, fonts) is left reachable.
+# ---------------------------------------------------------------------------
+
+# --- credentials ------------------------------------------------------------
 # <Files "config.php"> matches that one exact filename and nothing else.
-# setup.sh keeps a timestamped backup when it rewrites the file, and a name
-# like config.php.bak.20260712120000 does NOT end in .php -- so Apache does
-# not hand it to PHP, it just serves the bytes, database password and all.
-# FilesMatch catches the whole family.
+# setup.sh keeps a timestamped backup when it rewrites the file, and a name like
+# config.php.bak.20260712120000 does NOT end in .php -- so Apache does not hand
+# it to PHP, it just serves the bytes, database password and all.
 <FilesMatch "^config\.php">
     Require all denied
 </FilesMatch>
 
-# Block the repository metadata if the app was deployed as a git checkout.
-# Apache blocks .ht* out of the box, but nothing else -- /.git/config and the
-# packfiles under /.git/objects are fetchable, and git history keeps whatever
-# was ever committed, including a config.php committed by mistake and removed
-# later. <Files>/<FilesMatch> cannot match a directory; RedirectMatch can.
+# --- repository metadata ----------------------------------------------------
+# /.git/config and the packfiles under /.git/objects are fetchable, and git
+# history keeps whatever was ever committed -- including a config.php committed
+# by mistake and removed later. <Files>/<FilesMatch> cannot match a directory;
+# RedirectMatch can.
 RedirectMatch 404 /\.git(/|$)
+
+# --- operator tooling, schema, and docs -------------------------------------
+# None of this is ever requested by the application. All of it is useful to an
+# attacker:
+#   *.sql  - the complete schema (and make_mb_backup.sql contains a GRANT with
+#            a password), which turns blind SQL injection into aimed injection
+#   *.sh   - setup.sh, mb_migrate.sh, mb_schema_check.sh: deployment internals
+#   *.md   - docs describing the install layout
+#   *.tsv / *.patch / *.yml - CI internals
+<FilesMatch "\.(sql|sh|md|tsv|patch|ya?ml|example|bak|orig|rej)$">
+    Require all denied
+</FilesMatch>
+
+# --- directories that must never be served ----------------------------------
+RedirectMatch 404 /(migrations|tests|docs|backlog|\.github)(/|$)
+
+# --- vendored FPDF demo endpoints -------------------------------------------
+# php/tutorial/*.php and php/makefont/*.php are FPDF's own demos and dev tools:
+# unauthenticated, executable, and serving no purpose in a deployment. They
+# should be deleted from the tree (tracked separately); until they are, deny.
+RedirectMatch 404 /php/(tutorial|makefont|doc)(/|$)
