@@ -70,11 +70,11 @@ CREATE TABLE `dbaccess` (
   `db_subject_plural` varchar(45) DEFAULT NULL,
   `db_subject_single` varchar(45) DEFAULT NULL,
   `db_guide1_title` varchar(45) DEFAULT NULL,
-  `db_guide1_url` mediumtext,
+  `db_guide1_url` longtext,
   PRIMARY KEY (`db_no`),
   UNIQUE KEY `db_name_UNIQUE` (`db_name`),
   UNIQUE KEY `db_formurl_UNIQUE` (`db_formurl`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -91,7 +91,7 @@ CREATE TABLE `userdbaccess` (
   `db_name` varchar(64) NOT NULL,
   `db_accesstier` varchar(45) NOT NULL,
   PRIMARY KEY (`link_number`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -106,7 +106,7 @@ CREATE TABLE `userdetail` (
   `user_email` varchar(45) DEFAULT NULL,
   `user_phone` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`user_idno`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -125,7 +125,7 @@ CREATE TABLE `userpass` (
   PRIMARY KEY (`user_idno`),
   UNIQUE KEY `user_idno_UNIQUE` (`user_idno`),
   UNIQUE KEY `username_UNIQUE` (`user_name`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -151,7 +151,7 @@ CREATE TABLE `usertoken` (
   UNIQUE KEY `token_hash_UNIQUE` (`token_hash`),
   KEY `user_idno` (`user_idno`),
   KEY `lookup` (`token_hash`,`purpose`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

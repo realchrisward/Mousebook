@@ -14,15 +14,34 @@ Mousebook uses **two** databases and a backup is incomplete without both:
 Losing `userbook` locks everyone out even if `animalbook` is intact, so always
 dump the pair together.
 
-## Engine note (why `--single-transaction` is the wrong flag here)
+## Engine note (`--lock-tables` today, `--single-transaction` once you migrate)
 
-`animalbook` is **39 MyISAM tables + 1 InnoDB table** (`reservations_animals`).
-MyISAM is non-transactional, so `mysqldump --single-transaction` does **not**
-produce a consistent snapshot of it — that flag only helps InnoDB. For a
-consistent dump of a MyISAM-dominant schema you must take table locks. The
-script below uses `--lock-tables` per database (mysqldump's default), which is
-correct for MyISAM. Mousebook writes are brief, so the lock window is short; run
-backups off-peak regardless.
+**Which flag is correct depends on which engine your database is on**, so check
+before you trust either:
+
+```bash
+./mb_migrate.sh --db animalbook status     # applied / pending
+```
+
+**Every table InnoDB** (a fresh install, or an install that has applied
+migration `001_innodb_utf8mb4`):
+
+> Use **`--single-transaction`**. It gives a consistent snapshot from a single
+> read view **without locking anything**, so backups no longer block the app.
+> This is the reason the flag flipped from wrong to right — see
+> [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
+
+**Any table still MyISAM** (an install that has not migrated yet):
+
+> Use **`--lock-tables`** (mysqldump's default), as the script below does.
+> MyISAM is non-transactional, so `--single-transaction` does **not** produce a
+> consistent snapshot of it — that flag only helps InnoDB, and on a mixed schema
+> it will hand you a dump that *looks* fine and is silently torn. Writes are
+> brief, so the lock window is short; run backups off-peak regardless.
+
+A **partially** converted database is the worst of both: it gets no consistency
+benefit and keeps the locking cost. That is why migration 001 converts every
+table in one pass rather than a table at a time.
 
 ## A dedicated, least-privilege backup account
 
