@@ -107,15 +107,58 @@ changed after the editor loaded it.
 > comments. Alice saves. Bob saves. **Bob's whole-row write silently reverts Alice's
 > genotype change.** Neither is warned.
 
-This is the textbook lost update and the **highest-severity silent risk** in the app.
-It applies to any two users editing overlapping animal selections.
+This was the textbook lost update and the highest-severity silent risk in the app.
 
-**Triage:**
-- **Document (MVP):** avoid simultaneous edits to the same animals; last save wins,
-  silently.
-- **Fix in M2-A (top priority):** optimistic locking — add a version/`updated_at`
-  column, carry it in the form, and reject the write with a conflict notice if it
-  moved. This is the core of M2-A.
+**Status: FIXED in C-1 (#27a).** `manage_animals.php` now uses **optimistic locking**
+through `mb_write()`'s `expect` option (the seam built by B-3). No schema change was
+needed — see below.
+
+### How C-1 works
+
+- **No version/`updated_at` column.** The optimistic-lock token is the set of
+  **rendered values themselves**. When the table is drawn, each editable row emits the
+  as-rendered value of every write-set column as a hidden `orig_*` input
+  (`orig_line`, `orig_idno`, `orig_sex`, `orig_eartag`, `orig_dob`, `orig_dow`,
+  `orig_dod`, and `orig_geno<i>-<animal>` per genotype). `confirm_changes` posts these
+  back as `mb_write()`'s `expect`. `mb_write()` reads the row `FOR UPDATE`, compares
+  each `expect` value against the current column (type-aware: NULL≠'' but
+  `2026-01-01` == `2026-01-01 00:00:00`), and returns `conflict` — writing nothing — if
+  any of them moved. Because the rendered value *is* the token, there is nothing to
+  migrate and nothing to keep in sync.
+
+- **Full-row, by design.** `expect` covers the **entire write-set** — every column the
+  save writes — not just the fields the user touched. If Alice changes an ear tag and
+  Bob (on a form rendered before Alice saved) changes only the sex, Bob's save is
+  refused because the ear tag moved under him, even though Bob never touched it.
+  Rationale: a form that shows all fields implies the editor has accepted the values
+  they left alone, so any concurrent change to the row is best settled by a **row-level
+  refresh** rather than a silent field-level merge. Read-only / cross-page–owned columns
+  (`currentcage`, `location`, `role`, `sourcecage`, `parents`) are **excluded** from
+  `expect` — they are not written here, so a legitimate cage move on another page must
+  not false-conflict an unrelated animal edit.
+
+- **Whole-submit, all-or-nothing.** The whole `confirm_changes` submit runs in one
+  transaction. A conflict on any one animal (or genotype row) rolls the **entire submit**
+  back — a clean edit to a different animal in the same submit is *not* half-committed.
+  (Verified: an updated animal and a conflicting animal in the same submit → neither
+  persists.)
+
+- **Conflict UX — show the current value, force a re-apply.** On conflict the page
+  re-renders the affected animals as an editable table populated with the **current
+  database values**, above a notice that names each animal and every field that moved
+  (`animal 500: eartag (you had "L", now "Z")` — the complete set, not just the first
+  field `mb_write()` short-circuited on). The user sees the up-to-date value and must
+  deliberately re-enter any change they still want; because the refreshed hidden
+  baselines now equal the current row, a straight re-submit is a no-op. Nothing is ever
+  clobbered without the editor seeing the newer value first.
+
+- **Comments are append-only** (`data_comments`), so they have no before-image and no
+  conflict concept; they are inserted, never optimistically locked.
+
+**Known residual (self-correcting):** `mb_write()` reports the *first* differing column
+per record and stops, but the page's post-rollback scan re-reads the row and enumerates
+*all* moved fields for the notice, and the fresh re-render shows every current value —
+so a careful re-apply against the refreshed table will not trip a second conflict.
 
 ## 4. Cage mutations (`cage_location.php`, `cagerole.php`, `manage_cages.php`)
 
@@ -160,7 +203,7 @@ reservation intact. **No action needed.**
 |---|---|---|---|---|
 | 1 | Autonumber TOCTOU → duplicate reservation | Medium | No (1062 error, batch halts) | **Document** — retry works; no data loss |
 | 2 | `idno` ear-tag duplicate | **High** | **Yes** | **Document** — verify tags after concurrent adds |
-| 3 | Animal-edit lost update | **High** | **Yes** | **Document** — M2-A top priority |
+| 3 | Animal-edit lost update | **High** | ~~Yes~~ | **FIXED in C-1** — optimistic lock via `mb_write()` `expect` |
 | 4 | Cage move/role last-writer-wins | Low | Yes, but benign | **Document** |
 | 5 | Shared global print queue | Medium | No (visible) | **Document** |
 | 6 | Reservation purge scope | — | — | **No issue** — correctly per-user |
@@ -171,8 +214,9 @@ duplicates, §3 lost updates) are real and are the substance of **M2-A**.
 
 ## M2-A implementation checklist (carried forward)
 
-1. **Optimistic locking on animal edits** (§3) — version/`updated_at` column + conflict
-   detection. Highest value.
+1. ~~**Optimistic locking on animal edits** (§3)~~ — **DONE in C-1.** Implemented with
+   no schema change: rendered write-set values are the token, carried as `orig_*` hidden
+   inputs and passed to `mb_write()` as `expect`. See §3 for behavior and rationale.
 2. **Atomic number claim** (§1, §2, §4) — move the `max()` reads inside the existing
    `LOCK TABLES` window; unique key on `reservations_animals.user`; consider
    `UNIQUE (line, idno)` (dedupe migration first); re-validate the range at confirm.
