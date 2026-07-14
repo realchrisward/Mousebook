@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = null;
@@ -26,10 +27,7 @@ $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = nu
 
 	// collect config values
 	$config = require'../config.php';
-	if ($config['debug_mode']=='True'){
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}	
+	mb_debug_init($config);
 	//setup sql variables
 	$ubname=$config['server_user'];
 	$ubpass=$config['server_pass'];	
@@ -50,7 +48,7 @@ $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = nu
 		require_once __DIR__ . '/../includes/filters.php';
 
 		
-	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+	$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 	//check connection
 	if ($conn->connect_error) {
 		$xloginstatus='red';
@@ -62,11 +60,11 @@ $cage = null; $animals_string_display = null; $testtable = null; $sqlreport = nu
 		}
 	
 //create connection
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 
 //---generate temp list of animals---
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 if (isset($_POST['generate_animals'])){
 //get deadpup info
@@ -152,7 +150,7 @@ $death_type=($_POST['death_type'] ?? '');
 
 
 //line list
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $sqltext="call get_lines();";
 $results=$conn->query($sqltext);
 //set up static portion of table
@@ -174,12 +172,12 @@ $line_listbox .= '</select>';
 $conn->close();
 
 //location filter dropdown (filter mode)
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $location_listbox=filter_selectbox(location_filter_options($conn), $location_selection, 'location_selection', 'submitForm()', true);
 $conn->close();
 
 //mating list filtered by line (+ location)
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT `currentcage` 
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
 where dod is null and left(`currentcage`,1)='M' and (`line`='".$line_selection."' or `lineassignment`='".$line_selection."') "
@@ -205,7 +203,7 @@ $conn->close();
 
 
 //mating cage contents current
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 $sqltext="SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='".$source_selection."' ;";
 $results=$conn->query($sqltext);
@@ -221,7 +219,7 @@ $conn->close();
 
 
 //mating cage contents historical
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 $sqltext="SELECT table_cages.cagecontents FROM `table_cages` where `cageid`='".$source_selection."' ;";
 $results=$conn->query($sqltext);

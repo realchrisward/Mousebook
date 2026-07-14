@@ -2,6 +2,7 @@
 <html>
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 // =============================================================
 // php/change_password.php  (Phase G / issue #19)
 // Self-service password change for an ALREADY-LOGGED-IN user.
@@ -20,10 +21,7 @@ $xusername = '';
 $dbname = ($_POST['dbname'] ?? '');
 
 $config = require '../config.php';
-if (($config['debug_mode'] ?? 'False') == 'True') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/session.php';

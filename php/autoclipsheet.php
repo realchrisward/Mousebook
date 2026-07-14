@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../includes/db.php';
 // =============================================================
 // php/autoclipsheet.php
 //
@@ -25,10 +26,7 @@
 // session cookie), which is safe.
 
 $config = require '../config.php';
-if (($config['debug_mode'] ?? '') === 'True') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/session.php';
@@ -62,7 +60,7 @@ if (!$mb['authenticated'] || $host === null) {
     mb_clip_fail('Please connect to a colony database first, then reopen the clip sheet.');
 }
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 if ($conn->connect_error) {
     mb_clip_fail('Could not connect to the colony database (' . $dbname . ').');
 }

@@ -2,6 +2,7 @@
 <html>
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $xusername = '';
 $host = $accessun = $accesspw = null;
@@ -29,10 +30,7 @@ if (isset($_POST['button_disco'])) {
 $dbname = ($_POST['dbname'] ?? '');
 
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
 
@@ -50,7 +48,7 @@ $xloginstatus = $mb['loginstatus'];
 mb_guard_admin();
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
 	echo '<h2 class="centertext"> please connect to the database </h2>';
@@ -60,7 +58,7 @@ if ($conn->connect_error) {
 }
 
 // DB operations
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 if (isset($_POST['button_addrole'])) {
 	$role = ($_POST['textaddrole'] ?? '');
@@ -101,7 +99,7 @@ if (isset($_POST['button_editrole'])) {
 $conn->close();
 
 // Read roles for display
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 if ($conn->connect_error) {
 	echo '<h2 class="centertext"> please connect to the database </h2>';
 	exit;

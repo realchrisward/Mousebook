@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 	//setup sql variables
@@ -25,10 +26,7 @@ $host = $accessun = $accesspw = null;
 
 	// collect config values
 	$config = require'../config.php';
-	if ($config['debug_mode']=='True'){
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}	
+	mb_debug_init($config);
 	//setup sql variables
 	$ubname=$config['server_user'];
 	$ubpass=$config['server_pass'];	
@@ -46,7 +44,7 @@ $host = $accessun = $accesspw = null;
 		$xloginstatus = $mb['loginstatus'];
 
 		
-	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+	$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 	//check connection
 	if ($conn->connect_error) {
 		$xloginstatus='red';
@@ -58,7 +56,7 @@ $host = $accessun = $accesspw = null;
 		}
 	
 //create connection
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 
 //retreive animals data from db of animals
@@ -68,7 +66,7 @@ $sqltext="SELECT `line`,`idno`,`dob`,`genotypingrxn` as generxn, `allele` FROM v
 on view_unkgenos.allelegroup= key_allelegroupbygenotypingrxn.allelegroup
 order by generxn asc, line asc, cast(idno as unsigned) asc, idno;";
 //run query 
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqltext);
 $animals_results=$results;
 //loop and grab data

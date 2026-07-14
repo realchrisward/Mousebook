@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 /*
  * genotype_backfill.php — M1-E (issue #28): admin genotype-backfill repair surface.
  *
@@ -36,10 +37,7 @@
 
 	// collect config values
 	$config = require '../config.php';
-	if ($config['debug_mode'] == 'True') {
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}
+	mb_debug_init($config);
 	$ubname = $config['server_user'];
 	$ubpass = $config['server_pass'];
 
@@ -58,7 +56,7 @@
 	mb_guard_admin();
 
 	// connection test (matches the app's per-page pattern)
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	if ($conn->connect_error) {
 		$xloginstatus = 'red';
 		echo '<h2 class="centertext"> please connect to the database </h2>';
@@ -74,7 +72,7 @@
 	// same POST (no manual refresh). button_backfill is neutralised for
 	// non-admins by mb_guard_admin() above, so this block is a no-op for them.
 	if (isset($_POST['button_backfill'])) {
-		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 		$g_animal = $_POST['g_animal'] ?? array();
 		$g_group  = $_POST['g_group']  ?? array();
 		$g_allele = $_POST['g_allele'] ?? array();
@@ -107,7 +105,7 @@
 	}
 
 	// ---- line dropdown -----------------------------------------------------
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$line_listbox = '<select id="line_selection" name="line_selection" size=1 class="mediumlistbox" onchange="submitForm()"><option value="">-- select a line --</option>';
 	$results = $conn->query("call get_lines();");
 	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
@@ -122,7 +120,7 @@
 	// sexspecific (M / F / all) so a gap's select can be sex-appropriate.
 	$aglist = array();
 	if ($line_selection !== '') {
-		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 		$stmt = $conn->prepare("SELECT `list_allele`.`allelegroup`,`allele`,`sexspecific` FROM `key_allelebyline` JOIN `list_allele` ON `key_allelebyline`.`allelegroup`=`list_allele`.`allelegroup` WHERE `key_allelebyline`.`line`=?");
 		if ($stmt) {
 			$stmt->bind_param('s', $line_selection);
@@ -145,7 +143,7 @@
 	// an allele group currently assigned to the line (key_allelebyline).
 	$gaps = array();
 	if ($line_selection !== '') {
-		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 		$stmt = $conn->prepare(
 			"SELECT a.`animalautono`, a.`idno`, a.`sex`, k.`allelegroup`
 			 FROM `table_animals` a

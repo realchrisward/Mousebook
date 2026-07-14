@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/includes/db.php';
 // ── Phase F: single login origin (Issue #23) ────────────────
 // index.php is NOT a login origin. If someone is trying to enter a
 // colony from here — typing credentials into the header login box, or
@@ -29,11 +30,7 @@ if (isset($_POST['button_login'])) {
 // never read per-request nor emitted into the page.
 $config = require './config.php';
 
-if ($config['debug_mode'] == 'True') {
-	echo 'DEBUGGING ENABLED';
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config, true);
 
 require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/session.php';
@@ -114,7 +111,7 @@ $guide1url     = $mb['guide1_url'];
 
 
 	//create connection
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	//check connection
 	if ($conn->connect_error) {
 		echo '<h2 class="centertext"> please connect to the database </h2>';
@@ -163,7 +160,7 @@ $guide1url     = $mb['guide1_url'];
 
 
 	//get weaning list
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	//$results = $conn->query("call get_weanlist();");
 
 	$sqltext = "

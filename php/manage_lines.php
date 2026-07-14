@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $sqlaction = null; $line = null; $sqlstatus = null; $currcardcolor = null; $currstripecolor = null; $currstrain = null;
@@ -27,10 +28,7 @@ $currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null;
 
 	// collect config values
 	$config = require'../config.php';
-	if ($config['debug_mode']=='True'){
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}	
+	mb_debug_init($config);
 	//setup sql variables
 	$ubname=$config['server_user'];
 	$ubpass=$config['server_pass'];	
@@ -50,7 +48,7 @@ $currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null;
 		mb_guard_admin();
 
 		
-	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+	$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 	//check connection
 	if ($conn->connect_error) {
 		$xloginstatus='red';
@@ -62,7 +60,7 @@ $currucsdnumber = null; $currdeactiv = null; $currldesc = null; $sqltext = null;
 		}
 	
 //create connection
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 //add line
 if (isset($_POST['button_addline'])){
@@ -186,7 +184,7 @@ $conn->close();
 <?php 
 
 //create connection
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 //check connection
 if ($conn->connect_error) {
 echo '<h2 class="centertext"> please connect to the database </h2>';
@@ -197,7 +195,7 @@ $conn->close();
 //get line and allele data
 
 //allele table
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query("call get_allelegroups()");
 //set up static portion of table
 $allele_table= '<select id="allele_selection" name="allele_selection" size=10, class="largelistbox">';
@@ -212,7 +210,7 @@ $conn->close();
 
 //line table
 $currline=($_POST['line_selection'] ?? '');
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query("call get_lines()");
 //set up static portion of table
 $line_table= '<select id="line_selection" name="line_selection" size=10 class="mediumlistbox" onchange="showLine(this.value)">';
@@ -239,7 +237,7 @@ $line_table .= '</select>';
 $conn->close();
 
 //strain table
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query("call get_strains");
 //set up static portion of table
 $strain_table= '<select id="strain_selection" name="strain_selection" size=1 class="mediumlistbox"><option value="" selected></option>';
@@ -264,7 +262,7 @@ $currstrain_table.='</select>';
 $conn->close();
 
 //allelesbyline table
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $allelebylinequery="SELECT * from `key_allelebyline` WHERE `line`='".$currline."';";
 $results=$conn->query($allelebylinequery);
 //set up static portion of table

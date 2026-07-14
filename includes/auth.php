@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/db.php';
 // =============================================================
 // includes/auth.php
 // Shared Mousebook authentication helper.
@@ -83,7 +84,7 @@ function mb_authenticate(array $config, string $username, string $password, stri
     $upass = $config['server_pass'];
 
     mb_define_userbook_db($config);
-    $conn = new mysqli($host, $uname, $upass, mb_userbook_db($config));
+    $conn = mb_connect($host, $uname, $upass, mb_userbook_db($config));
     if ($conn->connect_error) {
         return $fail;
     }
@@ -187,7 +188,7 @@ function mb_get_user_databases(array $config, string $username, string $password
     $upass = $config['server_pass'];
 
     mb_define_userbook_db($config);
-    $conn = new mysqli($host, $uname, $upass, mb_userbook_db($config));
+    $conn = mb_connect($host, $uname, $upass, mb_userbook_db($config));
     if ($conn->connect_error) {
         return [];
     }

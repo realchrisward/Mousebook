@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $animals_string_display = null; $line_tip = null; $sqlreport = null;
@@ -26,10 +27,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -50,7 +48,7 @@ mb_guard_write();
 require_once __DIR__ . '/../includes/filters.php';
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -150,7 +148,7 @@ if (isset($_POST['confirm_litter'])) {
 		$sqlstatus = '-failed - a date of birth is required; litter was not saved.';
 		$sqlreport = $sqlstatus;
 	} else {
-		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 		if ($conn->multi_query($sqltext) === TRUE) {
 			//flush the mysql submission
 			while (mysqli_next_result($conn));
@@ -165,7 +163,7 @@ if (isset($_POST['confirm_litter'])) {
 	/**/
 }
 //litter log
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 // issue #9: show only litters that still need addressing. A litter is dropped
 // once it has been weaned, marked just_sac, or has no surviving pups. Pups are
 // linked back to a litter by matingcage = litterlog.cagename and dob (add_animals
@@ -259,7 +257,7 @@ $conn->close();
 
 
 //line list
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //$sqltext="call get_lines();";
 $sqltext = "Select * from `" . $dbname . "`.`table_lines` order by `line`;";
 $results = $conn->query($sqltext);
@@ -322,12 +320,12 @@ $sex_listbox .= '</select>';
 
 
 //location filter dropdown (filter mode)
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $location_listbox = filter_selectbox(location_filter_options($conn), $location_selection, 'location_selection', 'submitForm()', true);
 $conn->close();
 
 //mating list filtered by line (+ location)
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT `currentcage`, `cagecontents`
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
 where dod is null and left(`currentcage`,1)='M' and (`line`='" . $line_selection . "' or `lineassignment`='" . $line_selection . "') "
@@ -355,7 +353,7 @@ $conn->close();
 
 
 //mating cage contents current
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 $sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='" . $source_selection . "' ;";
 $results = $conn->query($sqltext);
@@ -371,7 +369,7 @@ $conn->close();
 
 
 //mating cage contents historical
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 $sqltext = "SELECT table_cages.cagecontents FROM `table_cages` where `cageid`='" . $source_selection . "' ;";
 $results = $conn->query($sqltext);

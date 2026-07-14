@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/db.php';
 // =============================================================
 // includes/session.php
 // Shared Mousebook session bootstrap (Phase F, Issue: session auth).
@@ -34,7 +35,9 @@
 //
 // This code base was written for PHP 5.x, where a failed
 // `new mysqli(...)` returned an object whose ->connect_error was
-// set (rather than throwing). Every page still checks
+// set (rather than throwing). B-2 moved that construction into
+// mb_connect() (includes/db.php), which preserves the same contract
+// deliberately: it returns a mysqli whose ->connect_error is set. Every page still checks
 // `if ($conn->connect_error)`. Under PHP 8's default report mode a
 // failed/absent connection throws mysqli_sql_exception, which turns
 // an unauthenticated page load into a fatal 500 instead of a login
