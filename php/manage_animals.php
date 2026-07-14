@@ -5,6 +5,7 @@
 <!--php code: login-->
 <?php
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/write.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $lf = null; $gf = null; $doaf = null; $sf = null; $bbf = null; $baf = null;
@@ -325,56 +326,118 @@ if (isset($_POST['confirm_changes'])) {
 		}
 	}
 
-	//prepare sql for dbupdate
-	$sqltext = '';
+	// ---------------------------------------------------------------------
+	// B-3: this save goes through mb_write(), the single write chokepoint.
+	//
+	// What it replaces: a multi-statement string, built by concatenating escaped
+	// POST values, executed with multi_query(). That shape had three defects that
+	// were invisible until you looked for them:
+	//
+	//   * NO TRANSACTION. Six animals in one submit meant six independent writes.
+	//     A failure on the fourth left three saved and three not, with a page that
+	//     reported "-failed" and no way to tell which.
+	//   * LAST WRITE WINS. It re-wrote every column of every animal on every save,
+	//     including columns the user never touched. mb_write() reads the row FOR
+	//     UPDATE, diffs, and writes only what changed -- which cuts the write down
+	//     to the user's actual edit, and gives Track D an audit trail of real
+	//     changes rather than "someone opened the form".
+	//
+	//     BE CLEAR ABOUT WHAT THIS DOES *NOT* FIX: the diff compares the form
+	//     against the CURRENT ROW, not against what the user was shown. If Bob's
+	//     form was rendered before Alice saved, Bob's stale value still differs
+	//     from the row and is still written -- Alice's edit is still lost. The
+	//     lost-update bug (#27a / CONCURRENCY.md §3) is NOT closed by this patch.
+	//     Closing it means passing the values the form was RENDERED with as
+	//     mb_write's 'expect' option, which then refuses the stale save instead of
+	//     clobbering. The seam exists and is tested; wiring the hidden fields into
+	//     this form is C-1.
+	//   * multi_query() ENABLED STACKED QUERIES on the connection carrying
+	//     user-supplied text.
+	//
+	// It also dropped three whole-table sweeps (`UPDATE table_animals SET dob=NULL
+	// WHERE dob=0`, and the same for dow/dod) that ran ONCE PER ANIMAL PER SAVE.
+	// They existed to clean up zero-dates written by this very code path; mb_write()
+	// writes a real NULL for an empty date, so nothing generates them any more.
+	// Cleaning up any zero-dates left by the OLD code is a migration's job, not
+	// something to re-run on every keystroke. (Noted for Track C.)
+	// ---------------------------------------------------------------------
+	$sqlreport = 'Edit animals ';
+	$updated = 0; $unchanged = 0; $failed = 0; $detail = array();
+
+	// One transaction around the whole submit: all animals save, or none do.
+	mb_tx_begin($conn);
+
 	foreach ($arrayman as $man) {
-		//echo $man.'<br>';
-		//table_animals
+		$man_id = (int)$man;
+		if ($man_id <= 0) { continue; }
 
-		//check for null dob dow dod
-		if (empty($dob[$man])) {
-			$dob[$man] = 'null';
+		// Empty date fields mean "unknown", which is NULL -- not '' and not 0.
+		$vals = array(
+			'line'   => $line[$man],
+			'idno'   => $idno[$man],
+			'sex'    => $sex[$man],
+			'eartag' => $eartag[$man],
+			'dob'    => (($dob[$man] ?? '') === '') ? null : $dob[$man],
+			'dow'    => (($dow[$man] ?? '') === '') ? null : $dow[$man],
+			'dod'    => (($dod[$man] ?? '') === '') ? null : $dod[$man],
+		);
+
+		$res = mb_write($conn, 'table_animals', 'animalautono', $man_id, $vals);
+
+		if ($res['status'] === 'updated') {
+			$updated++;
+			$detail[] = $man_id . ': ' . implode(', ', array_keys($res['changed']));
+		} elseif ($res['status'] === 'unchanged') {
+			$unchanged++;
 		} else {
-			$dob[$man] = "'" . $conn->real_escape_string($dob[$man]) . "'";
+			$failed++;
+			$detail[] = $man_id . ': ' . $res['status'] . ' ' . $res['error'];
+			continue;
 		}
 
-		if (empty($dow[$man])) {
-			$dow[$man] = 'null';
-		} else {
-			$dow[$man] = "'" . $conn->real_escape_string($dow[$man]) . "'";
+		// data_comments: an append-only log, so there is no before-image to diff --
+		// a new comment is a new row. Prepared, not concatenated.
+		if (($comments[$man] ?? '') !== '') {
+			$stc = $conn->prepare("INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (?,curdate(),?)");
+			if ($stc) {
+				$stc->bind_param('is', $man_id, $comments[$man]);
+				if (!$stc->execute()) { $failed++; $detail[] = $man_id . ': comment failed'; }
+				$stc->close();
+			} else {
+				$failed++; $detail[] = $man_id . ': comment prepare failed';
+			}
 		}
 
-		if (empty($dod[$man])) {
-			$dod[$man] = 'null';
-		} else {
-			$dod[$man] = "'" . $conn->real_escape_string($dod[$man]) . "'";
-		}
-
-		$sqltext .= "UPDATE `table_animals` 
-		SET `line`='" . $conn->real_escape_string($line[$man]) . "',`idno`='" . $conn->real_escape_string($idno[$man]) . "',`sex`='" . $conn->real_escape_string($sex[$man]) . "',`eartag`='" . $conn->real_escape_string($eartag[$man]) . "',`dob`=" . $dob[$man] . ",`dow`=" . $dow[$man] . ",`dod`=" . $dod[$man] . " 
-		WHERE `animalautono`=" . (int)$man . ";" .
-			"UPDATE `table_animals` 
-		SET `dob`=NULL WHERE `dob`=0;" .
-			"UPDATE `table_animals` 
-		SET `dow`=NULL WHERE `dow`=0;" .
-			"UPDATE `table_animals` 
-		SET `dod`=NULL WHERE `dod`=0;";
-		//data_comments
-		if ($comments[$man] != "") {
-			$sqltext .= "INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (" . (int)$man . ",curdate(),'" . $conn->real_escape_string($comments[$man]) . "');";
-		}
-		//table_genotypes
+		// table_genotypes: one row per (animal, allelegroup). Also a tracked write,
+		// so it goes through the chokepoint too, keyed by its own primary key.
 		foreach (range(0, $genecount - 1, 1) as $i) {
-			if ($genearray[$i][$man] != "") {
-				$sqltext .= "UPDATE `table_genotypes` SET `allele`='" . $conn->real_escape_string($genearray[$i][$man]) . "' WHERE `animalautono`=" . (int)$man . " and `allelegroup`='" . $conn->real_escape_string($genelist[$i]) . "';";
+			if (($genearray[$i][$man] ?? '') === '') { continue; }
+
+			$stg = $conn->prepare("SELECT `genoid` FROM `table_genotypes` WHERE `animalautono`=? AND `allelegroup`=?");
+			if (!$stg) { $failed++; $detail[] = $man_id . ': geno lookup failed'; continue; }
+			$stg->bind_param('is', $man_id, $genelist[$i]);
+			$stg->execute();
+			$grow = $stg->get_result()->fetch_assoc();
+			$stg->close();
+			if ($grow === null) { continue; }   // no such genotype row: unchanged from the old behaviour
+
+			$gres = mb_write($conn, 'table_genotypes', 'genoid', (int)$grow['genoid'],
+			                 array('allele' => $genearray[$i][$man]));
+			if ($gres['status'] === 'error') {
+				$failed++;
+				$detail[] = $man_id . ': genotype ' . $genelist[$i] . ' ' . $gres['error'];
 			}
 		}
 	}
-	$sqlreport = 'Edit animals ';
-	if ($conn->multi_query($sqltext) === TRUE) {
-		$sqlstatus = '-successful' . '...' . $sqltext;
+
+	if ($failed > 0) {
+		mb_tx_rollback($conn);
+		$sqlstatus = '-failed (' . $failed . ') - NOTHING was saved: ' . implode('; ', $detail);
+	} elseif (!mb_tx_commit($conn)) {
+		$sqlstatus = '-failed - could not commit: ' . $conn->error;
 	} else {
-		$sqlstatus = '-failed ' . $conn->error . '...' . $sqltext;
+		$sqlstatus = '-successful... ' . $updated . ' changed, ' . $unchanged . ' unchanged'
+		           . ($detail ? ' [' . implode('; ', $detail) . ']' : '');
 	}
 	$sqlreport .= $sqlstatus;
 	$conn->close();
