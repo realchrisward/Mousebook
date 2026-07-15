@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
@@ -26,10 +27,7 @@ $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
 
 	// collect config values
 	$config = require'../config.php';
-	if ($config['debug_mode']=='True'){
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}	
+	mb_debug_init($config);
 	//setup sql variables
 	$ubname=$config['server_user'];
 	$ubpass=$config['server_pass'];	
@@ -49,7 +47,7 @@ $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
 		mb_guard_admin();
 
 		
-	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+	$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 	//check connection
 	if ($conn->connect_error) {
 		$xloginstatus='red';
@@ -62,7 +60,7 @@ $sqlaction = null; $strain = null; $sqlstatus = null; $buttonmessage = null;
 	
 
 //create connection
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 
 //get posted variables
 //add strain
@@ -120,7 +118,7 @@ $conn->close();
 <?php 
 
 //create connection
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 //check connection
 if ($conn->connect_error) {
 echo '<h2 class="centertext"> please connect to the database </h2>';

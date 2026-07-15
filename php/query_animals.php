@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $lf = null; $gf = null; $doaf = null; $sf = null; $bbf = null; $baf = null;
@@ -28,10 +29,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -50,7 +48,7 @@ $xloginstatus = $mb['loginstatus'];
 require_once __DIR__ . '/../includes/filters.php';
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -64,7 +62,7 @@ if ($conn->connect_error) {
 
 
 if (isset($_POST['get_genofilt'])) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 	$gfcount = (int)($_POST['genecount'] ?? 0);
 	$agarray = array();
@@ -100,7 +98,7 @@ if (isset($_POST['get_genofilt'])) {
 
 if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($_POST['export_csv'])) {
 
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 	// P2 Option B: rebuild the WHERE from round-tripped filter VALUES (no client SQL)
 	$mbvals = animals_filter_values_from_post($_POST);
@@ -118,7 +116,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 	//echo $sqlgenotypes;
 	$sqldatacomments = "SELECT `data_comments`.`animalautono` as 'man',`commentdate`,`general_comment` FROM `data_comments` JOIN `table_animals` ON `data_comments`.`animalautono` = `table_animals`.`animalautono`  where " . $sql_where_text . " ;";
 	//query table_animals
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqltext);
 	$animals_results = $results;
 	//loop and grab data
@@ -151,7 +149,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 
 	//query table_genotypes
 	$aglist = [];
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqlgenotypes);
 	$geno_results = $results;
 
@@ -174,7 +172,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 
 	//get allelegroups
 	$sqltext = "SELECT `allelegroup`,`allele`,`sexspecific` FROM `list_allele` " . $agfilt . ";";
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqltext);
 	$aglist = [];
 	while (($results) && ($row = mysqli_fetch_array($results))) {
@@ -221,7 +219,7 @@ if (isset($_POST['get_tempanimals']) || isset($_POST['get_genofilt']) || isset($
 	}
 
 	//gather and concatenate comments
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqldatacomments);
 	$animals_results = $results;
 	//loop and grab data
@@ -398,18 +396,18 @@ $deadoralive_listbox .= '</select>';
 $source_category_listbox = filter_selectbox(cagetype_options(), $source_category_selection, 'source_category_selection', 'submitForm()', true, '');
 
 //line filter — via shared library
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $line_listbox = filter_selectbox(line_filter_options($conn), $line_filter, 'line_filter', 'submitForm()', true, 'mediumlistbox', 8);
 $conn->close();
 
 //location and role filters
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $location_listbox = filter_selectbox(location_filter_options($conn), $location_filter, 'location_filter', 'submitForm()', true);
 $role_listbox     = filter_selectbox(role_filter_options($conn),     $role_filter,     'role_filter',     'submitForm()', true);
 $conn->close();
 
 //cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //set filter text — built server-side via includes/filters.php (P2 Option B)
 $mbvals = animals_filter_values_from_post($_POST);
 $sql_where_text = animals_where_build($conn, $mbvals);   // filters only (no cage) — feeds the source-cage dropdown
@@ -432,7 +430,7 @@ $conn->close();
 //echo $sqltext;
 
 //animals list filtered by line|sex|cage
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 /*
 if($deadoralive_filter==="dead"){

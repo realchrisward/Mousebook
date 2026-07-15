@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $xusername = '';
 $host = $accessun = $accesspw = null;
@@ -47,10 +48,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -71,7 +69,7 @@ mb_guard_write();
 require_once __DIR__ . '/../includes/filters.php';
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 // issue #22: a failed connection here means every reconnect below fails too;
 // calling ->query() on it fatals ("mysqli object is already closed"). Gate all
@@ -168,7 +166,7 @@ $line_listbox = '<select id="line_filter" name="line_filter" size=1 class="mediu
 // set — a query on a failed connection fatals, and a failed query returns false
 // (a TypeError under PHP 8's mysqli_fetch_array).
 if ($dbconnected) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query("call get_lines();");
 	if ($results instanceof mysqli_result) {
 		while ($row = mysqli_fetch_array($results)) {
@@ -193,7 +191,7 @@ $line_listbox .= '</select>';
 if (isset($_POST['button_addlocation'])) {
 	$newloc = trim($_POST['textaddlocation'] ?? '');
 	if ($newloc !== '') {
-		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 		$newloc_esc = $conn->real_escape_string($newloc);
 		$sqltext = "INSERT IGNORE INTO `" . $dbname . "`.`list_cage_locations` (`Location_Option`) VALUES ('" . $newloc_esc . "')";
 		if ($conn->query($sqltext) === TRUE) {
@@ -209,13 +207,13 @@ if (isset($_POST['button_addlocation'])) {
 //retire: soft-delete — drops out of new-assignment lists, stays searchable while cages carry it
 if (isset($_POST['button_retirelocation'])) {
 	$rl = $_POST['retire_location'] ?? '';
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$loc_addstatus = ($rl !== '' && location_retire($conn, $rl)) ? 'Retired location: ' . $rl : 'Could not retire location.';
 	$conn->close();
 }
 if (isset($_POST['button_restorelocation'])) {
 	$rs = $_POST['restore_location'] ?? '';
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$loc_addstatus = ($rs !== '' && location_restore($conn, $rs)) ? 'Restored location: ' . $rs : 'Could not restore location.';
 	$conn->close();
 }
@@ -227,7 +225,7 @@ if (isset($_POST['button_restorelocation'])) {
 // mb_guard_write() does not neutralise it for read-only users — still flagged for
 // the non-button_* mutation-path audit.
 if ($dbconnected && isset($_POST['addcage_single'])) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$cage_selection = ($_POST['cage_selection'] ?? '');
 	$cageselection = '("' . implode('","', $cage_selection) . '")';
 	$sqlaction = 'move cages:' . $cageselection;
@@ -248,7 +246,7 @@ if ($dbconnected && isset($_POST['addcage_single'])) {
 // issue #22: these query the DB via the shared filter library; skip when
 // disconnected (empty controls already initialised above).
 if ($dbconnected) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$locA_listbox       = filter_selectbox(location_liveanimal_options($conn), $locationA_selection, 'locationA_selection', 'submitForm()', true);
 	$locB_listbox       = filter_selectbox(location_assign_options($conn),  $locationB_selection, 'locationB_selection', 'submitForm()', false);
 	$locRetire_listbox  = filter_selectbox(location_assign_options($conn),  '', 'retire_location',  '', false);
@@ -266,7 +264,7 @@ if ($dbconnected
 	&& $locationB_selection !== null
 	&& $locationB_selection !== ''
 	&& $locationB_selection !== 'all') {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	if (!$conn->connect_error) {
 		$stmt = $conn->prepare(
 			"SELECT c.`cageid` AS cageid
@@ -297,7 +295,7 @@ $cage_listbox .= '</select>';
 
 
 //locationA contents - cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname); // reopen: closed above, needed for filter-value escaping
+$conn = mb_connect($host, $accessun, $accesspw, $dbname); // reopen: closed above, needed for filter-value escaping
 //set filter text
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';
@@ -340,7 +338,7 @@ $sourcecage_listbox = '<select id="cage_selection" name="cage_selection[]" size=
 // location simply yields no rows here; $cage_batchlist stays the empty array from
 // init, so the implode below is a no-op instead of a fatal.
 if ($dbconnected) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqltext);
 	if ($results instanceof mysqli_result) {
 		while ($row = mysqli_fetch_array($results)) {

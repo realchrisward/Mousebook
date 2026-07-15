@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 //setup sql variables
 $xusername = ($_POST['xusername'] ?? '');
 
@@ -23,10 +24,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -46,7 +44,7 @@ $xloginstatus = $mb['loginstatus'];
 mb_guard_write();
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -114,7 +112,7 @@ if ($line_assignment <> $line_sync) {
 } else {
 	$line_assign_selected = $line_filter;
 }
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "call get_lines();";
 $results = $conn->query($sqltext);
 //set up static portion of table
@@ -146,7 +144,7 @@ $conn->close();
 
 
 //CagesForPrinting contents
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT `cageid` FROM `CagesForPrinting`;";
 
 $results = $conn->query($sqltext);
@@ -167,7 +165,7 @@ $conn->close();
 
 
 //cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';
@@ -211,7 +209,7 @@ $conn->close();
 $cage_batchlist = '("' . implode('"),("', $cage_batchlist) . '")';
 
 //functions and form controls
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //Add cage to list
 if (isset($_POST['addcage_single'])) {
 	$cage_selection = $_POST['cage_selection'] ?? array();
@@ -290,7 +288,7 @@ if (isset($_POST['remcage_color'])) {
 // batch-add still targets the source set the user saw; $sql_where_text (built above)
 // is reused for the fresh source query.
 if ($conn instanceof mysqli) { $conn->close(); }
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $results = $conn->query("SELECT `cageid` FROM `CagesForPrinting`;");
 $cage_listbox = '<select id="cagelist_selection" name="cagelist_selection[]" multiple="multiple" size=6 class="largelistbox onchange="">;';
 while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
@@ -303,7 +301,7 @@ while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($result
 $cage_listbox .= '</select>';
 $conn->close();
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT `currentcage` FROM `table_animals` left join CagesForPrinting on table_animals.currentcage=CagesForPrinting.cageid where dod is null and
 CagesForPrinting.cageid is null " . $sql_where_text . " GROUP BY `currentcage`;";
 $results = $conn->query($sqltext);
@@ -343,7 +341,7 @@ $colorkey = array(
 $cagegenokey = array();
 $sqlallelegroups = "SELECT `line`,`allelegroup` FROM key_allelebyline order by `allelegroup`;";
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $results = $conn->query($sqlallelegroups);
 
 //loop and grab data
@@ -367,7 +365,7 @@ $sqltext.="join ((`table_cages` join `table_lines` on `lineassignment`=`table_li
 */
 
 //query table_animals
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $results = $conn->query($sqltext);
 
 //loop and grab data
@@ -399,7 +397,7 @@ $sqlgenotypes="SELECT `table_genotypes`.`animalautono`,`allelegroup`,`allele` " 
 $sqlgenotypes.="FROM `table_genotypes` INNER JOIN (`table_animals` INNER JOIN `CagesForPrinting` on `currentcage`=`CagesForPrinting`.`cageid`) ";
 $sqlgenotypes.="ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where `dod` is null order by `allelegroup`;";
 
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query($sqlgenotypes);
 $geno_results=$results;
 //loop and grab data

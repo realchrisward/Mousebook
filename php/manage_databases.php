@@ -2,6 +2,7 @@
 <html>
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 // =============================================================
 // php/manage_databases.php  (Phase G / issue #19)
 // ADMIN. Register / edit colony databases in userbook.dbaccess.
@@ -24,10 +25,7 @@ $host = $accessun = $accesspw = null;
 $dbname = ($_POST['dbname'] ?? '');
 
 $config = require '../config.php';
-if (($config['debug_mode'] ?? 'False') == 'True') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 
 require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/session.php';
@@ -44,7 +42,7 @@ mb_guard_admin();
 
 $sqlstatus = '';
 
-$conn = new mysqli((string)$host, (string)$accessun, (string)$accesspw, $dbname);
+$conn = mb_connect((string)$host, (string)$accessun, (string)$accesspw, $dbname);
 if ($conn->connect_error) {
     $xloginstatus = 'red';
     echo '<h2 class="centertext"> please connect to the user database </h2>';

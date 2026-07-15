@@ -320,6 +320,11 @@ create_db() {
         || error "Could not create database '$1' - does the admin account have CREATE?"
 }
 
+# Databases this run actually created from the starter SQL. Only these may be
+# STAMPED (see Step 7b): a database we skipped is somebody's existing colony,
+# and stamping it would tell the ledger that migrations it never ran are done.
+FRESHLY_LOADED=()
+
 # The schemas carry no CREATE DATABASE / USE header, so they load into
 # whichever database we name here. They open with DROP TABLE IF EXISTS,
 # so loading over live data destroys it: never do that without consent.
@@ -344,6 +349,7 @@ load_schema() {
     info "Loading the $label schema into '${dbname}'..."
     if db_admin "$dbname" < "$sqlfile" 2>"$TMPDIR_MB/load.err"; then
         success "$label schema loaded into '${dbname}'."
+        FRESHLY_LOADED+=("$dbname")
     else
         warn "$label schema failed to load:"
         sed 's/^/         /' "$TMPDIR_MB/load.err"
@@ -353,6 +359,67 @@ load_schema() {
 
 load_schema "$USERBOOK_DB" "$SCRIPT_DIR/mousebook_userbook_install_schema.sql" "auth (userbook)"
 load_schema "$COLONY_DB"   "$SCRIPT_DIR/mousebook_install_schema.sql"          "colony"
+
+# =============================================================
+step "Step 7b: Record the schema version"
+# =============================================================
+#
+# THE INVARIANT: the starter SQL always reflects EVERY migration in
+# migrations/. A database loaded from it is already at the target state -- it
+# is InnoDB and utf8mb4 the moment it is created, and no migration needs to
+# run against it.
+#
+# But `migrations/` is also the upgrade path for the installs that predate
+# each change, and the ledger (`mb_schema_version`) is how mb_migrate.sh knows
+# which of those an existing database still needs. A fresh install with an
+# EMPTY ledger looks, to the runner, exactly like an ancient un-migrated
+# install: it would offer to re-run 001 against a database that is already
+# converted. (001 is convergent, so that is harmless -- but "harmless if you
+# run it" is not the same as "correct", and the next migration may not be.)
+#
+# So: STAMP. Record every current migration as already-satisfied, without
+# running it. That is precisely what `stamp` exists for.
+if [ "${#FRESHLY_LOADED[@]}" -gt 0 ]; then
+    for _db in "${FRESHLY_LOADED[@]}"; do
+        info "Recording schema version for '${_db}'..."
+        if DB_HOST="$DB_HOST" DB_PORT="$DB_PORT" \
+           DB_USER="$DB_ADMIN" DB_PASS="$DB_ADMIN_PASS" \
+           bash "$SCRIPT_DIR/mb_migrate.sh" --db "$_db" stamp --yes \
+                > "$TMPDIR_MB/stamp.out" 2>&1; then
+            success "Schema version recorded for '${_db}'."
+        else
+            # Deliberately NOT note_failure. The database is already in the
+            # target state -- the ledger is bookkeeping, and mb_migrate.sh is
+            # convergent, so the worst case is that a later run offers to apply
+            # 001 to a database it will then find nothing to do on. Failing the
+            # install's verification over this would cry wolf. (The likely
+            # cause is mundane: mb_migrate.sh connects over TCP, and this host
+            # may only grant the admin account a socket login.)
+            warn "Could not record the schema version for '${_db}' - the schema itself is correct."
+            sed 's/^/         /' "$TMPDIR_MB/stamp.out"
+            echo    "       Harmless. To record it later:"
+            echo    "         export DB_HOST='${DB_HOST}' DB_PORT='${DB_PORT}' DB_USER='${DB_ADMIN}' DB_PASS='...'"
+            echo    "         ./mb_migrate.sh --db ${_db} stamp"
+        fi
+    done
+else
+    info "No schema was loaded this run - nothing to stamp."
+fi
+
+# A database we did NOT load is an existing colony. It may be older than the
+# migrations in this checkout, and it is the one case where migrations must
+# actually RUN. Say so, once, plainly.
+for _db in "$USERBOOK_DB" "$COLONY_DB"; do
+    _fresh=0
+    for _f in "${FRESHLY_LOADED[@]:-}"; do [ "$_f" = "$_db" ] && _fresh=1; done
+    if [ "$_fresh" -eq 0 ]; then
+        warn "'${_db}' kept its existing tables, so it may predate the current schema."
+        echo "       Check it, and upgrade it if needed:"
+        echo "         ./mb_migrate.sh --db ${_db} preflight   # is the conversion safe on this data?"
+        echo "         ./mb_migrate.sh --db ${_db} status"
+        echo "         ./mb_migrate.sh --db ${_db} apply       # BACK UP FIRST - see BACKUP.md"
+    fi
+done
 
 # =============================================================
 step "Step 8: Create the database accounts"

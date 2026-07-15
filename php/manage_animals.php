@@ -4,6 +4,8 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/write.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $lf = null; $gf = null; $doaf = null; $sf = null; $bbf = null; $baf = null;
@@ -27,10 +29,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -51,7 +50,7 @@ mb_guard_write();
 require_once __DIR__ . '/../includes/filters.php';
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -63,7 +62,7 @@ if ($conn->connect_error) {
 
 
 //create connection
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 //retreive animals data from db of animals
 //*****generate temp list of animals*****
@@ -74,21 +73,20 @@ $testtable = '';
 $genepost = '';
 $sqlreport = '';
 
-if (isset($_POST['get_tempanimals'])) {
-
-
-
-	// P2 Option B: rebuild WHERE from round-tripped filter VALUES (no client SQL)
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-	$mbvals = animals_filter_values_from_post($_POST);
-	$sql_where_text = animals_where_build($conn, $mbvals) . cage_eq_where($conn, $_POST['sourcecage_selection'] ?? 'all');
-
+function mb_build_animal_table($host, $accessun, $accesspw, $dbname, $sql_where_text) {
+	// C-1: extracted from the get_tempanimals branch so the confirm/conflict path
+	// can re-render the same editable table with FRESH database values after an
+	// optimistic-lock conflict rolls a save back. Driven entirely by
+	// $sql_where_text: the conflict path passes an explicit animalautono IN(...)
+	// list; the normal path passes the round-tripped filter WHERE.
+	$testtable = '';
+	$genepost = '';
 	$sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,eartag,dob,dow,dod,matingcage,currentcage,parents, `table_cages`.`cagelocation_room` as cagelocation_room, `table_cages`.`cagerole_assignment` as cagerole_assignment FROM `table_animals` LEFT JOIN `table_cages` ON `table_animals`.`currentcage` = `table_cages`.`cageid` where " . $sql_where_text . " ORDER BY `line` asc, `animalautono` asc;";
 	//echo $sqltext;
 	$sqldatacomments = "SELECT `data_comments`.`animalautono` as 'man',`commentdate`,`general_comment` FROM `data_comments` JOIN `table_animals` ON `data_comments`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
 	$sqlgenotypes = "SELECT `table_genotypes`.`animalautono` as 'man',`allelegroup`,`allele` FROM `table_genotypes` JOIN `table_animals` ON `table_genotypes`.`animalautono` = `table_animals`.`animalautono` where " . $sql_where_text . " ;";
 	//query table_animals
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqltext);
 	$animals_results = $results;
 	//loop and grab data
@@ -122,17 +120,19 @@ if (isset($_POST['get_tempanimals'])) {
 
 	//query table_genotypes
 	$aglist = [];
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqlgenotypes);
 	$geno_results = $results;
 
 	// issue #13: initialise so a filter matching 0 genotypes does not
 	// leave these undefined for the guard/consumers below
 	$arraygeno = [];
+	$arraygeno_val = [];   // C-1: raw current allele per (group, animal), for the optimistic-lock 'expect'
 	$genelist = [];
 	$genoheader = '';
 	while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
 		$arraygeno[$row['allelegroup']][$row['man']] = "<option value='" . $row['allele'] . "' selected>" . $row['allele'] . "</option>";
+		$arraygeno_val[$row['allelegroup']][$row['man']] = $row['allele'];
 		//echo $row['allelegroup'];
 	}
 	$conn->close();
@@ -148,7 +148,7 @@ if (isset($_POST['get_tempanimals'])) {
 
 		//get allelegroups
 		$sqltext = "SELECT `allelegroup`,`allele`,`sexspecific` FROM `list_allele` WHERE " . $agfilt . ";";
-		$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 		$results = $conn->query($sqltext);
 		$aglist = [];
 		while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($results))) {
@@ -169,15 +169,18 @@ if (isset($_POST['get_tempanimals'])) {
 		foreach (range(0, $genecount - 1, 1) as $i) {
 			$ag = $genelist[$i];
 			foreach ($arrayman as $j) {
+				// C-1: carry the allele the form was rendered with, so confirm_changes
+				// can pass it to mb_write() as 'expect' and refuse a stale genotype save.
+				$mb_geno_orig = '<input type=hidden name="orig_geno' . $i . '-' . $j . '" value="' . htmlspecialchars((string)($arraygeno_val[$ag][$j] ?? ''), ENT_QUOTES) . '">';
 				if ($arraygeno[$ag][$j] == "") {
 					$arraygt[$ag][$j] = "<td>NA</td>";
 				} else {
 					if ($arraysex[$j] === "M") {
-						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['all'] . '</select></td>';
+						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['all'] . '</select>' . $mb_geno_orig . '</td>';
 					} elseif ($arraysex[$j] === "F") {
-						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
+						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select>' . $mb_geno_orig . '</td>';
 					} else {
-						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select></td>';
+						$arraygt[$ag][$j] = '<td ><select id="geno' . $i . '-' . $j . '" name="geno' . $i . '-' . $j . '">' . $arraygeno[$ag][$j] . $aglist[$ag]['M'] . $aglist[$ag]['F'] . $aglist[$ag]['all'] . '</select>' . $mb_geno_orig . '</td>';
 					}
 				}
 			}
@@ -197,7 +200,7 @@ if (isset($_POST['get_tempanimals'])) {
 	}
 
 	//gather and concatenate comments
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqldatacomments);
 	$animals_results = $results;
 	//loop and grab data
@@ -235,6 +238,8 @@ if (isset($_POST['get_tempanimals'])) {
 		$temprow .= '
 <tr name="trow' . $ck . '" id="trow' . $ck . '">
 <td ><input class="tinylistbox" type=hidden name="animalautono' . $ck . '" id="animalautono' . $ck . '" readonly="readonly" value=' . $ck . ' >
+<!-- C-1: original (as-rendered) values of the write-set columns. confirm_changes posts these back as mb_write() "expect": if the current row no longer matches, the save is refused as a conflict instead of silently clobbering a concurrent edit. -->
+<input type=hidden name="orig_line' . $ck . '" value="' . htmlspecialchars((string)$arrayline[$ck], ENT_QUOTES) . '"><input type=hidden name="orig_idno' . $ck . '" value="' . htmlspecialchars((string)$arrayidno[$ck], ENT_QUOTES) . '"><input type=hidden name="orig_sex' . $ck . '" value="' . htmlspecialchars((string)$arraysex[$ck], ENT_QUOTES) . '"><input type=hidden name="orig_eartag' . $ck . '" value="' . htmlspecialchars((string)$arrayeartag[$ck], ENT_QUOTES) . '"><input type=hidden name="orig_dob' . $ck . '" value="' . htmlspecialchars((string)$arraydob[$ck], ENT_QUOTES) . '"><input type=hidden name="orig_dow' . $ck . '" value="' . htmlspecialchars((string)$arraydow[$ck], ENT_QUOTES) . '"><input type=hidden name="orig_dod' . $ck . '" value="' . htmlspecialchars((string)$arraydod[$ck], ENT_QUOTES) . '">
 	</td>
 <td ><input class="smalllistbox" type=text name="line' . $ck . '" id="line' . $ck . '" readonly="readonly" value="' . $arrayline[$ck] . '" >
 	</td>
@@ -302,6 +307,21 @@ if (isset($_POST['get_tempanimals'])) {
 <span id="group_comment_ctrl" style="display:none;"> comment for all managed animals: <input type=text id="group_comment" class="smalllistbox"> <input type=button id="btn_group_comment_apply" value="Apply to all" onclick="mbGroupCommentApply()"></span>
 </div>
 <input type=submit id="confirm_changes" name="confirm_changes" value="Confirm Changes">';
+	return array($testtable, $genepost);
+}
+
+if (isset($_POST['get_tempanimals'])) {
+
+
+
+	// P2 Option B: rebuild WHERE from round-tripped filter VALUES (no client SQL)
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
+	$mbvals = animals_filter_values_from_post($_POST);
+	$sql_where_text = animals_where_build($conn, $mbvals) . cage_eq_where($conn, $_POST['sourcecage_selection'] ?? 'all');
+
+	$conn->close();
+	list($testtable, $genepost) = mb_build_animal_table($host, $accessun, $accesspw, $dbname, $sql_where_text);
+
 }
 
 //confirm animals and update to db
@@ -327,56 +347,196 @@ if (isset($_POST['confirm_changes'])) {
 		}
 	}
 
-	//prepare sql for dbupdate
-	$sqltext = '';
+	// ---------------------------------------------------------------------
+	// B-3: this save goes through mb_write(), the single write chokepoint.
+	//
+	// What it replaces: a multi-statement string, built by concatenating escaped
+	// POST values, executed with multi_query(). That shape had three defects that
+	// were invisible until you looked for them:
+	//
+	//   * NO TRANSACTION. Six animals in one submit meant six independent writes.
+	//     A failure on the fourth left three saved and three not, with a page that
+	//     reported "-failed" and no way to tell which.
+	//   * LAST WRITE WINS. It re-wrote every column of every animal on every save,
+	//     including columns the user never touched. mb_write() reads the row FOR
+	//     UPDATE, diffs, and writes only what changed -- which cuts the write down
+	//     to the user's actual edit, and gives Track D an audit trail of real
+	//     changes rather than "someone opened the form".
+	//
+	//     BE CLEAR ABOUT WHAT THIS DOES *NOT* FIX: the diff compares the form
+	//     against the CURRENT ROW, not against what the user was shown. If Bob's
+	//     form was rendered before Alice saved, Bob's stale value still differs
+	//     from the row and is still written -- Alice's edit is still lost. The
+	//     lost-update bug (#27a / CONCURRENCY.md §3) is NOT closed by this patch.
+	//     Closing it means passing the values the form was RENDERED with as
+	//     mb_write's 'expect' option, which then refuses the stale save instead of
+	//     clobbering. The seam exists and is tested; wiring the hidden fields into
+	//     this form is C-1.
+	//   * multi_query() ENABLED STACKED QUERIES on the connection carrying
+	//     user-supplied text.
+	//
+	// It also dropped three whole-table sweeps (`UPDATE table_animals SET dob=NULL
+	// WHERE dob=0`, and the same for dow/dod) that ran ONCE PER ANIMAL PER SAVE.
+	// They existed to clean up zero-dates written by this very code path; mb_write()
+	// writes a real NULL for an empty date, so nothing generates them any more.
+	// Cleaning up any zero-dates left by the OLD code is a migration's job, not
+	// something to re-run on every keystroke. (Noted for Track C.)
+	// ---------------------------------------------------------------------
+	$sqlreport = 'Edit animals ';
+	$updated = 0; $unchanged = 0; $failed = 0; $conflicts = 0; $detail = array();
+	$mb_conflicts = array();       // C-1: per-animal list of fields that moved under the editor
+	$mb_expect_by_man = array();   // C-1: the 'expect' we posted per animal, reused by the conflict scan
+
+	// One transaction around the whole submit: all animals save, or none do.
+	mb_tx_begin($conn);
+
 	foreach ($arrayman as $man) {
-		//echo $man.'<br>';
-		//table_animals
+		$man_id = (int)$man;
+		if ($man_id <= 0) { continue; }
 
-		//check for null dob dow dod
-		if (empty($dob[$man])) {
-			$dob[$man] = 'null';
+		// Empty date fields mean "unknown", which is NULL -- not '' and not 0.
+		$vals = array(
+			'line'   => $line[$man],
+			'idno'   => $idno[$man],
+			'sex'    => $sex[$man],
+			'eartag' => $eartag[$man],
+			'dob'    => (($dob[$man] ?? '') === '') ? null : $dob[$man],
+			'dow'    => (($dow[$man] ?? '') === '') ? null : $dow[$man],
+			'dod'    => (($dod[$man] ?? '') === '') ? null : $dod[$man],
+		);
+
+		// C-1 (#27a): optimistic lock. 'expect' is every write-set column AS THE
+		// FORM WAS RENDERED (the orig_* hidden inputs). mb_write() compares it
+		// against the current row FOR UPDATE and returns 'conflict' -- writing
+		// nothing -- if any of them moved while the user was editing. The date
+		// normalisation MUST match $vals above, or an unknown (NULL) date would
+		// read back as '' and conflict on every save. Full-row by design: a form
+		// that shows all fields implies the editor accepted the ones they left
+		// alone, so any concurrent change is settled by a refresh. See CONCURRENCY.md.
+		$expect = array(
+			'line'   => ($_POST['orig_line' . $man]   ?? ''),
+			'idno'   => ($_POST['orig_idno' . $man]   ?? ''),
+			'sex'    => ($_POST['orig_sex' . $man]    ?? ''),
+			'eartag' => ($_POST['orig_eartag' . $man] ?? ''),
+			'dob'    => (($_POST['orig_dob' . $man] ?? '') === '') ? null : $_POST['orig_dob' . $man],
+			'dow'    => (($_POST['orig_dow' . $man] ?? '') === '') ? null : $_POST['orig_dow' . $man],
+			'dod'    => (($_POST['orig_dod' . $man] ?? '') === '') ? null : $_POST['orig_dod' . $man],
+		);
+		$mb_expect_by_man[$man_id] = $expect;
+
+		$res = mb_write($conn, 'table_animals', 'animalautono', $man_id, $vals, array('expect' => $expect));
+
+		if ($res['status'] === 'updated') {
+			$updated++;
+			$detail[] = $man_id . ': ' . implode(', ', array_keys($res['changed']));
+		} elseif ($res['status'] === 'unchanged') {
+			$unchanged++;
+		} elseif ($res['status'] === 'conflict') {
+			$conflicts++;
+			$failed++;   // any conflict rolls the whole submit back; fields enumerated below
+			continue;
 		} else {
-			$dob[$man] = "'" . $conn->real_escape_string($dob[$man]) . "'";
+			$failed++;
+			$detail[] = $man_id . ': ' . $res['status'] . ' ' . $res['error'];
+			continue;
 		}
 
-		if (empty($dow[$man])) {
-			$dow[$man] = 'null';
-		} else {
-			$dow[$man] = "'" . $conn->real_escape_string($dow[$man]) . "'";
+		// data_comments: an append-only log, so there is no before-image to diff --
+		// a new comment is a new row. Prepared, not concatenated.
+		if (($comments[$man] ?? '') !== '') {
+			$stc = $conn->prepare("INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (?,curdate(),?)");
+			if ($stc) {
+				$stc->bind_param('is', $man_id, $comments[$man]);
+				if (!$stc->execute()) { $failed++; $detail[] = $man_id . ': comment failed'; }
+				$stc->close();
+			} else {
+				$failed++; $detail[] = $man_id . ': comment prepare failed';
+			}
 		}
 
-		if (empty($dod[$man])) {
-			$dod[$man] = 'null';
-		} else {
-			$dod[$man] = "'" . $conn->real_escape_string($dod[$man]) . "'";
-		}
-
-		$sqltext .= "UPDATE `table_animals` 
-		SET `line`='" . $conn->real_escape_string($line[$man]) . "',`idno`='" . $conn->real_escape_string($idno[$man]) . "',`sex`='" . $conn->real_escape_string($sex[$man]) . "',`eartag`='" . $conn->real_escape_string($eartag[$man]) . "',`dob`=" . $dob[$man] . ",`dow`=" . $dow[$man] . ",`dod`=" . $dod[$man] . " 
-		WHERE `animalautono`=" . (int)$man . ";" .
-			"UPDATE `table_animals` 
-		SET `dob`=NULL WHERE `dob`=0;" .
-			"UPDATE `table_animals` 
-		SET `dow`=NULL WHERE `dow`=0;" .
-			"UPDATE `table_animals` 
-		SET `dod`=NULL WHERE `dod`=0;";
-		//data_comments
-		if ($comments[$man] != "") {
-			$sqltext .= "INSERT INTO `data_comments` (`animalautono`,`commentdate`,`general_comment`) VALUES (" . (int)$man . ",curdate(),'" . $conn->real_escape_string($comments[$man]) . "');";
-		}
-		//table_genotypes
+		// table_genotypes: one row per (animal, allelegroup). Also a tracked write,
+		// so it goes through the chokepoint too, keyed by its own primary key.
 		foreach (range(0, $genecount - 1, 1) as $i) {
-			if ($genearray[$i][$man] != "") {
-				$sqltext .= "UPDATE `table_genotypes` SET `allele`='" . $conn->real_escape_string($genearray[$i][$man]) . "' WHERE `animalautono`=" . (int)$man . " and `allelegroup`='" . $conn->real_escape_string($genelist[$i]) . "';";
+			if (($genearray[$i][$man] ?? '') === '') { continue; }
+
+			$stg = $conn->prepare("SELECT `genoid` FROM `table_genotypes` WHERE `animalautono`=? AND `allelegroup`=?");
+			if (!$stg) { $failed++; $detail[] = $man_id . ': geno lookup failed'; continue; }
+			$stg->bind_param('is', $man_id, $genelist[$i]);
+			$stg->execute();
+			$grow = $stg->get_result()->fetch_assoc();
+			$stg->close();
+			if ($grow === null) { continue; }   // no such genotype row: unchanged from the old behaviour
+
+			// C-1: genotype rows are optimistically locked too. 'expect' is the
+			// allele the select was rendered with (orig_geno<i>-<man>).
+			$gexpect = array('allele' => ($_POST['orig_geno' . $i . '-' . $man] ?? ''));
+			$gres = mb_write($conn, 'table_genotypes', 'genoid', (int)$grow['genoid'],
+			                 array('allele' => $genearray[$i][$man]), array('expect' => $gexpect));
+			if ($gres['status'] === 'conflict') {
+				$conflicts++;
+				$failed++;
+				$mb_conflicts[$man_id][] = 'genotype ' . $genelist[$i]
+					. ' (you had "' . (string)$gexpect['allele']
+					. '", now "' . (string)($gres['changed']['allele']['new'] ?? '') . '")';
+			} elseif ($gres['status'] === 'error') {
+				$failed++;
+				$detail[] = $man_id . ': genotype ' . $genelist[$i] . ' ' . $gres['error'];
 			}
 		}
 	}
-	$sqlreport = 'Edit animals ';
-	if ($conn->multi_query($sqltext) === TRUE) {
-		$sqlstatus = '-successful' . '...' . $sqltext;
+
+	if ($failed > 0) {
+		mb_tx_rollback($conn);   // drops to depth 0 and actually rolls back; $conn stays usable
+
+		if ($conflicts > 0) {
+			// C-1: a record changed under the editor. The whole submit was rolled
+			// back (nothing saved). On the now-clean connection, read the current
+			// rows and report EVERY write-set column that moved -- not just the one
+			// mb_write() short-circuited on -- so the user sees the full set to review.
+			$types = mb_column_types($conn, 'table_animals');
+			$ids = array();
+			foreach ($mb_expect_by_man as $mid => $exp) { $ids[] = (int)$mid; }
+			if ($ids) {
+				$cur = array();
+				$rq = $conn->query("SELECT `animalautono`,`line`,`idno`,`sex`,`eartag`,`dob`,`dow`,`dod` FROM `table_animals` WHERE `animalautono` IN (" . implode(',', $ids) . ")");
+				while (($rq instanceof mysqli_result) && ($r = $rq->fetch_assoc())) {
+					$cur[(int)$r['animalautono']] = $r;
+				}
+				foreach ($mb_expect_by_man as $mid => $exp) {
+					if (!isset($cur[$mid])) {
+						$mb_conflicts[$mid][] = 'record was deleted while you were editing';
+						continue;
+					}
+					foreach ($exp as $col => $want) {
+						if (mb_values_differ($cur[$mid][$col], $want, $types[$col] ?? '')) {
+							$mb_conflicts[$mid][] = $col
+								. ' (you had "' . (($want === null) ? '' : (string)$want)
+								. '", now "' . (($cur[$mid][$col] === null) ? '' : (string)$cur[$mid][$col]) . '")';
+						}
+					}
+				}
+			}
+
+			$lines = array();
+			foreach ($mb_conflicts as $mid => $fields) {
+				if ($fields) { $lines[] = 'animal ' . $mid . ': ' . implode('; ', $fields); }
+			}
+			$sqlstatus = '-CONFLICT - nothing was saved. These records changed while you were editing; '
+			           . 'the list below has been refreshed to the CURRENT database values -- re-enter any '
+			           . 'change you still want, then Confirm again: ' . implode(' | ', $lines);
+
+			// Re-render the editable table with fresh values for exactly these animals,
+			// so the form shows the current value and the user must actively revert it.
+			$where = 'table_animals.animalautono IN (' . implode(',', $ids) . ')';
+			list($testtable, $genepost) = mb_build_animal_table($host, $accessun, $accesspw, $dbname, $where);
+		} else {
+			$sqlstatus = '-failed (' . $failed . ') - NOTHING was saved: ' . implode('; ', $detail);
+		}
+	} elseif (!mb_tx_commit($conn)) {
+		$sqlstatus = '-failed - could not commit: ' . $conn->error;
 	} else {
-		$sqlstatus = '-failed ' . $conn->error . '...' . $sqltext;
+		$sqlstatus = '-successful... ' . $updated . ' changed, ' . $unchanged . ' unchanged'
+		           . ($detail ? ' [' . implode('; ', $detail) . ']' : '');
 	}
 	$sqlreport .= $sqlstatus;
 	$conn->close();
@@ -441,7 +601,7 @@ foreach ($source_category_options as $row) {
 $source_category_listbox .= '</select>';
 
 //line lists
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "call get_lines();";
 $results = $conn->query($sqltext);
 //set up static portion of table
@@ -467,13 +627,13 @@ while (($results instanceof mysqli_result) && ($row = mysqli_fetch_array($result
 $line_listbox .= '</select>';
 $conn->close();
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $location_listbox = filter_selectbox(location_filter_options($conn), $location_filter, 'location_filter', 'submitForm()', true);
 $role_listbox     = filter_selectbox(role_filter_options($conn),     $role_filter,     'role_filter',     'submitForm()', true);
 $conn->close();
 
 //cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //set filter text — built server-side via includes/filters.php (P2 Option B)
 $mbvals = animals_filter_values_from_post($_POST);
 $sql_where_text = animals_where_build($conn, $mbvals);   // filters only (no cage) — feeds the source-cage dropdown
@@ -495,7 +655,7 @@ $conn->close();
 //echo $sqltext;
 
 //animals list filtered by line|sex|cage
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 ///  P2 Option B: with-cage WHERE via builder
 $mbvals = animals_filter_values_from_post($_POST);

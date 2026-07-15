@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $xusername = '';
 $host = $accessun = $accesspw = null;
@@ -42,10 +43,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
 
@@ -63,7 +61,7 @@ $xloginstatus = $mb['loginstatus'];
 mb_guard_write();
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
 	echo '<h2 class="centertext"> please connect to the database </h2>';
@@ -129,7 +127,7 @@ if (isset($_POST['roleB_selection'])) {
 // single POST both assigns the role and shows fresh state (no manual REFRESH). The
 // inputs ($cage_selection, $roleB_selection) are already parsed above.
 if (isset($_POST['addcage_single'])) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$cage_selection = ($_POST['cage_selection'] ?? '');
 	$cageselection = '("' . implode('","', $cage_selection) . '")';
 	$sqltext = "UPDATE `" . $dbname . "`.`table_cages` SET `cagerole_assignment`='" . $roleB_selection . "' WHERE `cageid` in " . $cageselection . ";";
@@ -167,7 +165,7 @@ foreach ($source_category_options as $row) {
 $source_category_listbox .= '</select>';
 
 //line lists
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "call get_lines();";
 $results = $conn->query($sqltext);
 $line_listbox = '<select id="line_filter" name="line_filter" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
@@ -182,7 +180,7 @@ $line_listbox .= '</select>';
 $conn->close();
 
 // PATCHED: replaced hardcoded `animalbook.list_cage_role_assignments`
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT * FROM `" . $dbname . "`.`list_cage_role_assignments`";
 $results = $conn->query($sqltext);
 $locA_listbox = '<select id="roleA_selection" name="roleA_selection" size=1 class="mediumlistbox" onchange="submitForm()"><option value="all">all</option>';
@@ -204,7 +202,7 @@ $locB_listbox .= '</select>';
 $conn->close();
 
 // roleB contents
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT `cageid` FROM `table_cages` where cagerole_assignment ='" . $roleB_selection . "';";
 $results = $conn->query($sqltext);
 // PATCHED: fixed malformed HTML attribute (missing closing quote on onchange)
@@ -220,7 +218,7 @@ $cage_listbox .= '</select>';
 $conn->close();
 
 // roleA contents - cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 if ($line_filter === "all" or $line_filter === null) {
 	$lf = '';
 } else {

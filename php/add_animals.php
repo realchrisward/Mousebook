@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $sqlstatus = null; $maxanimalautono1 = null; $maxanimalautono2 = null; $maxanimalinline1 = null; $maxanimalinline2 = null; $animals_string_display = null;
@@ -28,10 +29,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -52,7 +50,7 @@ mb_guard_write();
 require_once __DIR__ . '/../includes/filters.php';
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -66,9 +64,11 @@ if ($conn->connect_error) {
 $sqlreport = '';
 
 //*****purge old animal number reservations*****
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
-// P2: parameterized purge (LOCK/UNLOCK preserved; table name unqualified — conn default DB is $dbname)
-$conn->query("LOCK TABLES `reservations_animals` WRITE");
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
+// B-2: LOCK TABLES removed. It wrapped a single DELETE, and a single statement is
+// already atomic -- the lock bought nothing. It also cannot stay: under InnoDB,
+// LOCK TABLES implicitly COMMITs and takes the session out of transactional mode,
+// so it would silently defeat the transaction mb_write() opens (B-3).
 $stp = $conn->prepare("DELETE FROM `reservations_animals` WHERE `user` = ?");
 if ($stp) {
 	$stp->bind_param('s', $xusername);
@@ -77,7 +77,6 @@ if ($stp) {
 } else {
 	$sqlstatus = '-failed ' . $conn->error . '...';
 }
-$conn->query("UNLOCK TABLES");
 $sqlreport .= $sqlstatus;
 $conn->close();
 
@@ -85,7 +84,7 @@ $conn->close();
 
 
 //*****generate temp list of animals*****
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 if (isset($_POST['generate_animals'])) {
 
@@ -121,7 +120,7 @@ if (isset($_POST['generate_animals'])) {
 	} else {
 
 	//maxanimalautono
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$sqltext = "SELECT max(animalautono) as maxanimalautono FROM `" . $dbname . "`.`table_animals`;";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
@@ -132,7 +131,7 @@ if (isset($_POST['generate_animals'])) {
 		$maxanimalautono1 = 0;
 	}
 	//maxanimalautono - reserved
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$sqltext = "SELECT max(maxautono) as maxanimalautono FROM `" . $dbname . "`.`reservations_animals`;";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
@@ -146,7 +145,7 @@ if (isset($_POST['generate_animals'])) {
 	$xmaxanimalautono = max($maxanimalautono1, $maxanimalautono2);
 
 	//maxanimalinline
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$sqltext = "SELECT max(cast(`idno` as unsigned)) as maxanimalinline FROM `" . $dbname . "`.`table_animals` where `line`='" . $line_selection . "' ;";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
@@ -158,7 +157,7 @@ if (isset($_POST['generate_animals'])) {
 	}
 
 	//maxanimalinline - reserved
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$sqltext = "SELECT max(maxidno) as maxanimalinline FROM `" . $dbname . "`.`reservations_animals` where `line`='" . $line_selection . "';";
 	$results = $conn->query($sqltext);
 	//loop the result set and prepare table
@@ -172,10 +171,14 @@ if (isset($_POST['generate_animals'])) {
 	$xmaxanimalinline = max($maxanimalinline1, $maxanimalinline2);
 
 	//deposit user, xmaxanimalautono, line, maxanimalinline into reservation list
-	// P2: parameterized reservation upsert (LOCK/UNLOCK preserved; row-alias avoids VALUES() deprecation)
+	// P2/B-2: parameterized reservation upsert (row-alias avoids VALUES() deprecation).
+	// LOCK TABLES removed -- see the purge above. NOTE: the lock never covered the
+	// read of MAX(animalautono) further up, so it never closed the read-then-reserve
+	// race it appeared to guard. Two users adding to the same line can still claim
+	// the same idno. That race is real and is C-2's job (atomic claim + UNIQUE
+	// (line, idno)); removing a lock that was not preventing it changes nothing.
 	$resAuto = (int)($xmaxanimalautono + $xtotalnumber);
 	$resIdno = (int)($xmaxanimalinline + $xtotalnumber);
-	$conn->query("LOCK TABLES `reservations_animals` WRITE");
 	$str = $conn->prepare("INSERT INTO `reservations_animals` (`user`,`line`,`maxautono`,`maxidno`,`timestamp`) VALUES (?,?,?,?,now()) AS newrow ON DUPLICATE KEY UPDATE `line`=newrow.`line`, `maxautono`=newrow.`maxautono`, `maxidno`=newrow.`maxidno`, `timestamp`=now()");
 	if ($str) {
 		$str->bind_param('ssii', $xusername, $xline_selection, $resAuto, $resIdno);
@@ -184,7 +187,6 @@ if (isset($_POST['generate_animals'])) {
 	} else {
 		$sqlstatus = '-failed ' . $conn->error . '...';
 	}
-	$conn->query("UNLOCK TABLES");
 	$sqlreport .= $sqlstatus;
 	$conn->close();
 	/**/
@@ -204,7 +206,7 @@ if (isset($_POST['generate_animals'])) {
 		if ($xsource_selection === 'FOUNDER' || $xsource_selection === '') {
 			$xassign_location = 'Limbo';
 		} else {
-			$lc = new mysqli($host, $accessun, $accesspw, $dbname);
+			$lc = mb_connect($host, $accessun, $accesspw, $dbname);
 			$lcr = $lc->query("SELECT cagelocation_room FROM table_cages WHERE cageid='" . $lc->real_escape_string($xsource_selection) . "' LIMIT 1;");
 			if ($lcr && ($lcrow = mysqli_fetch_array($lcr))) { $xassign_location = $lcrow['cagelocation_room']; }
 			$lc->close();
@@ -214,7 +216,7 @@ if (isset($_POST['generate_animals'])) {
 
 
 	//populate table
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 	$xautonos = range($xmaxanimalautono + 1, $xmaxanimalautono + $xtotalnumber, 1);
 	$autonoskv = array_combine($xautonos, $xautonos);
@@ -307,7 +309,7 @@ if (isset($_POST['generate_animals'])) {
 	//echo $genepost;
 
 	//get genotype dialogs prepared
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$sqltext = "SELECT `line`,`list_allele`.`allelegroup`,`allele`,`sexspecific` FROM `" . $dbname . "`.`key_allelebyline` 
 JOIN `" . $dbname . "`.`list_allele` ON `key_allelebyline`.`allelegroup`=`list_allele`.`allelegroup` 
 WHERE `key_allelebyline`.`line`='" . $xline_selection . "';";
@@ -464,7 +466,7 @@ if (isset($_POST['confirm_animals'])) {
 	// Parameterized (no injection) and errors are no longer swallowed by
 	// `while (mysqli_next_result())`. Targets are MyISAM, so no transaction is
 	// available; we halt on the first failing statement and report which one.
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$ins_error = '';
 	$st_cage   = $conn->prepare('INSERT INTO `table_cages` (`cageid`,`cagetype`,`setupdate`,`cageactive`,`lineassignment`,`cageno`,`cagecontents`,`cagelocation_room`,`cagerole_assignment`) VALUES (?,"Litter",?,"1",?,0,"pups",?,?) ON DUPLICATE KEY UPDATE `cageno`=`cageno`');
 	$st_animal = $conn->prepare('INSERT INTO `table_animals` (`animalautono`,`line`,`idno`,`sex`,`eartag`,`dob`,`matingcage`,`currentcage`,`parents`) VALUES (?,?,?,?,?,?,?,?,?)');
@@ -561,7 +563,7 @@ $numberunknown = ($_POST['numberunknown'] ?? '');
 
 
 //line list
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //$sqltext="call get_lines();";
 $sqltext = "Select * from `" . $dbname . "`.`table_lines` order by `line`;";
 $results = $conn->query($sqltext);
@@ -611,7 +613,7 @@ $line_listbox .= '</select>';
 $conn->close();
 
 //maxanimalautono
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(animalautono) as maxanimalautono FROM `" . $dbname . "`.`table_animals`;";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
@@ -622,7 +624,7 @@ if ($maxanimalautono1 == "") {
 	$maxanimalautono1 = 0;
 }
 //maxanimalautono - reserved
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(maxautono) as maxanimalautono FROM `" . $dbname . "`.`reservations_animals`;";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
@@ -636,7 +638,7 @@ if ($maxanimalautono2 == "") {
 $maxanimalautono = max($maxanimalautono1, $maxanimalautono2);
 
 //maxanimalinline
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(cast(`idno` as unsigned)) as maxanimalinline FROM `" . $dbname . "`.`table_animals` where `line`='" . $line_selection . "' ;";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
@@ -648,7 +650,7 @@ if ($maxanimalinline1 == "") {
 }
 
 //maxanimalinline - reserved
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "SELECT max(maxidno) as maxanimalinline FROM `" . $dbname . "`.`reservations_animals` where `line`='" . $line_selection . "';";
 $results = $conn->query($sqltext);
 //loop the result set and prepare table
@@ -675,7 +677,7 @@ $sex_listbox .= '</select>';
 
 
 //mating list filtered by line
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $dod_filter = $include_stopped ? '' : 'dod is null and '; //§2e: omit when including stopped matings
 $sqltext = "SELECT `currentcage`, `cagecontents`
 FROM (`table_animals` join `table_cages` on `table_animals`.`currentcage`=`table_cages`.`cageid`)
@@ -703,7 +705,7 @@ $conn->close();
 
 
 //mating cage contents current
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 $sqltext = "SELECT table_animals.animalautono as 'man',line,idno,sex,dob,dod,currentcage FROM `table_animals` where dod is null and `currentcage`='" . $source_selection . "' order by sex desc, line, idno ;";
 $results = $conn->query($sqltext);
@@ -721,7 +723,7 @@ $conn->close();
 
 
 //mating cage contents historical
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 
 $sqltext = "SELECT table_cages.cagecontents FROM `table_cages` where `cageid`='" . $source_selection . "' ;";
 $results = $conn->query($sqltext);
@@ -738,7 +740,7 @@ $conn->close();
 $assign_location = $_POST['assign_location'] ?? '';
 $assign_role     = $_POST['assign_role'] ?? '';
 $location_sync   = $_POST['location_sync'] ?? chr(1);
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 if ($source_selection === 'FOUNDER' || $source_selection === '' || $source_selection === null) {
 	$default_location = 'Limbo';
 } else {

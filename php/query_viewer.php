@@ -3,6 +3,7 @@
 <html>
 
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $xquerytorun = null; $temptable = null;
@@ -24,10 +25,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -45,7 +43,7 @@ $accesspw     = $mb['accesspw'];
 $xloginstatus = $mb['loginstatus'];
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -85,7 +83,7 @@ if (isset($_POST['Download'])) {
 	$xquerytorun = ($_POST['querytorun'] ?? '');
 	$sqltext = "SELECT * FROM " . $xquerytorun . ";";
 
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 	$results = $conn->query($sqltext);
 
 	header('Content-Type: text/csv; charset=utf-8');
@@ -117,7 +115,7 @@ if (isset($_POST['Download'])) {
 }
 
 // Run the view query for on-screen display
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $results = $conn->query($sqltext);
 
 $rowdata = array();

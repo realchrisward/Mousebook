@@ -8,13 +8,11 @@
 	<link href="../mousebook.css" rel="stylesheet" type="text/css" />
 	<!--php code-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 	// ── Config ─────────────────────────────────────────
 	$config = require '../config.php';
 
-	if ($config['debug_mode'] == 'True') {
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}
+	mb_debug_init($config);
 
 	// ── Auth helper ────────────────────────────────────
 	// Uses password_verify() against bcrypt hashes —
@@ -28,7 +26,7 @@
 	$ubname = $config['server_user'];
 	$ubpass = $config['server_pass'];
 
-	$conn = new mysqli($host, $ubname, $ubpass, mb_userbook_db($config));
+	$conn = mb_connect($host, $ubname, $ubpass, mb_userbook_db($config));
 	$xloginstatus = $conn->connect_error ? 'red' : 'green';
 	if (!$conn->connect_error) {
 		$conn->close();

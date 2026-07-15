@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/db.php';
 // =============================================================
 // includes/usertoken.php
 // Shared Mousebook userbook-management helpers (Phase G, issue #19).
@@ -47,7 +48,7 @@ if (!function_exists('mb_userbook_conn')) {
         $ubdb  = mb_userbook_db($config);
 
         // Step 1: read connection (config account) to fetch write creds.
-        $ro = @new mysqli($host, (string)$config['server_user'],
+        $ro = @mb_connect($host, (string)$config['server_user'],
                           (string)$config['server_pass'], $ubdb, $port);
         if ($ro->connect_error) {
             $error = 'userbook read connect failed: ' . $ro->connect_error;
@@ -78,7 +79,7 @@ if (!function_exists('mb_userbook_conn')) {
         }
 
         // Step 2: write connection with the userbook dbaccess credentials.
-        $wr = @new mysqli($wr_host, (string)$wr_un, (string)$wr_pw,
+        $wr = @mb_connect($wr_host, (string)$wr_un, (string)$wr_pw,
                           $ubdb, $wr_port);
         if ($wr->connect_error) {
             $error = 'userbook write connect failed: ' . $wr->connect_error;

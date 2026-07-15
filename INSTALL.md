@@ -179,6 +179,21 @@ right. The ones that matter:
 It ends with a run of checks. **Every line must say `[OK]`.** If any says
 `[WARN]`, go to [Troubleshooting](#7-troubleshooting) before continuing.
 
+> **If the installer finds a database that already has tables**, it will not
+> touch it — your data is never overwritten without your say-so. But that
+> database may predate the current schema, so `setup.sh` will not mark it as
+> up to date either. Upgrade it deliberately, after a backup:
+>
+> ```bash
+> export DB_HOST=localhost DB_USER=root DB_PASS='...'
+> ./mb_migrate.sh --db <your-colony-db> preflight   # is the conversion safe on this data?
+> ./mb_migrate.sh --db <your-colony-db> apply       # BACK UP FIRST — see BACKUP.md
+> ```
+>
+> A **brand-new** database needs none of this: it is created already converted
+> (InnoDB, utf8mb4), and the installer records that for you. See
+> [docs/MIGRATIONS.md](docs/MIGRATIONS.md).
+
 ![Placeholder: the terminal at the end of a successful setup.sh run, showing
 the green [OK] verification lines and the "Setup complete" banner](docs/img/02-setup-complete.png)
 *A successful `setup.sh`. Every check green.*

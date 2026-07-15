@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <?php
+require_once __DIR__ . '/../includes/db.php';
 // =============================================================
 // php/forgot_password.php  (Phase G / issue #19)
 // PUBLIC. User-initiated password reset request.
@@ -14,10 +15,7 @@
 // =============================================================
 
 $config = require '../config.php';
-if (($config['debug_mode'] ?? 'False') == 'True') {
-    error_reporting(E_ALL);
-    ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 require_once __DIR__ . '/../includes/usertoken.php';
 require_once __DIR__ . '/../includes/mail.php';
 

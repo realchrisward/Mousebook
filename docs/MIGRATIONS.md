@@ -186,6 +186,26 @@ must never be edited.** Add a new one instead.
 6. `.sql` files are piped to the client. `.sh` files run with `DB_HOST`/`DB_PORT`/`DB_USER`/
    `DB_PASS`/`DB_NAME`/`CLIENT` in the environment — use these when the change requires inspecting
    the database first (which convergence usually does).
+7. **Update the starter SQL in the same commit — with what the server actually did, not what you
+   told it to do.** The starter must end in the identical state a migrated database reaches;
+   `mb_schema_check.sh` and the CI `migrations` job compare the two and go red if they differ.
+
+   This last point is not pedantry. `CONVERT TO CHARACTER SET utf8mb4` does more than change a
+   charset: because `TEXT` is limited by *bytes* and not characters, the server **silently widens
+   every blob/text column one tier** to preserve its character capacity —
+
+   | before | after |
+   |---|---|
+   | `TINYTEXT` | `TEXT` |
+   | `TEXT` | `MEDIUMTEXT` |
+   | `MEDIUMTEXT` | `LONGTEXT` |
+
+   Five columns in Mousebook are affected (`Study_Cohorts.CohortDesc`, `Study_Info.StudyDesc`,
+   `table_deadpups.comments`, `table_litterlog.litter_comments`, `dbaccess.db_guide1_url`). Hand-
+   editing `ENGINE=` and `DEFAULT CHARSET=` in the starter would have produced a starter that no
+   migrated database ever matches — a fresh install and an upgraded install quietly becoming
+   different products. **Derive the starter's state from a real migrated database** (diff
+   `information_schema.columns` between the two), never from what the migration script appears to say.
 
 ---
 

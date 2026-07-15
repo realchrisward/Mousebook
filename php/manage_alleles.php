@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 	<?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $sqlaction = null; $sqlstatus = null; $sqlreport = null; $currallelegrpref = null; $currgenorxncomments = null; $currgenorxncycle = null;
@@ -29,10 +30,7 @@ $currprimerseq = null; $currprimercom = null;
 
 	// collect config values
 	$config = require'../config.php';
-	if ($config['debug_mode']=='True'){
-		error_reporting(E_ALL);
-		ini_set('display_errors', 1);
-	}	
+	mb_debug_init($config);
 	//setup sql variables
 	$ubname=$config['server_user'];
 	$ubpass=$config['server_pass'];	
@@ -52,7 +50,7 @@ $currprimerseq = null; $currprimercom = null;
 		mb_guard_admin();
 
 		
-	$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+	$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 	//check connection
 	if ($conn->connect_error) {
 		$xloginstatus='red';
@@ -63,7 +61,7 @@ $currprimerseq = null; $currprimercom = null;
 		$conn->close();
 		}
 
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 //add gene
 
 if (isset($_POST['addgenebutton'])){
@@ -364,7 +362,7 @@ $currgenorxnfromag=($_POST['genorxnbyallelegrp_selection'] ?? '');
 $currprimer=($_POST['primer_selection'] ?? '');
 
 //gene table
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query("call get_genes();");
 //set up static portion of table
 $gene_table= '<select id="gene_selection" name="gene_selection" size=8class="smalllistbox" onchange="submitForm()">';
@@ -385,7 +383,7 @@ $gene_table .= '</select>';
 $conn->close();
 
 //allelegroups filtered by gene
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $sqltext="select * from list_allelegroup where gene='".$currgene."';";
 $results=$conn->query($sqltext);
 //set up static portion of table
@@ -408,7 +406,7 @@ $allelegrp_table .= '</select>';
 $conn->close();
 
 //alleles filtered by allelegroup
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT * FROM list_allele where allelegroup='".$currallelegrp."';";
 $results=$conn->query($sqltext);
 //set up static portion of table
@@ -423,7 +421,7 @@ $allele_table .= '</select>';
 $conn->close();
 
 //allelegroup x genotyping rxn pairs
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT * FROM key_allelegroupbygenotypingrxn WHERE allelegroup='".$currallelegrp."';";
 $results=$conn->query($sqltext);
 //set up static portion of table
@@ -444,7 +442,7 @@ $genorxnbyallelegrp_table.= '</select>';
 $conn->close();
 
 //select * genotyping reactions
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $results=$conn->query("call get_genorxns();");
 //set up static portion of table
 $genorxn_table= '<select id="genorxn_selection" name="genorxn_selection" size=5 class="mediumlistbox" onchange="submitForm()">';
@@ -464,7 +462,7 @@ $genorxn_table .= '</select>';
 $conn->close();
 
 //genotyping primers filtered by genotyping rxn
-$conn=new mysqli($host,$accessun,$accesspw,$dbname);
+$conn=mb_connect($host,$accessun,$accesspw,$dbname);
 $sqltext="SELECT * FROM list_genotypingprimers WHERE genotypingrxn='".$currgenorxn."';";
 $results=$conn->query($sqltext);
 //set up static portion of table

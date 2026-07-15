@@ -57,7 +57,7 @@ DROP TABLE IF EXISTS `CagesForInfo`;
 CREATE TABLE `CagesForInfo` (
   `cageid` varchar(255) NOT NULL,
   PRIMARY KEY (`cageid`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -70,7 +70,7 @@ DROP TABLE IF EXISTS `CagesForPrinting`;
 CREATE TABLE `CagesForPrinting` (
   `cageid` varchar(255) NOT NULL,
   PRIMARY KEY (`cageid`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -88,7 +88,7 @@ CREATE TABLE `Study_CagesInCohorts` (
   `CohortKey` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`StudyCageKey`),
   UNIQUE KEY `StudyCageNumber_UNIQUE` (`StudyCageKey`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -102,10 +102,10 @@ CREATE TABLE `Study_Cohorts` (
   `CohortKey` bigint NOT NULL AUTO_INCREMENT,
   `StudyNumber` bigint NOT NULL,
   `CohortName` varchar(45) NOT NULL,
-  `CohortDesc` text,
+  `CohortDesc` mediumtext,
   PRIMARY KEY (`CohortKey`),
   UNIQUE KEY `CohortNumber_UNIQUE` (`CohortKey`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -121,7 +121,7 @@ CREATE TABLE `Study_GroupAlias` (
   `AliasText` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`AliasKey`),
   UNIQUE KEY `AliasKey_UNIQUE` (`AliasKey`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -138,7 +138,7 @@ CREATE TABLE `Study_GroupInfo` (
   `StudyKey` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`GroupKey`),
   UNIQUE KEY `GroupKey_UNIQUE` (`GroupKey`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -151,11 +151,11 @@ DROP TABLE IF EXISTS `Study_Info`;
 CREATE TABLE `Study_Info` (
   `StudyNumber` bigint NOT NULL,
   `StudyName` varchar(45) NOT NULL,
-  `StudyDesc` text,
+  `StudyDesc` mediumtext,
   PRIMARY KEY (`StudyNumber`),
   UNIQUE KEY `StudyNumber_UNIQUE` (`StudyNumber`),
   UNIQUE KEY `StudyName_UNIQUE` (`StudyName`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -176,7 +176,7 @@ CREATE TABLE `Study_animals` (
   `StudyKey` bigint DEFAULT NULL,
   PRIMARY KEY (`StudyanimalKey`),
   UNIQUE KEY `StudyanimalKey_UNIQUE` (`StudyanimalKey`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -192,7 +192,7 @@ CREATE TABLE `Study_animalsGroups` (
   `GroupAliasKey` bigint DEFAULT NULL,
   PRIMARY KEY (`MG_LinkKey`),
   UNIQUE KEY `MG_LinkKey_UNIQUE` (`MG_LinkKey`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -211,7 +211,7 @@ CREATE TABLE `conversion_geno` (
   `expgeno` int DEFAULT NULL,
   PRIMARY KEY (`autono`),
   UNIQUE KEY `autono_UNIQUE` (`autono`)
-) ENGINE=MyISAM AUTO_INCREMENT=231 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=231 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -229,7 +229,7 @@ CREATE TABLE `data_comments` (
   PRIMARY KEY (`commentid`),
   UNIQUE KEY `commentid_UNIQUE` (`commentid`),
   KEY `fk_data_comments_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM AUTO_INCREMENT=9652 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=9652 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -248,7 +248,7 @@ CREATE TABLE `data_weights` (
   PRIMARY KEY (`measurementid`),
   UNIQUE KEY `measurementid_UNIQUE` (`measurementid`),
   KEY `fk_data_weights_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -269,7 +269,7 @@ CREATE TABLE `good_genos` (
   `geno3` varchar(45) DEFAULT NULL,
   `alleles_needed` int DEFAULT NULL,
   PRIMARY KEY (`idgood_genos`)
-) ENGINE=MyISAM AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -286,7 +286,7 @@ CREATE TABLE `key_allelebyline` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_key_allelebyline_list_allelegroup1_idx` (`allelegroup`)
-) ENGINE=MyISAM AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=88 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -304,7 +304,7 @@ CREATE TABLE `key_allelegroupbygenotypingrxn` (
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_key_allelegroupbygenotypingrxn_list_allelegroup1_idx` (`allelegroup`),
   KEY `fk_key_allelegroupbygenotypingrxn_list_genotypingrxns1_idx` (`genotypingrxn`)
-) ENGINE=MyISAM AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -323,7 +323,7 @@ CREATE TABLE `list_allele` (
   PRIMARY KEY (`indexkey`),
   UNIQUE KEY `indexkey_UNIQUE` (`indexkey`),
   KEY `fk_list_allele_list_allelegroup1_idx` (`allelegroup`)
-) ENGINE=MyISAM AUTO_INCREMENT=330 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=330 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -340,7 +340,7 @@ CREATE TABLE `list_allelegroup` (
   PRIMARY KEY (`allelegroup`),
   UNIQUE KEY `allelegroup_UNIQUE` (`allelegroup`),
   KEY `fk_list_allelegroup_list_gene_idx` (`gene`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -355,7 +355,7 @@ CREATE TABLE `list_cage_locations` (
   `active` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`Location_Option`),
   UNIQUE KEY `Location_Option_UNIQUE` (`Location_Option`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -373,7 +373,7 @@ CREATE TABLE `list_cage_role_assignments` (
   `active` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`roleassignment_option`),
   UNIQUE KEY `roleassignment_option_UNIQUE` (`roleassignment_option`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -387,7 +387,7 @@ CREATE TABLE `list_gene` (
   `gene` varchar(255) NOT NULL,
   PRIMARY KEY (`gene`),
   UNIQUE KEY `gene_UNIQUE` (`gene`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -406,7 +406,7 @@ CREATE TABLE `list_genotypingprimers` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_list_genotypingprimers_list_genotypingrxns1_idx` (`genotypingrxn`)
-) ENGINE=MyISAM AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=75 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -422,7 +422,7 @@ CREATE TABLE `list_genotypingrxns` (
   `recommendedcycle` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`genotypingrxn`),
   UNIQUE KEY `genotypingrxn_UNIQUE` (`genotypingrxn`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -435,7 +435,7 @@ DROP TABLE IF EXISTS `list_lengthone`;
 CREATE TABLE `list_lengthone` (
   `id` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -449,7 +449,7 @@ CREATE TABLE `list_numbers` (
   `number_list` int NOT NULL,
   PRIMARY KEY (`number_list`),
   UNIQUE KEY `number_list_UNIQUE` (`number_list`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -463,7 +463,7 @@ CREATE TABLE `list_strains` (
   `strains` varchar(45) NOT NULL,
   PRIMARY KEY (`strains`),
   UNIQUE KEY `strains_UNIQUE` (`strains`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -526,7 +526,7 @@ CREATE TABLE `table_animals` (
   UNIQUE KEY `animalautono_UNIQUE` (`animalautono`),
   KEY `fk_table_animals_table_lines1_idx` (`line`),
   KEY `fk_table_animals_table_cages1_idx` (`currentcage`)
-) ENGINE=MyISAM AUTO_INCREMENT=3098 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=3098 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -550,7 +550,7 @@ CREATE TABLE `table_cages` (
   `cagerole_assignment` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`cageid`),
   UNIQUE KEY `cageid_UNIQUE` (`cageid`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -565,11 +565,11 @@ CREATE TABLE `table_deadpups` (
   `dob` date DEFAULT NULL,
   `dod` date DEFAULT NULL,
   `death_autono` bigint NOT NULL AUTO_INCREMENT,
-  `comments` text,
+  `comments` mediumtext,
   `death_type` char(45) DEFAULT NULL,
   PRIMARY KEY (`death_autono`),
   UNIQUE KEY `death_autono_UNIQUE` (`death_autono`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -588,7 +588,7 @@ CREATE TABLE `table_genotypes` (
   PRIMARY KEY (`genoid`),
   UNIQUE KEY `genoid_UNIQUE` (`genoid`),
   KEY `fk_table_genotypes_table_animals1_idx` (`animalautono`)
-) ENGINE=MyISAM AUTO_INCREMENT=4766 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=4766 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -608,7 +608,7 @@ CREATE TABLE `table_lines` (
   `deactivated_line` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`line`),
   UNIQUE KEY `line_UNIQUE` (`line`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -628,12 +628,12 @@ CREATE TABLE `table_litterlog` (
   `estimate_male` int DEFAULT NULL,
   `estimate_female` int DEFAULT NULL,
   `estimate_unknown` int DEFAULT NULL,
-  `litter_comments` text,
+  `litter_comments` mediumtext,
   `just_sac` varchar(45) DEFAULT NULL,
   `litterlog_autono` bigint NOT NULL AUTO_INCREMENT,
   PRIMARY KEY (`litterlog_autono`),
   UNIQUE KEY `litterlog_autono_UNIQUE` (`litterlog_autono`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -651,7 +651,7 @@ CREATE TABLE `temp_comments` (
   PRIMARY KEY (`commentid`),
   UNIQUE KEY `commentid_UNIQUE` (`commentid`),
   KEY `fk_temp_comments_temp_createanimals1_idx` (`animalautono`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -674,7 +674,7 @@ CREATE TABLE `temp_createanimals` (
   `parents` varchar(1024) DEFAULT NULL,
   PRIMARY KEY (`animalautono`),
   UNIQUE KEY `animalautono_UNIQUE` (`animalautono`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -693,7 +693,7 @@ CREATE TABLE `temp_genotypes` (
   PRIMARY KEY (`genoid`),
   UNIQUE KEY `genoid_UNIQUE` (`genoid`),
   KEY `fk_temp_genotypes_temp_createanimals1_idx` (`animalautono`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -707,7 +707,7 @@ CREATE TABLE `temp_shufcg1` (
   `animalautono` bigint NOT NULL,
   PRIMARY KEY (`animalautono`),
   UNIQUE KEY `animalautono_UNIQUE` (`animalautono`)
-) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --

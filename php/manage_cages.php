@@ -4,6 +4,7 @@
 
 <!--php code: login-->
 <?php
+require_once __DIR__ . '/../includes/db.php';
 /* issue #14: initialize first-load output variables to prevent PHP 8 undefined-variable warnings on first load */
 $host = $accessun = $accesspw = null;
 $lf = null;
@@ -33,10 +34,7 @@ $dbname = ($_POST['dbname'] ?? '');
 
 // collect config values
 $config = require '../config.php';
-if ($config['debug_mode'] == 'True') {
-	error_reporting(E_ALL);
-	ini_set('display_errors', 1);
-}
+mb_debug_init($config);
 //setup sql variables
 $ubname = $config['server_user'];
 $ubpass = $config['server_pass'];
@@ -57,7 +55,7 @@ mb_guard_write();
 require_once __DIR__ . '/../includes/filters.php';
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //check connection
 if ($conn->connect_error) {
 	$xloginstatus = 'red';
@@ -74,12 +72,21 @@ if ($conn->connect_error) {
 //skipped on the submit request so this user's reservation stays in place right up to the commit,
 //closing the purge-then-insert micro-window; a successful submit releases it explicitly (see below).
 if (!isset($_POST['submit_cages'])) {
-	$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+	$conn = mb_connect($host, $accessun, $accesspw, $dbname);
+	// B-2: was LOCK TABLES + DELETE + UNLOCK sent as one multi_query() string.
+	// Three problems, all now gone: (1) the lock guarded a single DELETE, which is
+	// already atomic; (2) under InnoDB LOCK TABLES implicitly COMMITs, which would
+	// defeat mb_write()'s transaction (B-3); (3) multi_query() ENABLES STACKED
+	// QUERIES on this connection -- the mechanism that turns a SQL injection from
+	// "read one row" into "DROP TABLE". A prepared statement does the same work
+	// with none of that. Table left unqualified: the connection's default database
+	// is already $dbname.
 	try {
-		$esc_user_purge = $conn->real_escape_string($xusername ?? '');
-		$sqlpurge = "LOCK TABLES `" . $dbname . "`.`reservations_cages` WRITE; DELETE FROM `" . $dbname . "`.`reservations_cages` WHERE `user`='" . $esc_user_purge . "'; UNLOCK TABLES;";
-		if ($conn->multi_query($sqlpurge) === TRUE) {
-			while (mysqli_next_result($conn));
+		$stp = $conn->prepare("DELETE FROM `reservations_cages` WHERE `user` = ?");
+		if ($stp) {
+			$stp->bind_param('s', $xusername);
+			$stp->execute();
+			$stp->close();
 		}
 	} catch (\Throwable $e) {
 		//reservations_cages not present yet — nothing to purge
@@ -88,7 +95,7 @@ if (!isset($_POST['submit_cages'])) {
 }
 
 
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //Add animals individually to cage1|2|3|4
 if (isset($_POST['addcage1_single'])) {
 	// P3 #21: the source list is a multi-select; add the whole selected subset.
@@ -404,14 +411,17 @@ SELECT `animalautono`, '" . $esc_c4date . "' as commentdate, 'moved to cage:" . 
 		$sqlstatus = 'successful - ' . $sqltext;
 		//micro-window hardening: the cages now exist in table_cages, so release this user's reservation
 		//for the committed line+category. Scoped to line+category so other open windows keep theirs.
-		$conn2 = new mysqli($host, $accessun, $accesspw, $dbname);
+		$conn2 = mb_connect($host, $accessun, $accesspw, $dbname);
+		// B-2: multi_query + LOCK TABLES -> prepared DELETE (see the purge above).
 		try {
-			$rel_user = $conn2->real_escape_string($xusername ?? '');
-			$rel_line = $conn2->real_escape_string($xline_assignment ?? '');
-			$rel_type = $conn2->real_escape_string($xcategory_selection ?? '');
-			$sqlrelease = "LOCK TABLES `" . $dbname . "`.`reservations_cages` WRITE; DELETE FROM `" . $dbname . "`.`reservations_cages` WHERE `user`='" . $rel_user . "' AND `lineassignment`='" . $rel_line . "' AND `cagetype`='" . $rel_type . "'; UNLOCK TABLES;";
-			if ($conn2->multi_query($sqlrelease) === TRUE) {
-				while (mysqli_next_result($conn2));
+			$rel_user = $xusername ?? '';
+			$rel_line = $xline_assignment ?? '';
+			$rel_type = $xcategory_selection ?? '';
+			$str = $conn2->prepare("DELETE FROM `reservations_cages` WHERE `user` = ? AND `lineassignment` = ? AND `cagetype` = ?");
+			if ($str) {
+				$str->bind_param('sss', $rel_user, $rel_line, $rel_type);
+				$str->execute();
+				$str->close();
 			}
 		} catch (\Throwable $e) {
 			//reservations_cages absent — nothing to release
@@ -507,7 +517,7 @@ if ($line_assignment <> $line_sync) {
 } else {
 	$line_assign_selected = $line_filter;
 }
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $sqltext = "call get_lines();";
 $results = $conn->query($sqltext);
 //set up static portion of table
@@ -538,7 +548,7 @@ $lineassign_listbox .= '</select>';
 $conn->close();
 
 //temp_cage1 contents (P3 Option A: rendered from the session slot)
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $cage1_in = mb_stage_in_csv(mb_stage_slot($dbname, 1));
 $cage1size = 0;
 $animalc1 = array();
@@ -560,7 +570,7 @@ $cage1_listbox .= '</select>';
 $conn->close();
 
 //temp_cage2 contents (P3 Option A: rendered from the session slot)
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $cage2_in = mb_stage_in_csv(mb_stage_slot($dbname, 2));
 $cage2size = 0;
 $animalc2 = array();
@@ -582,7 +592,7 @@ $cage2_listbox .= '</select>';
 $conn->close();
 
 //temp_cage3 contents (P3 Option A: rendered from the session slot)
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $cage3_in = mb_stage_in_csv(mb_stage_slot($dbname, 3));
 $cage3size = 0;
 $animalc3 = array();
@@ -604,7 +614,7 @@ $cage3_listbox .= '</select>';
 $conn->close();
 
 //temp_cage4 contents (P3 Option A: rendered from the session slot)
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $cage4_in = mb_stage_in_csv(mb_stage_slot($dbname, 4));
 $cage4size = 0;
 $animalc4 = array();
@@ -630,7 +640,7 @@ $conn->close();
 $cage_location_listbox = array();
 $cage_role_listbox     = array();
 $cage_locsync          = array();
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $loc_assign_values = location_assign_options($conn);
 if (!in_array('Limbo', $loc_assign_values, true)) {
 	array_unshift($loc_assign_values, 'Limbo');
@@ -681,7 +691,7 @@ $conn->close();
 
 
 //cage list filtered by line, sex, etc
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all") {
 	$lf = '';
@@ -745,7 +755,7 @@ $conn->close();
 //echo $sqltext;
 
 //animals list filtered by line|sex|cage
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 //set filter text
 if ($line_filter === "all") {
 	$lf = '';
@@ -808,7 +818,7 @@ $conn->close();
 //cage tentative names + cageno reservation (concurrency-safe; mirrors add_animals reservation pattern)
 //one read of the committed MAX(cageno) and one of the reserved MAX, so two users staging the
 //same line+category at once cannot mint duplicate cage numbers/names.
-$conn = new mysqli($host, $accessun, $accesspw, $dbname);
+$conn = mb_connect($host, $accessun, $accesspw, $dbname);
 $esc_line = $conn->real_escape_string($line_assignment ?? '');
 $esc_type = $conn->real_escape_string($category_selection ?? '');
 //highest committed cageno for this line+category
@@ -837,14 +847,17 @@ $cage3name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($ca
 $cage4name = $category_selection . ' : ' . $line_assignment . ' : ' . strval($cage4no);
 //reserve this block of cagenos so a concurrent transfer on the same line+category cannot reuse them
 if (($line_assignment ?? '') !== '' && ($category_selection ?? '') !== '') {
+	// B-2: multi_query + LOCK TABLES -> prepared INSERT (see the purge above).
 	try {
-		$esc_user = $conn->real_escape_string($xusername ?? '');
-		$sqlreserve = "LOCK TABLES `" . $dbname . "`.`reservations_cages` WRITE; "
-			. "INSERT INTO `" . $dbname . "`.`reservations_cages` (`user`,`lineassignment`,`cagetype`,`maxcageno`,`timestamp`) "
-			. "VALUES ('" . $esc_user . "','" . $esc_line . "','" . $esc_type . "'," . $cage4no . ",now()); "
-			. "UNLOCK TABLES;";
-		if ($conn->multi_query($sqlreserve) === TRUE) {
-			while (mysqli_next_result($conn));
+		$res_user   = $xusername ?? '';
+		$res_line   = $line_assignment ?? '';
+		$res_type   = $category_selection ?? '';
+		$res_maxno  = (int)$cage4no;
+		$str = $conn->prepare("INSERT INTO `reservations_cages` (`user`,`lineassignment`,`cagetype`,`maxcageno`,`timestamp`) VALUES (?,?,?,?,now())");
+		if ($str) {
+			$str->bind_param('sssi', $res_user, $res_line, $res_type, $res_maxno);
+			$str->execute();
+			$str->close();
 		}
 	} catch (\Throwable $e) {
 		//reservation unavailable (e.g. table not yet migrated) — fall back to committed-MAX behavior
